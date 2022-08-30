@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 
 namespace Slin.Masking
 {
-
 	public class MaskingOptions
 	{
 		public static readonly MaskingOptions Default = new MaskingOptions

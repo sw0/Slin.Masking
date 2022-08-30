@@ -39,7 +39,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Slin.Masking.NLog\Slin.Masking.NLog.csproj" />
     <ProjectReference Include="..\Slin.Masking\Slin.Masking.csproj" />
   </ItemGroup>
 

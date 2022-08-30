@@ -19,14 +19,14 @@ var logger = LogManager.Setup(setupBuilder: (setupBuilder) =>
 
 	var profile = cfg.GetSection("masking").Get<MaskingProfile>();
 	profile.Normalize();
-	var logMaskOptions = cfg.GetSection("masking:LogMaskingOptions").Get<LogMaskingOptions>();
+	var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
 
 	var masker = new Masker(profile);
 
-	setupBuilder.SetupSerialization(serialization =>
-	{
-		serialization.RegisterJsonConverter(new JsonConverter2());
-	});
+	//setupBuilder.SetupSerialization(serialization =>
+	//{
+	//	serialization.RegisterJsonConverter(new JsonConverter2());
+	//});
 	setupBuilder.SetupExtensions(s =>
 	   //s.RegisterLayoutRenderer("trace_id", (logevent) => CorrelationIdentifier.TraceId.ToString())
 	   s.RegisterSingletonService<IMasker>(masker)
@@ -74,11 +74,11 @@ try
 		var profile = cfg.GetSection("masking").Get<MaskingProfile>();
 		return profile;
 	});
-	builder.Services.AddSingleton<LogMaskingOptions>(sp =>
+	builder.Services.AddSingleton<ObjectMaskingOptions>(sp =>
 	{
 		var cfg = sp.GetRequiredService<IConfiguration>();
 
-		var logMaskOptions = cfg.GetSection("masking:LogMaskingOptions").Get<LogMaskingOptions>();
+		var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
 		return logMaskOptions;
 	});
 	builder.Services.AddSingleton<IMasker, Masker>();

@@ -1,50 +1,24 @@
-
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Slin.Masking;
 using Xunit.Sdk;
 
-namespace Slin.Masking2.Tests
+namespace Slin.Masking.Tests
 {
-	public class MaskerTests
+	public class MaskerTests: TestBase
 	{
-
-		IServiceProvider CreateProvider()
+		[Fact]
+		public void MaskProfileTest()
 		{
-
-			var services = new ServiceCollection();
-			var configBuilder = new ConfigurationBuilder();
-			configBuilder.AddJsonFile("masking.json");
-
-			var configuration = configBuilder.Build();
-
-			services.AddSingleton<IConfiguration>(configuration);
-			services.Configure<MaskingProfile>(configuration.GetSection("Masking"))
-				.PostConfigure<MaskingProfile>((options) => options.Normalize());
-
-			services.AddScoped<MaskingProfile>(provider =>
-			{
-				var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
-
-				return profile;
-			});
-
-			services.AddScoped<IMasker, Masker>();
-			services.AddScoped<IUrlMasker, Masker>();
-
-			var provider = services.BuildServiceProvider();
-
-			var profile = provider.GetService<IOptions<MaskingProfile>>()!.Value;
+			var profile = CreateProvider().GetService<IOptions<MaskingProfile>>()!.Value;
 
 			Assert.True(profile.Rules.All(x => !string.IsNullOrEmpty(x.Key)));
 			Assert.True(profile.Rules.All(x => x.Value.Formatters != null));
-
-			return provider;
 		}
 
+
 		[Fact]
-		public void MaskProfileTest1()
+		public void MaskerTest()
 		{
 			var data = new[] {
 				new{Key="FirstName", Value ="Shawn",  Expected ="Sh***" },
@@ -74,8 +48,6 @@ namespace Slin.Masking2.Tests
 
 				Assert.NotNull(engine);
 
-
-
 				//string result;
 				int idx = 0;
 				foreach (var item in data)
@@ -91,6 +63,7 @@ namespace Slin.Masking2.Tests
 		[Theory]
 		[InlineData("?firstname=shawn&lastname=1234", "?firstname=sh***&lastname=12**")]
 		[InlineData("firstname=shawn&lastname=1234", "firstname=sh***&lastname=12**")]
+		[InlineData("https://jd.com/pan/1234567890123456/firstname/hello", "https://jd.com/pan/1234********3456/firstname/he***")]
 		[InlineData("https://jd.com/firstname/shawn/lastname/lin", "https://jd.com/firstname/sh***/lastname/li*")]
 		[InlineData("https://jd.com/firstname/shawn/lastname/lin?ssn=123456789", "https://jd.com/firstname/sh***/lastname/li*?ssn=*********")]
 		public void UrlMaskerTest(string url, string expected)

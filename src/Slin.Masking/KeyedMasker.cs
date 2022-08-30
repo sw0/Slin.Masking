@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Slin.Masking
 {
-	public interface IKeyedMasker
+	internal interface IKeyedMasker
 	{
 		string KeyName { get; }
 
@@ -27,7 +27,8 @@ namespace Slin.Masking
 		{
 			_context = context;
 
-			var formatters = source.Formatters.ConvertAll(o => new ValueFormatter(context, o));
+			var formatters = source.Formatters.Where(f => f.Enabled)
+				.Select(o => new ValueFormatter(context, o));
 
 			KeyName = source.KeyName;
 			Formatters = new List<IValueFormatter>(formatters);

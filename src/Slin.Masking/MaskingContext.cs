@@ -63,7 +63,7 @@ namespace Slin.Masking
 
 			//todo print configurations
 
-			if (_profile.Options.KeyCaseInsensitive)
+			if (_profile.MaskingOptions.KeyCaseInsensitive)
 			{
 				_pooled = new ConcurrentDictionary<string, KeyedMasker>(StringComparer.OrdinalIgnoreCase);
 			}
@@ -74,13 +74,13 @@ namespace Slin.Masking
 
 			MaskFormatter = maskFormatter ?? new MaskFormatter();
 
-			if (_profile.Options == null)
+			if (_profile.MaskingOptions == null)
 			{
-				_profile.Options = MaskingOptions.Default;
+				_profile.MaskingOptions = MaskingOptions.Default;
 			}
-			else if (_profile.Options.PatternCheckChars == null || _profile.Options.PatternCheckChars.Count == 0)
+			else if (_profile.MaskingOptions.PatternCheckChars == null || _profile.MaskingOptions.PatternCheckChars.Count == 0)
 			{
-				_profile.Options.PatternCheckChars = new List<char>(MaskingOptions.Default.PatternCheckChars);
+				_profile.MaskingOptions.PatternCheckChars = new List<char>(MaskingOptions.Default.PatternCheckChars);
 			}
 
 			Initialize();
@@ -106,7 +106,7 @@ namespace Slin.Masking
 					else
 					{
 						definition.Formatters.RemoveAt(i);
-						if (_profile.Options.ThrowIfNamedProfileNotFound)
+						if (_profile.MaskingOptions.ThrowIfNamedProfileNotFound)
 							throw new Exception($"{nameof(_profile.NamedFormatterDefintions)} does not found: {formatter.Name}");
 					}
 				}
@@ -119,8 +119,8 @@ namespace Slin.Masking
 		{
 			if (_initalized) throw new Exception("already initialized");
 
-			RegexOptions keyRegOptions = _profile.Options.GetKeyNameRegexOptions();
-			RegexOptions valRegOptions = _profile.Options.GetValuePatternRegexOptions();
+			RegexOptions keyRegOptions = _profile.MaskingOptions.GetKeyNameRegexOptions();
+			RegexOptions valRegOptions = _profile.MaskingOptions.GetValuePatternRegexOptions();
 
 			var normalized = new List<KeyedMasker>();
 
@@ -191,7 +191,7 @@ namespace Slin.Masking
 
 		public bool IsLikePattern(string input)
 		{
-			return _profile.Options.PatternCheckChars.Any(c => input.Contains(c));
+			return _profile.MaskingOptions.PatternCheckChars.Any(c => input.Contains(c));
 		}
 
 		public Regex GetOrAddRegex(string pattern, RegexOptions options)

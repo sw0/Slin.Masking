@@ -29,6 +29,10 @@ namespace Slin.Masking
 		public string Name { get; set; }
 		public string Format { get; set; }
 		public string ValuePattern { get; set; } = "";
+		/// <summary>
+		/// default true
+		/// </summary>
+		public bool Enabled { get; set; } = true;
 	}
 
 

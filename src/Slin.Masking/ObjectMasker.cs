@@ -3,32 +3,41 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Linq;
+using System.Net.Http.Headers;
 
-namespace Slin.Masking.NLog
+namespace Slin.Masking
 {
 	public interface IJsonMasker
-	{ 
+	{
 		string MaskJsonObjectString(JsonNode node);
 	}
 
-	public interface IObjectMasker: IJsonMasker
+	public interface IObjectMasker : IJsonMasker
 	{
-
+		/// <summary>
+		/// get if masking is enabled
+		/// </summary>
+		bool IsEnabled { get; }
 	}
 
 	public class ObjectMasker : IObjectMasker
 	{
 		private readonly IMasker _masker = null;
-		private readonly LogMaskingOptions _options;
+		private readonly ObjectMaskingOptions _options;
 
-		private bool SerializedUnfoldable => _options.EnabledUnfoldSerialized
-			&& _options.SerializedKeys != null && _options.SerializedKeys.Count > 0;
+		private bool SerializedUnfoldable => _options.MaskJsonSerializedEnabled
+			&& _options.SerializedKeys != null && _options.SerializedKeys.Any();
 
-		public ObjectMasker(IMasker masker, LogMaskingOptions options)
+		private bool IsMaskUrlEnabled => _options.MaskUrlEnabled && _options.UrlKeys != null
+			&& _options.UrlKeys.Any();
+
+		public ObjectMasker(IMasker masker, ObjectMaskingOptions options)
 		{
 			_masker = masker;
-			_options = options ?? new LogMaskingOptions();
+			_options = options ?? new ObjectMaskingOptions();
 		}
+
+		public bool IsEnabled => _options.Enabled;
 
 		public string MaskJsonObjectString(JsonNode node)
 		{
@@ -54,9 +63,10 @@ namespace Slin.Masking.NLog
 				foreach (var item in noneEmptyValueList)
 				{
 					var jval = (JsonValue)item.Value; //here all items are JsonValue
-
+					var isString = true;
 					if (!jval.TryGetValue<string>(out var value))
 					{
+						isString = false;
 						//if not string, it would be ValueKind.Number 
 						value = jval.GetValue<double>().ToString();
 					}
@@ -66,6 +76,7 @@ namespace Slin.Masking.NLog
 						continue;
 					}
 
+					//mask serialized item
 					if (IsSerializedKey(item.Key))
 					{
 						try
@@ -87,6 +98,16 @@ namespace Slin.Masking.NLog
 						{
 							//todo Parse Json failed
 						}
+					}
+
+					//mask url
+					if (IsMaskUrlEnabled && isString
+						&& _options.UrlKeys.Contains(item.Key, _options.SerializedKeysCaseSensitive
+						? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+						&& IsLikeUrlOrQuery(value))
+					{
+						masked = _masker.MaskUrl(value);
+						obj[item.Key] = masked;
 					}
 				}
 
@@ -110,6 +131,27 @@ namespace Slin.Masking.NLog
 			return node.ToJsonString();
 		}
 
+
+		private bool IsLikeUrlOrQuery(string value)
+		{
+			if (value == null) return false;
+			if (value.Length <= 5) return false; //at least key=value
+			if (value.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+				|| value.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+			{
+				return true;
+			}
+			else if (value.Contains("="))
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+
 		private bool IsSerializedKey(string key)
 		{
 			if (SerializedUnfoldable && _options.SerializedKeys.Contains(key,
@@ -132,7 +174,7 @@ namespace Slin.Masking.NLog
 				if (item.Value is JsonValue jv)
 				{
 					var v = jv.GetValue<JsonElement>();
-					if (v.ValueKind == JsonValueKind.Number && _options.EnableJsonNumberMasking)
+					if (v.ValueKind == JsonValueKind.Number && _options.MaskJsonNumberEnabled)
 					{
 						yield return item;
 					}
@@ -145,42 +187,4 @@ namespace Slin.Masking.NLog
 			}
 		}
 	}
-
-
-	//[LayoutRenderer("masked-url")]
-	//[ThreadAgnostic]
-	//[MutableUnsafe]
-	//public class UrlMakableLayoutRenderer : LayoutRenderer
-	//{
-	//	public readonly IMaskEngine _maskEngine;
-
-	//	public List<string> Patterns { get; set; }
-
-	//	public UrlMakableLayoutRenderer() : base()
-	//	{
-	//		_maskEngine = this.ResolveService<IMaskEngine>();
-	//	}
-
-	//	/// <summary>
-	//	/// Renders the specified environmental information and appends it to the specified <see cref="T:System.Text.StringBuilder" />.
-	//	/// </summary>
-	//	/// <param name="builder">The <see cref="T:System.Text.StringBuilder" /> to append the rendered data to.</param>
-	//	/// <param name="logEvent">Logging event.</param>
-	//	protected override void Append(StringBuilder builder, LogEventInfo logEvent)
-	//	{
-	//		if (!string.IsNullOrWhiteSpace(logEvent.Message))
-	//		{
-	//			var uri = new Uri(logEvent.Message,UriKind.RelativeOrAbsolute);
-
-	//			foreach (var item in Patterns)
-	//			{
-
-	//			}
-
-
-	//			var masked = _maskEngine.MaskObjectString(logEvent.Message);
-	//			builder.Append(masked);
-	//		}
-	//	}
-	//}
 }

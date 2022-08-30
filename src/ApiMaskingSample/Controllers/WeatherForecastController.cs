@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using Slin.Masking.NLog;
+using Slin.Masking;
 
 namespace WebApi6.Controllers
 {
@@ -28,11 +28,13 @@ namespace WebApi6.Controllers
 				DOB = new DateTime(1988, 1, 1),
 				SSN = "123456789",
 				Pan = "6225000099991234",
-				Amount = 9.9m
+				Amount = 9.9m,
+				Balance = 9999.99m,
 			}));
-			data.Add(new KeyValuePair<string, object>("data", new { SSN="123456789",PAN="1234567890123456" }));
+			data.Add(new KeyValuePair<string, object>("data", new { SSN = "123456789", PAN = "1234567890123456" }));
 			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
-			data.Add(new KeyValuePair<string, object>("school", "shixun"));
+			data.Add(new KeyValuePair<string, object>("query", "ssn=123456789&pan=6666111122223333&dob=1988-07-14"));
+			data.Add(new KeyValuePair<string, object>("requestUrl", "https://jd.com/firtname/steven/lastname/jobs?ssn=123456789"));
 
 			return data;
 		}
@@ -46,9 +48,9 @@ namespace WebApi6.Controllers
 		public IEnumerable<WeatherForecast> Get([FromServices] IObjectMasker engine)
 		{
 			var entry = CreateLogEntry();
-			entry.Add(new KeyValuePair<string, object>("action", nameof(Get)));
+			entry.Add(new KeyValuePair<string, object>("eventName", nameof(Get)));
 
-			//_logger.LogInformation(entry);
+			_logger.LogInformation(entry);
 
 
 			//var obj = JsonSerializer.SerializeToNode(entry);
@@ -59,7 +61,7 @@ namespace WebApi6.Controllers
 			{
 				Date = DateTime.Now.AddDays(index),
 				TemperatureC = Random.Shared.Next(-20, 55),
-				DOB = new DateTime(1988,8,8),
+				DOB = new DateTime(1988, 8, 8),
 				SSN = "123456789",
 				PAN = $"622500009999{DateTime.Now.Second:D4}",
 				Summary = Summaries[Random.Shared.Next(Summaries.Length)]

@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "WebApi6": {
+    "ApiMaskingSample": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

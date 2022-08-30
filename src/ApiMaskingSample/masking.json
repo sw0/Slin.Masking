@@ -1,21 +1,29 @@
 {
   "Masking": {
-    "Options": {
+    "ObjectMaskingOptions": {
+      "Enabled": true,  //if false, ObjectMasker will not work. But it does affect fundamental masker: Masker
+      "MaskUrlEnabled": true, //default: false, work with UrlKeys
+      "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
+      "MaskXmlSerializedEnabled": false, //Not Implemented
+      "MaskJsonNumberEnabled": true, //this works only in JSON
+      "ValueMinLength": 3,
+      //"SerializedKeysCaseSensitive": true,
+      "UrlKeys": [ "requestUrl", "query" ],
+      "SerializedKeys": [ "Body" ]
+    },
+    "MaskingOptions": {
       "PatternCheckChars": [ "?", "+", "*", "\\", "[", "|", "(", "^", ".", "$" ],
       "KeyCaseInsensitive": true,
       "ValueCaseInsensitive": false, //todo this is global setting, maybe we can control more precisely in ValuePattern.
       "ThrowIfNamedProfileNotFound": false
     },
-    "LogMaskingOptions": {
-      "ValueMinLength": 3,
-      //"EnabledUnfoldSerialized": true,
-      //"SerializedKeysCaseSensitive": true,
-      "SerializedKeys": [ "Body" ],
-      "EnableJsonNumberMasking": true //this works only in JSON
-    },
-    "UrlMaskingPatterns": [
+    "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
-        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)", "IgnoreCase": true
+        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
+        "IgnoreCase": true
+      },
+      {
+        "Pattern": "pan/(?<pan>\\d{15,16})"
       }
     ],
     "NamedFormatterDefintions": {
@@ -59,6 +67,7 @@
           { "Name": "pan16" }
         ]
       },
+      "Balance": { "Formatters": [ { "Format": "null" } ] },
       "FirstName": { "Formatters": [ { "Name": "Name" } ] },
       "LastName": { "Formatters": [ { "Name": "Name" } ] },
       "Email": { "Formatters": [ { "Name": "email" } ] },

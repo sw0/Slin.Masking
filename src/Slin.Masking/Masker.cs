@@ -8,13 +8,23 @@
 	using System.Web;
 
 	/// <summary>
-	/// 
+	/// IMasker interface
 	/// </summary>
-	public interface IMasker
+	public interface IMasker: IUrlMasker
 	{
+		/// <summary>
+		/// mask the value if the key is configured in masking rules.
+		/// </summary>
+		/// <param name="key">key</param>
+		/// <param name="value">value</param>
+		/// <param name="masked">masked result</param>
+		/// <returns>if masker found, whatever it's masked or not, it will be true</returns>
 		bool TryMask(string key, string value, out string masked);
 	}
 
+	/// <summary>
+	/// IUrlMasker interface
+	/// </summary>
 	public interface IUrlMasker
 	{
 		/// <summary>
@@ -31,7 +41,7 @@
 	/// <summary>
 	/// default Masker
 	/// </summary>
-	public class Masker : IMasker, IUrlMasker
+	public class Masker : IMasker
 	{
 		private readonly IMaskingContext _context;
 

@@ -8,11 +8,11 @@ namespace WebApi6
 
 		public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 
-		public string SSN { get; set; }
+		public string? SSN { get; set; }
 
 		public DateTime DOB { get; set; }
 
-		public string PAN { get; set; }
+		public string? PAN { get; set; }
 
 		public string? Summary { get; set; }
 	}
