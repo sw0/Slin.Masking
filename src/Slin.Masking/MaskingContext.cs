@@ -24,8 +24,12 @@ namespace Slin.Masking
 		IKeyedMasker GetKeyedMasker(string key, string value);
 
 		IMaskFormatter MaskFormatter { get; }
-	}
 
+		/// <summary>
+		/// [optional] Only used for URL masking.
+		/// </summary>
+		List<UrlMaskingPattern> UrlMaskingPatterns { get; }
+	}
 
 	internal class MaskingContext : IMaskingContext
 	{
@@ -41,6 +45,11 @@ namespace Slin.Masking
 
 		//todo this might not be shared.
 		public static readonly ConcurrentDictionary<string, Regex> PooledRegex = new ConcurrentDictionary<string, Regex>();
+
+		/// <summary>
+		/// maybe it's not good to use public here, but it's intenal use. so just keep it here
+		/// </summary>
+		public List<UrlMaskingPattern> UrlMaskingPatterns => _profile.UrlMaskingPatterns;
 
 		private readonly MaskingProfile _profile;
 
@@ -154,6 +163,27 @@ namespace Slin.Masking
 					throw;
 				}
 			}
+
+			if (this.UrlMaskingPatterns != null)
+			{
+				this.UrlMaskingPatterns.ForEach(item =>
+				{
+					if (!item.Enabled) return;
+					if (string.IsNullOrWhiteSpace(item.Pattern)) return;
+
+					try
+					{
+						var reg = new Regex(item.Pattern, RegexOptions.Compiled |
+							(item.IgnoreCase ? RegexOptions.IgnoreCase : RegexOptions.None));
+
+						PooledRegex.TryAdd(item.CacheKey, reg);
+					}
+					catch (Exception ex)
+					{
+						//todo logging						
+					}
+				});
+			}
 			#endregion
 
 			_initalized = true;
@@ -205,6 +235,7 @@ namespace Slin.Masking
 			}
 			return null;
 		}
+
 	}
 
 	//public static class MaskingExtensions

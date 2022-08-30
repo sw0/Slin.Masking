@@ -5,6 +5,9 @@ namespace Slin.Masking
 {
 	public class MaskingProfile
 	{
+		/// <summary>
+		/// Masking Options
+		/// </summary>
 		public MaskingOptions Options { get; set; }
 
 		/// <summary>
@@ -15,6 +18,16 @@ namespace Slin.Masking
 
 		//todo use MaskRuleDefinitionCollection?
 		public Dictionary<string, MaskRuleDefinition> Rules { get; set; } = new Dictionary<string, MaskRuleDefinition>();
+
+		/// <summary>
+		/// Url Masking patterns. Each pattern will be tried and group name will be used the key name while masking.
+		/// Example:
+		/// <![CDATA[
+		///    https://abc.com/cards/pan/(?<pan>\d{16})/ssn/(?<ssn>\d{16}) 
+		///    it's just for example, usually we should not pass sensitive information in URL
+		/// ]]>
+		/// </summary>
+		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; } = new List<UrlMaskingPattern>();
 
 		//private Action OnProfileValidation { get; private set; }
 

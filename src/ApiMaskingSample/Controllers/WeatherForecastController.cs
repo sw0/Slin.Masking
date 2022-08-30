@@ -43,7 +43,7 @@ namespace WebApi6.Controllers
 		}
 
 		[HttpGet(Name = "GetWeatherForecast")]
-		public IEnumerable<WeatherForecast> Get([FromServices] IJsonMasker engine)
+		public IEnumerable<WeatherForecast> Get([FromServices] IObjectMasker engine)
 		{
 			var entry = CreateLogEntry();
 			entry.Add(new KeyValuePair<string, object>("action", nameof(Get)));

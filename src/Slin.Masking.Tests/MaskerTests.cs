@@ -10,7 +10,8 @@ namespace Slin.Masking2.Tests
 	public class MaskerTests
 	{
 
-		IServiceProvider CreateProvider() {
+		IServiceProvider CreateProvider()
+		{
 
 			var services = new ServiceCollection();
 			var configBuilder = new ConfigurationBuilder();
@@ -29,9 +30,8 @@ namespace Slin.Masking2.Tests
 				return profile;
 			});
 
-			//services.AddScoped<IMaskContext, MaskingContext>();
 			services.AddScoped<IMasker, Masker>();
-			//services.AddScoped<IUrlMasker, Masker>();
+			services.AddScoped<IUrlMasker, Masker>();
 
 			var provider = services.BuildServiceProvider();
 
@@ -88,32 +88,28 @@ namespace Slin.Masking2.Tests
 		}
 
 
-		//[Fact]
-		//public void UrlMaskerTest1()
-		//{
-		//	var provider =	CreateProvider();
+		[Theory]
+		[InlineData("?firstname=shawn&lastname=1234", "?firstname=sh***&lastname=12**")]
+		[InlineData("firstname=shawn&lastname=1234", "firstname=sh***&lastname=12**")]
+		[InlineData("https://jd.com/firstname/shawn/lastname/lin", "https://jd.com/firstname/sh***/lastname/li*")]
+		[InlineData("https://jd.com/firstname/shawn/lastname/lin?ssn=123456789", "https://jd.com/firstname/sh***/lastname/li*?ssn=*********")]
+		public void UrlMaskerTest(string url, string expected)
+		{
+			var provider = CreateProvider();
 
-		//	//var context = new MaskingContext(profile);
-		//	using (provider.CreateScope())
-		//	{
-		//		var engine = provider.GetRequiredService<IUrlMasker>();
+			//var context = new MaskingContext(profile);
+			using (provider.CreateScope())
+			{
+				var engine = provider.GetRequiredService<IUrlMasker>();
 
-		//		Assert.NotNull(engine);
+				Assert.NotNull(engine);
 
-		//		var url = "";
-		//		url = "?firstname=shawn&lastname=1234&password=7234324";
-		//		url = "?firstname=shawn&lastname=&password=";
-		//		engine.TryMask(url);
-
-		//		////string result;
-		//		//int idx = 0;
-		//		//foreach (var item in data)
-		//		//{
-		//		//	Assert.True(engine.TryMask(item.Key, item.Value, out var result), $"Failed: {item.Key} on sub-test: {idx}");
-		//		//	Assert.True(object.Equals(item.Expected, result), $"Not matched: {item.Key} on sub-test: {idx}");
-		//		//	idx++;
-		//		//}
-		//	}
-		//}
+				//var url = "";
+				//url = "?firstname=shawn&lastname=1234&password=7234324";
+				//url = "?firstname=shawn&lastname=&password=";
+				var result = engine.MaskUrl(url);
+				Assert.Equal(expected, result);
+			}
+		}
 	}
 }

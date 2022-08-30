@@ -11,8 +11,13 @@
       //"EnabledUnfoldSerialized": true,
       //"SerializedKeysCaseSensitive": true,
       "SerializedKeys": [ "Body" ],
-      "EnableJsonNumberMasking": true  //this works only in JSON
+      "EnableJsonNumberMasking": true //this works only in JSON
     },
+    "UrlMaskingPatterns": [
+      {
+        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)", "IgnoreCase": true
+      }
+    ],
     "NamedFormatterDefintions": {
       //NOTE: definition names here are case-insensitive
       "null": { "Format": "null" },

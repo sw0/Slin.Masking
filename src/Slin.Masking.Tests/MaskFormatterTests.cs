@@ -83,6 +83,18 @@ namespace Slin.Masking.Tests
 			Assert.Equal(expected, value);
 		}
 
+		[Theory]
+		[InlineData("", "ABC", "")]
+		[InlineData("helloworld", "ABC", "ABC")]
+		[InlineData("123456789", "ABC", "ABC")]
+		[InlineData("123456789", "", "")]
+		//[InlineData(null, "", "")]//null is not allowed as parameter to string.Format(...,input)
+		public void ReplacementTest(string input, string replacement, string expected)
+		{
+			var value = string.Format(new MaskFormatter(), $"{{0:REPLACEMENT={replacement}}}", input);
+			Assert.Equal(expected, value);
+		}
+
 
 		[Theory]
 		[InlineData("{0:*}", "*********")]

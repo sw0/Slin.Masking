@@ -1,11 +1,12 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Text;
-using System.Web;
-
-namespace Slin.Masking
+﻿namespace Slin.Masking
 {
+	using System.Collections.Generic;
+	using System;
+	using System.Linq;
+	using System.Text;
+	using System.Text.RegularExpressions;
+	using System.Web;
+
 	/// <summary>
 	/// 
 	/// </summary>
@@ -14,10 +15,23 @@ namespace Slin.Masking
 		bool TryMask(string key, string value, out string masked);
 	}
 
+	public interface IUrlMasker
+	{
+		/// <summary>
+		/// Mask Url base on patterns using named group name, for query, by default it will use query parameter name.
+		/// Profile.UrlMaskingPatterns is used by default as mask rules.
+		/// </summary>
+		/// <param name="url"></param>
+		/// <param name="maskParamters">default:true, to extract key value from query and process masking</param>
+		/// <param name="overwrittenPatterns">if provided, it will overwrite those provied in profile</param>
+		/// <returns></returns>
+		string MaskUrl(string url, bool maskParamters = true, params UrlMaskingPattern[] overwrittenPatterns);
+	}
+
 	/// <summary>
 	/// default Masker
 	/// </summary>
-	public class Masker : IMasker//, IUrlMasker
+	public class Masker : IMasker, IUrlMasker
 	{
 		private readonly IMaskingContext _context;
 
@@ -40,77 +54,123 @@ namespace Slin.Masking
 			return true;
 		}
 
-		//public string TryMask(string url)
-		//{
-		//	if (string.IsNullOrEmpty(url)) return url;
+		private string MaskQuery(string query)
+		{
+			var items = HttpUtility.ParseQueryString(query);
 
-		//	//var uri = new Uri(url, UriKind.RelativeOrAbsolute);
+			if (items.HasKeys())
+			{
+				bool changed = false;
 
-		//	var builder = new StringBuilder(url.Length);
+				for (var i = 0; i < items.Count; i++)
+				{
+					var key = items.Keys[i];
+					var value = items[i];
+					if (value != "")
+					{
+						if (TryMask(key, value, out var masked))
+						{
+							if (masked != value && changed == false)
+								changed = true;
 
-		//	var path = "";
-		//	var idx = url.IndexOf('?');
-		//	if (idx >= 0)
-		//	{
-		//		if (idx > 0)
-		//		{
-		//			path = url.Substring(0, idx);
+							if (masked != value) items[key] = masked;
+						}
+					}
+				}
 
-		//			MaskPath(path, builder);
-		//		}
-		//		var query = url.Substring(idx);
+				if (changed)
+				{
+					List<string> rows = new List<string>();
 
-		//		MaskQuery(query, builder);
+					foreach (string name in items)
+						rows.Add(string.Concat(name, "=", items[name]));
+					//No need urlEncode here System.Web.HttpUtility.UrlEncode
 
-		//		return builder.ToString();
-		//	}
-		//	else 
+					var result = $"{(query.StartsWith("?") ? "?" : "")}{string.Join("&", rows)}";
+					return result;
+				}
+			}
 
-		//	return url;
-		//}
+			return query;
+		}
 
-		//private string GetPath(string url) {
-		//	if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
-		//			url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-		//			|| url.StartsWith("ftp://", StringComparison.OrdinalIgnoreCase))
-		//	{
-		//		string path = url.Substring(url.IndexOf('/', url.IndexOf("://") + 3));
+		public string MaskUrl(string url, bool maskQueries = true, params UrlMaskingPattern[] overwrittenPatterns)
+		{
+			var result = url;
 
-		//		return path;
-		//	}
-		//}
-		//private string MaskPath(string path, StringBuilder builder)
-		//{
+			var patterns = overwrittenPatterns == null || overwrittenPatterns.Length == 0
+				? _context.UrlMaskingPatterns : overwrittenPatterns.ToList();
 
-		//}
-		//private string MaskQuery(string query, StringBuilder builder)
-		//{
+			if (patterns != null && patterns.Any())
+			{
+				foreach (var item in patterns.Where(x => x.Enabled && !string.IsNullOrEmpty(x.Pattern)))
+				{
+					var reg = _context.GetRequiredRegex(item.CacheKey);
+					var gns = reg.GetGroupNames().Where(gn => !char.IsNumber(gn[0]));
 
-		//	var items = HttpUtility.ParseQueryString(query);
+					result = reg.Replace(result, (m) =>
+					{
+						var g0Val = m.Groups[0].Value;
+						var g0Idx = m.Groups[0].Index;
+						var g0Len = m.Groups[0].Length;
 
-		//	if (items.HasKeys())
-		//	{
-		//		bool changed = false;
+						var capturedGroup = GetMatchedGroup(m.Groups, gns, out var groupName);
+						var cIdx = capturedGroup.Index;
+						var cVal = capturedGroup.Value;
+						var cLen = capturedGroup.Length;
 
-		//		for (var i = 0; i < items.Count; i++)
-		//		{
-		//			var key = items.Keys[i];
-		//			var value = items[i];
-		//			if (value != "")
-		//			{
-		//				if (TryMask(key, value, out var masked))
-		//				{
-		//					if (masked != value && changed == false)
-		//						changed = true;
-		//				}
-		//			}
-		//		}
-		//	}
-		//}
+						if (TryMask(groupName, cVal, out var masked) && masked != cVal)
+						{
+							var replaced = g0Val.Insert(cIdx - g0Idx, masked).Remove(cIdx - g0Idx + masked.Length, cLen);
+							return replaced;
+						}
+						else
+						{
+							return g0Val;
+						}
+					});
+				}
+			}
+
+			var idx = url.IndexOf('?');
+			if (maskQueries
+				&& (idx >= 0 || idx == -1 && IsKvpStrings(url)))
+			{
+				var query = idx == -1 ? url : result.Substring(idx);
+				var masked = MaskQuery(query);
+				if (query == masked)
+					return result;
+				else if (idx == -1)
+					result = masked;
+				else
+					result = result.Substring(0, idx) + masked;
+			}
+			return result;
+		}
+
+		private bool IsKvpStrings(string url)
+		{
+			return (!url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+					&& !url.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+					&& url.Contains('='));
+		}
+
+		Group GetMatchedGroup(GroupCollection gc, IEnumerable<string> groupNames, out string groupName)
+		{
+			foreach (var gn in groupNames)
+			{
+				if (char.IsNumber(gn[0])) continue;
+
+				var g = gc[gn];
+				if (g.Success)
+				{
+					groupName = gn;
+					return g;
+				}
+			}
+			groupName = null;
+			throw new Exception("should not happen");
+		}
 	}
 
-	//public interface IUrlMasker
-	//{
-	//	string TryMask(string url);
-	//}
 }

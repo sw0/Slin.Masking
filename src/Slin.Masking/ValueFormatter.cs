@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
@@ -115,16 +114,5 @@ namespace Slin.Masking
 #endif
 			return true;
 		}
-	}
-
-
-	public class MaskRuleDefinition
-	{
-		public string Description { get; set; }
-
-		//public List<string> FieldNames { get; set; } = new List<string>(1);
-		public string KeyName { get; set; } = "";
-
-		public List<ValueFormatterDefinition> Formatters { get; set; }
 	}
 }

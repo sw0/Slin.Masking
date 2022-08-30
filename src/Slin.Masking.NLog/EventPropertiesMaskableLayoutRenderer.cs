@@ -14,11 +14,11 @@ namespace Slin.Masking.NLog
 	[MutableUnsafe]
 	public class EventPropertiesMaskLayoutRenderer : LayoutRenderer
 	{
-		public readonly IJsonMasker _jsonMasker;
+		public readonly IObjectMasker _jsonMasker;
 
 		public EventPropertiesMaskLayoutRenderer() : base()
 		{
-			_jsonMasker = ResolveService<IJsonMasker>();
+			_jsonMasker = ResolveService<IObjectMasker>();
 		}
 
 		/// <summary>
@@ -38,7 +38,7 @@ namespace Slin.Masking.NLog
 					Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 				});
 
-				var masked = _jsonMasker.MaskObjectString(serialized);
+				var masked = _jsonMasker.MaskJsonObjectString(serialized);
 				builder.Append(masked);
 				//try { System.IO.File.WriteAllText(@"c:\tmp\abcd.log", serialized); } catch { }
 			}

@@ -60,6 +60,7 @@ namespace Slin.Masking
 		static MaskFormatter()
 		{
 			var str = @"^REDACTED|EMPTY$"
+			+ @"|^REPLACEMENT=(?<replacement>.{0,30})$"
 			+ @"|^(?<char>[\*xX])(?<middle>\d{1,2})?$"
 			+ @"|^L(?<left>\d{1,2})(?:(?<char>[\*xX])(?<middle>\d{1,2})?)?$"
 			+ @"|^R(?<right>\d{1,2})(?:(?<char>[\*xX])(?<middle>\d{1,2})?)?$"
@@ -112,7 +113,11 @@ namespace Slin.Masking
 					if (format == "EMPTY") return "";
 					if (format == "null")
 					{
-						arg = null; return null;
+						return null;
+					}
+					else if (format.StartsWith("REPLACEMENT="))
+					{
+						return m.Groups["replacement"].Value;
 					}
 
 					var parameters = new MaskFormatterOptions

@@ -30,7 +30,7 @@ var logger = LogManager.Setup(setupBuilder: (setupBuilder) =>
 	setupBuilder.SetupExtensions(s =>
 	   //s.RegisterLayoutRenderer("trace_id", (logevent) => CorrelationIdentifier.TraceId.ToString())
 	   s.RegisterSingletonService<IMasker>(masker)
-	   .RegisterSingletonService<IJsonMasker>(new JsonMasker(masker, logMaskOptions))	   
+	   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, logMaskOptions))	   
 	   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
 	);
 }).GetCurrentClassLogger();
@@ -82,7 +82,7 @@ try
 		return logMaskOptions;
 	});
 	builder.Services.AddSingleton<IMasker, Masker>();
-	builder.Services.AddSingleton<IJsonMasker, JsonMasker>();
+	builder.Services.AddSingleton<IObjectMasker, ObjectMasker>();
 
 	builder.Host
 	//.UseMaskableNLog(null);

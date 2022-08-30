@@ -7,11 +7,16 @@ using System.Linq;
 namespace Slin.Masking.NLog
 {
 	public interface IJsonMasker
-	{
-		string MaskObjectString(JsonNode node);
+	{ 
+		string MaskJsonObjectString(JsonNode node);
 	}
 
-	public class JsonMasker : IJsonMasker
+	public interface IObjectMasker: IJsonMasker
+	{
+
+	}
+
+	public class ObjectMasker : IObjectMasker
 	{
 		private readonly IMasker _masker = null;
 		private readonly LogMaskingOptions _options;
@@ -19,13 +24,13 @@ namespace Slin.Masking.NLog
 		private bool SerializedUnfoldable => _options.EnabledUnfoldSerialized
 			&& _options.SerializedKeys != null && _options.SerializedKeys.Count > 0;
 
-		public JsonMasker(IMasker masker, LogMaskingOptions options)
+		public ObjectMasker(IMasker masker, LogMaskingOptions options)
 		{
 			_masker = masker;
 			_options = options ?? new LogMaskingOptions();
 		}
 
-		public string MaskObjectString(JsonNode node)
+		public string MaskJsonObjectString(JsonNode node)
 		{
 			return MaskObjectInternal(node);
 		}
