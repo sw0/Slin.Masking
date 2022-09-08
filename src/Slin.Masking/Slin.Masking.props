@@ -1,10 +1,23 @@
 ﻿<Project>
-  <PropertyGroup>
-    <Authors>Shawn Lin</Authors>
-    <Company>Shawn Lin</Company>
-    <Copyright>(C) 2020 linsw@live.cn</Copyright>
-    <AssemblyVersion>0.1.9</AssemblyVersion>
-    <FileVersion>0.1.9</FileVersion>
-    <Version>0.1.9</Version>
-  </PropertyGroup>
+	<PropertyGroup>
+		<Authors>Shawn Lin</Authors>
+		<Company>Shawn Lin</Company>
+		<Copyright>(C) 2020 linsw@live.cn</Copyright>
+		<AssemblyVersion>0.1.10</AssemblyVersion>
+		<FileVersion>0.1.10</FileVersion>
+		<Version>0.1.10</Version>
+		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<Description>
+			Slin.Masking provides high performance masking feature to protect sensitive data. It supports memory object, JSON and URL including query (Key-Value list). Masking profile can be set in json configuration as you want, like 'masking.json'.
+		</Description>
+		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
+		<PackageReleaseNotes>
+			- MaskFormatter, MaskEngine, Masker, JsonMasker
+			- Format: Left char count to keep + MaskChar with optional char count + Right char count to keep. Exmaple: L2*4R2, L4*R4, L2, R4, *
+			- Special format: null, REDACTED, REPLACEMENT=xxx
+		</PackageReleaseNotes>
+		<copyright>Copyright 2019-2026</copyright>
+		<PackageTags>MaskEngine, Masking, Mask, JsonMasker</PackageTags>
+	</PropertyGroup>
 </Project>
