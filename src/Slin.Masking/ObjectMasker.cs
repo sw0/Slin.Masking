@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Unicode;
 using System.Xml.Linq;
 
 namespace Slin.Masking
@@ -29,6 +31,35 @@ namespace Slin.Masking
 	}
 
 	/// <summary>
+	/// like {"name":"ssn","val":"123456789"}, here KeyKeyName is 'name', ValueKeyName is 'val'
+	/// </summary>
+	public class KeyKeyValueKey
+	{
+		/// <summary>
+		/// the name of key.
+		/// </summary>
+		public string KeyKeyName { get; set; }
+		/// <summary>
+		/// the name of value
+		/// </summary>
+		public string ValueKeyName { get; set; }
+
+		public KeyKeyValueKey()
+		{
+
+		}
+		public KeyKeyValueKey(string keyKey, string valKey)
+		{
+			if (string.IsNullOrEmpty(keyKey))
+				throw new ArgumentNullException(nameof(keyKey));
+			if (string.IsNullOrEmpty(valKey))
+				throw new ArgumentNullException(nameof(valKey));
+			KeyKeyName = keyKey;
+			ValueKeyName = valKey;
+		}
+	}
+
+	/// <summary>
 	/// ObjectMasker can mask values for those properties set in rules
 	/// </summary>
 	public class ObjectMasker : IObjectMasker
@@ -42,14 +73,17 @@ namespace Slin.Masking
 		private bool IsMaskUrlEnabled => _options.MaskUrlEnabled && _options.UrlKeys != null
 			&& _options.UrlKeys.Any();
 
-
-		private bool IsNestedKvpEnabled => true;//todo from configuration
+		/// <summary>
+		/// indicates whether to support nested key-value-pairs. 
+		/// Like to support mask {"key":"ssn", "value":"123456789"}
+		/// </summary>
+		private bool MaskNestedKvpEnabled => _options.MaskNestedKvpEnabled;
 
 		public bool IsEnabled => _options.Enabled;
 
-		private static readonly List<KeyValuePair<string, string>> DefaultKeyValueNames = new List<KeyValuePair<string, string>> {
-			new KeyValuePair<string, string>("Key","Value"),
-			new KeyValuePair<string, string>("key","value"),
+		private static readonly List<KeyKeyValueKey> DefaultKeyValueNames = new List<KeyKeyValueKey> {
+			new KeyKeyValueKey("Key","Value"),
+			new KeyKeyValueKey("key","value"),
 		};
 
 		public ObjectMasker(IMasker masker, IObjectMaskingOptions options)
@@ -85,6 +119,15 @@ namespace Slin.Masking
 			{
 				try
 				{
+					//var encoderSettings = new TextEncoderSettings();
+					//encoderSettings.AllowCharacters('\u0026', '&');
+					//encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
+					//var jsonOptions = new JsonSerializerOptions()
+					//{
+					//	//Encoder = JavaScriptEncoder.Create(encoderSettings)
+					//	Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+					//};
+					//TODO looks like it's Microsoft has bug here for SerializeToNode method to use Encoder
 					node = JsonSerializer.SerializeToNode(data);
 
 					return MaskJsonObjectString(node);
@@ -126,7 +169,7 @@ namespace Slin.Masking
 			{
 				var noneEmptyValueList = GetNotEmptyJsonValueItems(obj).ToList();
 
-				if (IsNestedKvpEnabled &&
+				if (MaskNestedKvpEnabled &&
 					noneEmptyValueList.Count >= 2 && noneEmptyValueList.Count < 5
 					&& ContainsKeyValuePair(noneEmptyValueList, out string keyKeyName, out string valKeyName))
 				{
@@ -137,7 +180,8 @@ namespace Slin.Masking
 						var value = default(string);
 						var valueIsString = true;
 
-						if (!FirstJsonMaskAttempt(key, valKeyName, jval, obj, out value, out valueIsString))
+						if (!FirstJsonMaskAttempt(key, valKeyName, jval, obj, out value, out valueIsString)
+							&& value != null && value.Length > _options.ValueMinLength)
 						{
 							SerializedJsonMaskAttempt(key, value, valKeyName, obj);
 
@@ -166,6 +210,9 @@ namespace Slin.Masking
 						var valueIsString = true;
 
 						if (FirstJsonMaskAttempt(item.Key, item.Key, jval, obj, out value, out valueIsString))
+							continue;
+
+						if (value == null || value.Length <= _options.ValueMinLength)
 							continue;
 
 						//if (!jval.TryGetValue<string>(out var value))
@@ -276,7 +323,7 @@ namespace Slin.Masking
 		/// <param name="keyName"></param>
 		/// <param name="valueName"></param>
 		/// <returns></returns>
-		private bool ContainsKeyValuePair(ICollection<KeyValuePair<string, JsonNode>> source, out string keyName, out string valueName, List<KeyValuePair<string, string>> eligibleKeyValueNames = null)
+		private bool ContainsKeyValuePair(ICollection<KeyValuePair<string, JsonNode>> source, out string keyName, out string valueName, List<KeyKeyValueKey> eligibleKeyValueNames = null)
 		{
 			keyName = valueName = null;
 
@@ -284,14 +331,14 @@ namespace Slin.Masking
 			{
 				//here: item.Key is keyName, item.Value is value keyName. By default: it's "Key","Value".
 				//Let's make it simple here, that assuming the value type are strings for matched item for key and value.
-				var k = source.FirstOrDefault(x => x.Key == item.Key);
+				var k = source.FirstOrDefault(x => x.Key == item.KeyKeyName);
 				if (k.Key != null && k.Value != null)
 				{
 					//var valueOfKey = ((JsonValue)k.Value).GetValue<JsonElement>();
 					//if (valueOfKey.ValueKind != JsonValueKind.String)
 					//	continue;
 
-					var v = source.FirstOrDefault(x => x.Key == item.Value);
+					var v = source.FirstOrDefault(x => x.Key == item.ValueKeyName);
 
 					if (v.Key != null && v.Value != null)
 					{

@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Slin.Masking" Version="0.1.10" />
+    <PackageReference Include="Slin.Masking" Version="0.1.14" />
   </ItemGroup>
 
 </Project>

@@ -18,7 +18,7 @@ namespace Slin.Masking.Tests
 		public const string DobStr = "1988-01-01";
 		public static readonly DateTime DOB = new(1988, 1, 1);
 
-		public const string UrlQuery1 = "ssn=123456789&pan=1234567890123456&dob=1988-07-14";
+		public const string UrlQuery1 = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界";
 		public const string UrlQuery1Encoded = "ssn=123456789&amp;pan=1234567890123456&amp;dob=1988-07-14";
 		public const string UrlQuery2 = "?" + UrlQuery1;
 		public const string UrlQuery2Encoded = "?" + UrlQuery1Encoded;
@@ -64,29 +64,30 @@ namespace Slin.Masking.Tests
 		{
 			var data = new List<KeyValuePair<string, object>>();
 
-			//data.Add(new KeyValuePair<string, object>("user", DummyData.User));
-			//data.Add(new KeyValuePair<string, object>("data", new { SSN = "123456789", PAN = DummyData.PAN }));
-			//data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
-			//data.Add(new KeyValuePair<string, object>("query", DummyData.UrlQuery2));
-			//data.Add(new KeyValuePair<string, object>("requestUrl", DummyData.UrlFull));
+			data.Add(new KeyValuePair<string, object>("user", DummyData.User));
+			data.Add(new KeyValuePair<string, object>("data", new { SSN = "123456789", PAN = DummyData.PAN }));
+			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
+			data.Add(new KeyValuePair<string, object>("query", DummyData.UrlQuery2));
+			data.Add(new KeyValuePair<string, object>("requestUrl", DummyData.UrlFull));
 
-			//var d1 = new
-			//{
-			//	transId = "12",
-			//	amount = 9.99m,
-			//	ssn = DummyData.SSN,
-			//};
-			//data.Add(new KeyValuePair<string, object>("objectfield", d1));
+			var d1 = new
+			{
+				transId = "12",
+				amount = 9.99m,
+				ssn = DummyData.SSN,
+			};
+			data.Add(new KeyValuePair<string, object>("objectfield", d1));
 
-			//data.Add(new KeyValuePair<string, object>("kvpfield", DummyData.UrlQuery1));
-			//data.Add(new KeyValuePair<string, object>("reserialize", JsonSerializer.Serialize(d1)));
-			//data.Add(new KeyValuePair<string, object>("ResponseBody", Xml1));
+			data.Add(new KeyValuePair<string, object>("kvpfield", DummyData.UrlQuery1));
+			data.Add(new KeyValuePair<string, object>("reserialize", JsonSerializer.Serialize(d1)));
+			data.Add(new KeyValuePair<string, object>("ResponseBody", Xml1));
 			data.Add(new KeyValuePair<string, object>("kvplist", new List<KeyValuePair<string, object>>
 			{
 				new KeyValuePair<string, object>("ssn", DummyData.SSN ),
 				new KeyValuePair<string, object>("dob", DummyData.DobStr ),
 				new KeyValuePair<string, object>("requestUrl", DummyData.Url1 )
 			}));
+			data.Add(new KeyValuePair<string, object>("kvp1", new { key = "ssn", val = DummyData.SSN }));
 
 			return data;
 		}

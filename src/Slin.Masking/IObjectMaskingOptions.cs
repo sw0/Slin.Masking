@@ -9,6 +9,8 @@ namespace Slin.Masking
 		bool MaskJsonSerializedEnabled { get; set; }
 		bool MaskUrlEnabled { get; set; }
 		bool MaskXmlSerializedEnabled { get; set; }
+		bool MaskNestedKvpEnabled { get; set; }
+		List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
 		List<string> SerializedKeys { get; set; }
 		bool SerializedKeysCaseSensitive { get; set; }
 		List<string> UrlKeys { get; set; }

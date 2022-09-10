@@ -46,6 +46,16 @@ namespace Slin.Masking
 		public bool MaskJsonNumberEnabled { get; set; }
 
 		/// <summary>
+		/// <inheritdoc/>
+		/// </summary>
+		public bool MaskNestedKvpEnabled { get; set; }
+
+		/// <summary>
+		/// if <see cref="MaskNestedKvpEnabled"/> is enabled, and <see cref="KeyKeyValueKeys"/> is null, it will use Key,Value and key,value.
+		/// </summary>
+		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
+
+		/// <summary>
 		/// Default: 3. 
 		/// If value.Length < N, it mask engine will bypass it.
 		/// For name it might be short. So set it to 3

@@ -5,9 +5,26 @@
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
     "MaskXmlSerializedEnabled": false, //Not Implemented
     "MaskJsonNumberEnabled": true, //this works only in JSON
-    "ValueMinLength": 3,
-    //"SerializedKeysCaseSensitive": true,
-    "UrlKeys": [ "requestUrl", "query", "kvpFIEld" ],
+    "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
+    "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
+      {
+        "KeyKeyName": "Key",
+        "ValueKeyName": "Value"
+      },
+      {
+        "KeyKeyName": "key",
+        "ValueKeyName": "value"
+      },
+      {
+        "KeyKeyName": "key",
+        "ValueKeyName": "val"
+      }
+    ],
+    "ValueMinLength": 3, //if key matched, but value's length <=3, it will skip masking.
+    "SerializedKeysCaseSensitive": false,
+
+    //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
+    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
     "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
     "MaskingOptions": {
       "PatternCheckChars": [ "?", "+", "*", "\\", "[", "|", "(", "^", ".", "$" ],

@@ -3,13 +3,8 @@ using System.Collections.Generic;
 
 namespace Slin.Masking
 {
-	public class MaskingProfile: IObjectMaskingOptions
+	public class MaskingProfile : IObjectMaskingOptions
 	{
-		///// <summary>
-		///// Object Maskig options for global masking setting when using <see cref="IObjectMasker"/>
-		///// </summary>
-		//public ObjectMaskingOptions ObjectMaskingOptions { get; set; }
-
 		#region -- object masking settings --
 		/// <summary>
 		/// enabled by default
@@ -51,6 +46,9 @@ namespace Slin.Masking
 		/// </summary>
 		public bool MaskJsonNumberEnabled { get; set; }
 
+		/// <inheritdoc/>
+		public bool MaskNestedKvpEnabled { get; set; } = false;
+		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
 		/// <summary>
 		/// Default: 3. 
 		/// If value.Length < N, it mask engine will bypass it.
