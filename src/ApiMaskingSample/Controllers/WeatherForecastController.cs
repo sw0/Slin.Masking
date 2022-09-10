@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using Slin.Masking;
+using Slin.Masking.Tests;
 
-namespace WebApi6.Controllers
+namespace ApiMaskingSample.Controllers
 {
 	[ApiController]
 	[Route("[controller]")]
@@ -15,29 +16,6 @@ namespace WebApi6.Controllers
 
 		private readonly ILogger<WeatherForecastController> _logger;
 
-		List<KeyValuePair<string, object>> CreateLogEntry()
-		{
-			var data = new List<KeyValuePair<string, object>>();
-
-			data.Add(new KeyValuePair<string, object>("user", new
-			{
-				UserName = "userslin",
-				FirstName = "Shawn",
-				LastName = "Shawn",
-				Password = "123456",
-				DOB = new DateTime(1988, 1, 1),
-				SSN = "123456789",
-				Pan = "6225000099991234",
-				Amount = 9.9m,
-				Balance = 9999.99m,
-			}));
-			data.Add(new KeyValuePair<string, object>("data", new { SSN = "123456789", PAN = "1234567890123456" }));
-			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
-			data.Add(new KeyValuePair<string, object>("query", "ssn=123456789&pan=6666111122223333&dob=1988-07-14"));
-			data.Add(new KeyValuePair<string, object>("requestUrl", "https://jd.com/firtname/steven/lastname/jobs?ssn=123456789"));
-
-			return data;
-		}
 
 		public WeatherForecastController(ILogger<WeatherForecastController> logger)
 		{
@@ -47,15 +25,10 @@ namespace WebApi6.Controllers
 		[HttpGet(Name = "GetWeatherForecast")]
 		public IEnumerable<WeatherForecast> Get([FromServices] IObjectMasker engine)
 		{
-			var entry = CreateLogEntry();
+			var entry = DummyData.CreateLogEntry();
 			entry.Add(new KeyValuePair<string, object>("eventName", nameof(Get)));
 
 			_logger.LogInformation(entry);
-
-
-			//var obj = JsonSerializer.SerializeToNode(entry);
-
-			//engine.MaskObjectString(obj);
 
 			return Enumerable.Range(1, 2).Select(index => new WeatherForecast
 			{
@@ -72,11 +45,13 @@ namespace WebApi6.Controllers
 		[HttpPost(Name = "CreateWeatherForecast")]
 		public WeatherForecast Post(WeatherForecast request)
 		{
-			var entry = CreateLogEntry();
+			var entry = DummyData.CreateLogEntry();
 			entry.Add(new KeyValuePair<string, object>("action", nameof(Post)));
 
 			_logger.LogInformation(entry);
 			return request;
 		}
 	}
+
+
 }

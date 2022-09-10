@@ -1,16 +1,14 @@
 {
   "Masking": {
-    "ObjectMaskingOptions": {
-      "Enabled": true,  //if false, ObjectMasker will not work. But it does affect fundamental masker: Masker
-      "MaskUrlEnabled": true, //default: false, work with UrlKeys
-      "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
-      "MaskXmlSerializedEnabled": false, //Not Implemented
-      "MaskJsonNumberEnabled": true, //this works only in JSON
-      "ValueMinLength": 3,
-      //"SerializedKeysCaseSensitive": true,
-      "UrlKeys": [ "requestUrl", "query" ],
-      "SerializedKeys": [ "Body" ]
-    },
+    "Enabled": true, //if false, ObjectMasker will not work. But it does affect fundamental masker: Masker
+    "MaskUrlEnabled": true, //default: false, work with UrlKeys
+    "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
+    "MaskXmlSerializedEnabled": false, //Not Implemented
+    "MaskJsonNumberEnabled": true, //this works only in JSON
+    "ValueMinLength": 3,
+    //"SerializedKeysCaseSensitive": true,
+    "UrlKeys": [ "requestUrl", "query", "kvpFIEld" ],
+    "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
     "MaskingOptions": {
       "PatternCheckChars": [ "?", "+", "*", "\\", "[", "|", "(", "^", ".", "$" ],
       "KeyCaseInsensitive": true,

@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Text.Encodings.Web;
+using System;
 
 namespace Slin.Masking.NLog
 {
@@ -15,6 +16,22 @@ namespace Slin.Masking.NLog
 	public class EventPropertiesMaskLayoutRenderer : LayoutRenderer
 	{
 		public readonly IObjectMasker _objectMasker;
+
+
+		private string _mode = "object";
+		/// <summary>
+		/// Mode: OBJECT, URL, RESERIALIZE
+		/// </summary>
+		public string Mode
+		{
+			get { return _mode; }
+			set { _mode = (value ?? "object").ToLower().Trim(); }
+		}
+
+		/// <summary>
+		/// Property Name
+		/// </summary>
+		public string Item { get; set; }
 
 		public EventPropertiesMaskLayoutRenderer() : base()
 		{
@@ -32,42 +49,125 @@ namespace Slin.Masking.NLog
 			{
 				if (logEvent.Properties == null || logEvent.Properties.Count == 0)
 					return;
-				//var serialized = logEvent.Properties.ToJson();
 
-				if (_objectMasker.IsEnabled)
-				{
-					var serialized = JsonSerializer.SerializeToNode(logEvent.Properties, new JsonSerializerOptions
-					{
-						Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-					});
-
-					var masked = _objectMasker.MaskJsonObjectString(serialized);
-					builder.Append(masked);
-
-				}
-				else
+				if (!_objectMasker.IsEnabled)
 				{
 					var converter = this.ResolveService<IJsonConverter>();
 					converter.SerializeObject(logEvent.Properties, builder);
+					return;
+				}
+
+				if (!string.IsNullOrEmpty(Item))
+				{
+					if (!logEvent.Properties.ContainsKey(Item)) return;
+				}
+
+				if (Mode == "url")
+				{
+					if (string.IsNullOrEmpty(Item)) return;//todo warning
+
+					if (!logEvent.Properties.TryGetValue(Item, out var value))
+					{
+						return;
+					}
+					if (value is string url)
+					{
+						var masked = _objectMasker.MaskUrl(url);
+						builder.Append(string.Concat("\"", masked, "\""));
+					}
+					else
+					{
+						MaskObject(value, builder);
+					}
+				}
+				else if (Mode == "reserialize")
+				{
+					if (!string.IsNullOrEmpty(Item) && logEvent.Properties.TryGetValue(Item, out var value))
+					{
+						if (value == null)
+							return;
+
+						if (value is string str)
+						{
+							if ((str.StartsWith("{") && str.EndsWith("}")
+							|| str.StartsWith("[") && str.EndsWith("]")))
+							{
+								try
+								{
+									var data = JsonObject.Parse(str);
+
+									var serialized = JsonSerializer.SerializeToNode(data, new JsonSerializerOptions
+									{
+										Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+									});
+
+									var masked = _objectMasker.MaskJsonObjectString(serialized);
+									builder.Append(masked);
+								}
+								catch (Exception)
+								{
+									//todo logging
+									builder.Append("\"parsed failed\"");
+								}
+							}
+							else
+							{
+								builder.Append(str);
+							}
+						}
+						else
+						{
+							MaskObject(value, builder);
+						}
+					}
+				}
+				else
+				{
+					object data;
+					if (string.IsNullOrEmpty(Item))
+					{
+						data = logEvent.Properties;
+					}
+					else
+					{
+						logEvent.Properties.TryGetValue(Item, out data);
+					}
+
+					MaskObject(data, builder);
 				}
 				//try { System.IO.File.WriteAllText(@"c:\tmp\abcd.log", serialized); } catch { }
+			}
+		}
+
+		private void MaskObject(object data, StringBuilder builder)
+		{
+			if (data != null)
+			{
+				var serialized = JsonSerializer.SerializeToNode(data, new JsonSerializerOptions
+				{
+					Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+				});
+
+				var masked = _objectMasker.MaskJsonObjectString(serialized);
+				builder.Append(masked);
 			}
 		}
 	}
 
 
-	//[LayoutRenderer("masked-url")]
+	//[LayoutRenderer("event-property-object-masker")]
 	//[ThreadAgnostic]
 	//[MutableUnsafe]
-	//public class UrlMakableLayoutRenderer : LayoutRenderer
+	//public class EventPropertyObjectMaskLayoutRenderer : LayoutRenderer
 	//{
-	//	public readonly IMaskEngine _maskEngine;
+	//	public readonly IObjectMasker _objectMasker;
 
-	//	public List<string> Patterns { get; set; }
+	//	[DefaultParameter]
+	//	public string PropertyName { get; set; }
 
-	//	public UrlMakableLayoutRenderer() : base()
+	//	public EventPropertyObjectMaskLayoutRenderer() : base()
 	//	{
-	//		_maskEngine = this.ResolveService<IMaskEngine>();
+	//		_objectMasker = ResolveService<IObjectMasker>();
 	//	}
 
 	//	/// <summary>
@@ -77,18 +177,24 @@ namespace Slin.Masking.NLog
 	//	/// <param name="logEvent">Logging event.</param>
 	//	protected override void Append(StringBuilder builder, LogEventInfo logEvent)
 	//	{
-	//		if (!string.IsNullOrWhiteSpace(logEvent.Message))
+	//		if (logEvent.Properties.TryGetValue(PropertyName, out object value) && value != null)
 	//		{
-	//			var uri = new Uri(logEvent.Message,UriKind.RelativeOrAbsolute);
-
-	//			foreach (var item in Patterns)
+	//			if (_objectMasker.IsEnabled)
 	//			{
+	//				var serialized = JsonSerializer.SerializeToNode(value, new JsonSerializerOptions
+	//				{
+	//					Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+	//				});
+
+	//				var masked = _objectMasker.MaskJsonObjectString(serialized);
+	//				builder.Append(masked);
 
 	//			}
-
-
-	//			var masked = _maskEngine.MaskObjectString(logEvent.Message);
-	//			builder.Append(masked);
+	//			else
+	//			{
+	//				var converter = this.ResolveService<IJsonConverter>();
+	//				converter.SerializeObject(value, builder);
+	//			}
 	//		}
 	//	}
 	//}
@@ -96,20 +202,17 @@ namespace Slin.Masking.NLog
 	//[LayoutRenderer("masked-url")]
 	//[ThreadAgnostic]
 	//[MutableUnsafe]
-	//public class UrlMakableLayoutRenderer : LayoutRenderer
+	//public class EventPropertyUrlMaskLayoutRenderer : LayoutRenderer
 	//{
-	//	private readonly IUrlMasker _masker = null;
+	//	private readonly IObjectMasker _objectMasker = null;
 
-	//	public UrlMakableLayoutRenderer(IUrlMasker masker)
-	//	{
-	//		_masker = masker;
-	//	}
-
+	//	[DefaultParameter]
+	//	public string PropertyName { get; set; }
 	//	//public List<string> Patterns { get; set; }
 
-	//	public UrlMakableLayoutRenderer() : base()
+	//	public EventPropertyUrlMaskLayoutRenderer() : base()
 	//	{
-	//		_maskEngine = this.ResolveService<IMaskEngine>();
+	//		_objectMasker = this.ResolveService<IObjectMasker>();
 	//	}
 
 	//	/// <summary>
@@ -119,18 +222,24 @@ namespace Slin.Masking.NLog
 	//	/// <param name="logEvent">Logging event.</param>
 	//	protected override void Append(StringBuilder builder, LogEventInfo logEvent)
 	//	{
-	//		if (!string.IsNullOrWhiteSpace(logEvent.Message))
+	//		if (logEvent.Properties.TryGetValue(PropertyName, out object value) && value != null && (value is string || value is Uri))
 	//		{
-	//			var uri = new Uri(logEvent.Message, UriKind.RelativeOrAbsolute);
+	//			//if (_objectMasker.IsEnabled)
+	//			//{
+	//			//	var serialized = JsonSerializer.SerializeToNode(value, new JsonSerializerOptions
+	//			//	{
+	//			//		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+	//			//	});
 
-	//			foreach (var item in Patterns)
-	//			{
+	//			//	var masked = _objectMasker.MaskJsonObjectString(serialized);
+	//			//	builder.Append(masked);
 
-	//			}
-
-
-	//			var masked = _maskEngine.MaskObjectString(logEvent.Message);
-	//			builder.Append(masked);
+	//			//}
+	//			//else
+	//			//{
+	//			//	var converter = this.ResolveService<IJsonConverter>();
+	//			//	converter.SerializeObject(value, builder);
+	//			//}
 	//		}
 	//	}
 	//}

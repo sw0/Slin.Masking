@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\ApiMaskingSample\masking.json" Link="masking.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\ApiMaskingSample\nlog.config" Link="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Slin.Masking" Version="0.1.10" />
+  </ItemGroup>
+
+</Project>

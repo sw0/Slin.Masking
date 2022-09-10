@@ -1,4 +1,4 @@
-namespace WebApi6
+namespace ApiMaskingSample
 {
 	public class WeatherForecast
 	{

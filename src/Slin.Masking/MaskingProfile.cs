@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Slin.Masking
 {
-	public class MaskingProfile
+	public class MaskingProfile: IObjectMaskingOptions
 	{
 		///// <summary>
 		///// Object Maskig options for global masking setting when using <see cref="IObjectMasker"/>

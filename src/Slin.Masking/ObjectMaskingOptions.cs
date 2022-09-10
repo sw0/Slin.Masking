@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Slin.Masking
 {
-	public class ObjectMaskingOptions
+	public class ObjectMaskingOptions : IObjectMaskingOptions
 	{
 		/// <summary>
 		/// enabled by default

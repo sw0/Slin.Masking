@@ -2,11 +2,6 @@
 using Microsoft.AspNetCore.HttpLogging;
 using NLog;
 using NLog.Web;
-using System.Text;
-using System.Text.Json.Nodes;
-using WebApi6;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using Slin.Masking;
 using Slin.Masking.NLog;
 
@@ -19,7 +14,6 @@ var logger = LogManager.Setup(setupBuilder: (setupBuilder) =>
 
 	var profile = cfg.GetSection("masking").Get<MaskingProfile>();
 	profile.Normalize();
-	var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
 
 	var masker = new Masker(profile);
 
@@ -30,8 +24,10 @@ var logger = LogManager.Setup(setupBuilder: (setupBuilder) =>
 	setupBuilder.SetupExtensions(s =>
 	   //s.RegisterLayoutRenderer("trace_id", (logevent) => CorrelationIdentifier.TraceId.ToString())
 	   s.RegisterSingletonService<IMasker>(masker)
-	   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, logMaskOptions))	   
+	   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))	   
 	   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
+	   //.RegisterLayoutRenderer<EventPropertyObjectMaskLayoutRenderer>("event-property-object-masker")
+	   //.RegisterLayoutRenderer<EventPropertyObjectMaskLayoutRenderer>("event-property-url-masker")
 	);
 }).GetCurrentClassLogger();
 NLog.LogManager.ConfigurationChanged += (object? sender, NLog.Config.LoggingConfigurationChangedEventArgs e) =>
@@ -74,12 +70,13 @@ try
 		var profile = cfg.GetSection("masking").Get<MaskingProfile>();
 		return profile;
 	});
-	builder.Services.AddSingleton<ObjectMaskingOptions>(sp =>
+	builder.Services.AddSingleton<IObjectMaskingOptions>(sp =>
 	{
-		var cfg = sp.GetRequiredService<IConfiguration>();
+		return sp.GetRequiredService<MaskingProfile>();
+		//var cfg = sp.GetRequiredService<IConfiguration>();
 
-		var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
-		return logMaskOptions;
+		//var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
+		//return logMaskOptions;
 	});
 	builder.Services.AddSingleton<IMasker, Masker>();
 	builder.Services.AddSingleton<IObjectMasker, ObjectMasker>();

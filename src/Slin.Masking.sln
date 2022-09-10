@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{3C55D22C-4
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleMaskingSample", "ConsoleMaskingSample\ConsoleMaskingSample.csproj", "{2AD236A3-5D07-4498-8019-B8030439AEF2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,12 +42,17 @@ Global
 		{8C0D16F1-4D74-46D4-ABBF-E653BA7A733E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8C0D16F1-4D74-46D4-ABBF-E653BA7A733E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8C0D16F1-4D74-46D4-ABBF-E653BA7A733E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2AD236A3-5D07-4498-8019-B8030439AEF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2AD236A3-5D07-4498-8019-B8030439AEF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2AD236A3-5D07-4498-8019-B8030439AEF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2AD236A3-5D07-4498-8019-B8030439AEF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{7EBE7FF4-7861-420E-9B88-47CC47128077} = {D84E6F08-B87B-4B19-8746-12847E98074F}
+		{2AD236A3-5D07-4498-8019-B8030439AEF2} = {D84E6F08-B87B-4B19-8746-12847E98074F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {8F6C9D6D-2A4C-47CE-9BA8-00D7DFF11F38}

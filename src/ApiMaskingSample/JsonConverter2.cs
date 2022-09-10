@@ -4,7 +4,7 @@ using NLog;
 using NLog.MessageTemplates;
 using System.Text.Json.Serialization;
 
-namespace WebApi6
+namespace ApiMaskingSample
 {
 	public class JsonConverter2 : NLog.IJsonConverter
 	{

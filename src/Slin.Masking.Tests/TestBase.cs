@@ -24,6 +24,12 @@ namespace Slin.Masking.Tests
 				var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
 				return profile;
 			});
+			services.AddScoped<IObjectMaskingOptions>(provider =>
+			{
+				var profile = provider.GetRequiredService<MaskingProfile>();
+				return profile;
+			});
+
 			//services.AddScoped<ObjectMaskingOptions>(provider =>
 			//{
 			//	var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
@@ -32,6 +38,7 @@ namespace Slin.Masking.Tests
 
 			services.AddScoped<IMasker, Masker>();
 			services.AddScoped<IUrlMasker, Masker>();
+			services.AddScoped<IObjectMasker, ObjectMasker>();
 
 			if (setup != null) setup(services);
 

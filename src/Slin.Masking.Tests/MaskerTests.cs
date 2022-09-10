@@ -2,10 +2,14 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Slin.Masking;
 using Xunit.Sdk;
+using System.Xml.Linq;
+using System.Xml.Serialization;
+using Newtonsoft.Json;
+using System;
 
 namespace Slin.Masking.Tests
 {
-	public class MaskerTests: TestBase
+	public class MaskerTests : TestBase
 	{
 		[Fact]
 		public void MaskProfileTest()
@@ -77,11 +81,30 @@ namespace Slin.Masking.Tests
 
 				Assert.NotNull(engine);
 
-				//var url = "";
-				//url = "?firstname=shawn&lastname=1234&password=7234324";
-				//url = "?firstname=shawn&lastname=&password=";
 				var result = engine.MaskUrl(url);
 				Assert.Equal(expected, result);
+			}
+		}
+
+
+		[Fact]
+		public void XmlMaskTest()
+		{
+			var xml = DummyData.Xml1;
+
+			var provider = CreateProvider();
+
+			//var context = new MaskingContext(profile);
+			using (provider.CreateScope())
+			{
+				var engine = provider.GetRequiredService<IObjectMasker>();
+
+				Assert.NotNull(engine);
+
+				var data = DummyData.CreateLogEntry();
+
+				var result = engine.MaskObject(data);
+				Assert.True(result != null);
 			}
 		}
 	}
