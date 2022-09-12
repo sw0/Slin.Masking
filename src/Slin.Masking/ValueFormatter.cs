@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.ComTypes;
@@ -10,9 +11,17 @@ namespace Slin.Masking
 	internal interface IValueFormatter
 	{
 		string Name { get; set; }
+
 		string Format { get; set; }
+		/// <summary>
+		/// NOTE: here valuepattern would get append with ignore case comment (?#True/False)
+		/// </summary>
 		string ValuePattern { get; set; }
-		//bool SetEmpty { get; set; } //todo maybe no need this
+
+		bool IgnoreCase { get; set; }
+
+		//string CacheKey { get; }
+
 		bool TryFormat(string value, out string result);
 
 		bool ValueMatchesPattern(string value);
@@ -27,12 +36,44 @@ namespace Slin.Masking
 		/// If name is not set, it will be set by Key, it set, it will ignore other property and use NamedFormatter.
 		/// </summary>
 		public string Name { get; set; }
+
 		public string Format { get; set; }
+
 		public string ValuePattern { get; set; } = "";
+		/// <summary>
+		/// indicates whether valuepattern ignores case or not, so does if it's regular expression. 
+		/// default: false
+		/// </summary>
+		public bool IgnoreCase { get; set; } = false;
 		/// <summary>
 		/// default true
 		/// </summary>
 		public bool Enabled { get; set; } = true;
+
+		public ValueFormatterDefinition() { }
+
+		public ValueFormatterDefinition(string format, bool ignoreCase = false)
+		{
+			Format = format;
+			IgnoreCase = ignoreCase;
+			Enabled = true;
+		}
+		public ValueFormatterDefinition(string format, string valuePattern, bool ignoreCase = false)
+		{
+			Format = format;
+			ValuePattern = valuePattern;
+			IgnoreCase = ignoreCase;
+			Enabled = true;
+		}
+
+		/// <summary>
+		/// however it does not in appsettings.json?
+		/// </summary>
+		/// <param name="format"></param>
+		public static implicit operator ValueFormatterDefinition(string format)
+		{
+			return new ValueFormatterDefinition { Format = format, Enabled = true };
+		}
 	}
 
 
@@ -42,11 +83,17 @@ namespace Slin.Masking
 
 		public string Name { get; set; }
 		public string Format { get; set; }
+		/// <summary>
+		/// NOTE: here ValuePattern will got suffix of (?#True or False) if ValuePattern was provided and is like a Regular Expression.
+		/// </summary>
 		public string ValuePattern { get; set; } = "";
+
+		//public string CacheKey { get; }
 
 		public bool HasValuePatterned => !string.IsNullOrEmpty(ValuePattern) && _context.IsLikePattern(ValuePattern);
 
-		//public bool SetEmpty { get; set; } //todo maybe no need this
+		public bool IgnoreCase { get; set; }
+
 		public ValueFormatter(IMaskingContext context, ValueFormatterDefinition valueFormatterDefinition)
 		{
 			_context = context;
@@ -60,7 +107,12 @@ namespace Slin.Masking
 				Format = valueFormatterDefinition.Format;
 			}
 			ValuePattern = valueFormatterDefinition.ValuePattern;
-			//SetEmpty = valueFormatterDefinition.SetEmpty;
+			IgnoreCase = valueFormatterDefinition.IgnoreCase;
+
+			if (HasValuePatterned)
+			{
+				ValuePattern = $"{ValuePattern}(?#{IgnoreCase})";
+			}
 		}
 
 		public bool ValueMatchesPattern(string value)//, bool defaultWhenNotPatterned =true)
@@ -70,12 +122,15 @@ namespace Slin.Masking
 			if (string.IsNullOrEmpty(ValuePattern))
 				return true;
 
-			if (_context.IsLikePattern(ValuePattern))
+			if (HasValuePatterned)
 			{
 				return _context.GetRequiredRegex(ValuePattern).IsMatch(value);
 			}
 
-			return value == ValuePattern; //todo case-insensitive
+			if (IgnoreCase)
+				return value.Equals(ValuePattern, System.StringComparison.OrdinalIgnoreCase);
+			else
+				return value == ValuePattern;
 		}
 
 
@@ -96,7 +151,7 @@ namespace Slin.Masking
 			}
 			else
 			{
-				if (!string.IsNullOrEmpty(ValuePattern) && ValuePattern != value)
+				if (!string.IsNullOrEmpty(ValuePattern) && !value.Equals(ValuePattern, IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
 				{
 					result = value;
 					return false;

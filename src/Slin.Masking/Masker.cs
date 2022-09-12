@@ -8,7 +8,8 @@
 	using System.Web;
 
 	/// <summary>
-	/// IMasker interface
+	/// IMasker interface. Masking value as long as key/value matches the rules defined.
+	/// It also support <see cref="IUrlMasker"/>
 	/// </summary>
 	public interface IMasker: IUrlMasker
 	{
@@ -45,9 +46,9 @@
 	{
 		private readonly IMaskingContext _context;
 
-		public Masker(MaskingProfile profile, IMaskFormatter maskFormatter = null)
+		public Masker(IMaskingOptions options, IMaskFormatter maskFormatter = null)
 		{
-			_context = new MaskingContext(profile, maskFormatter);
+			_context = new MaskingContext(options, maskFormatter);
 		}
 
 		public bool TryMask(string key, string value, out string masked)

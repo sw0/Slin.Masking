@@ -1,9 +1,10 @@
 {
   "Masking": {
-    "Enabled": true, //if false, ObjectMasker will not work. But it does affect fundamental masker: Masker
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
-    "MaskXmlSerializedEnabled": false, //Not Implemented
+    "MaskXmlSerializedEnabled": true, //Not Implemented
+    "MaskXmlSerializedOnXmlAttributeEnabled": true, //default false
+    "MaskJsonSerializedOnXmlAttributeEnabled": true, //default false
     "MaskJsonNumberEnabled": true, //this works only in JSON
     "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
     "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
@@ -21,17 +22,12 @@
       }
     ],
     "ValueMinLength": 3, //if key matched, but value's length <=3, it will skip masking.
+    "XmlMinLength": 15, //system setting, usually no need to set. it bypasses deserializing if length < N
+    "JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
     "SerializedKeysCaseSensitive": false,
-
     //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
     "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
     "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
-    "MaskingOptions": {
-      "PatternCheckChars": [ "?", "+", "*", "\\", "[", "|", "(", "^", ".", "$" ],
-      "KeyCaseInsensitive": true,
-      "ValueCaseInsensitive": false, //todo this is global setting, maybe we can control more precisely in ValuePattern.
-      "ThrowIfNamedProfileNotFound": false
-    },
     "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
         "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
@@ -42,18 +38,28 @@
       }
     ],
     "NamedFormatterDefintions": {
-      //NOTE: definition names here are case-insensitive
+      //NOTE: definition names here are case-insensitive.
+      //For a given Name(unique and ignore case), the formatter defintion contains: 
+      //  valid Format, 
+      //  optional ValuePattern and IgnoreCase for value pattern. ValuePattern can be regular expression(simple regex usage).
+      //  default true of Enabled.
+      //  Enabled: default true. BUT no need to set it to False here.
       "null": { "Format": "null" },
       "Empty": { "Format": "EMPTY" },
       "REDACTED": { "Format": "REDACTED" },
       "Remove": { "RemoveNode": true }, //todo not supported yet, do we need it?
       "PAN15": {
         "ValuePattern": "^\\d{15}$",
-        "Format": "L6*R4"
+        "Format": "L6*R4",
+        //IgnoreCase is working with ValuePattern.
+        "IgnoreCase": false,
+        "Enabled": true //default true
       },
       "PAN16": { //just for sample here to use two different formatter base on length difference
         "ValuePattern": "^\\d{16}$",
-        "Format": "L4*R4"
+        "Format": "L4*R4",
+        //IgnoreCase is working with ValuePattern.
+        "IgnoreCase": false
       },
       "DOB": {
         //"KeyName": "^DOB$|^DateOfBirth$",
@@ -76,7 +82,9 @@
       "SSN": { "Formatters": [ { "Name": "SSN" } ] },
       "DOB": { "Formatters": [ { "Name": "dob" } ] },
       "Pan": {
-        "KeyName": "^pan|PersonalAccountNumber|PrimaryAccountNumber$", //"^Pan|PAN$",
+        "KeyName": "^pan|PersonalAccountNumber|PrimaryAccountNumber$",
+        //IgnoreKeyCase is working with KeyName
+        "IgnoreKeyCase": true,
         "Formatters": [
           { "Name": "Pan15" },
           { "Name": "pan16" }

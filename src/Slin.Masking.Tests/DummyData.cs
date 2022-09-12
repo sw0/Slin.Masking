@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading.Tasks;
 using System.Web;
 
@@ -11,6 +13,8 @@ namespace Slin.Masking.Tests
 
 	public class DummyData
 	{
+		public static readonly JavaScriptEncoder MyEncoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+
 		public const string FirstName = "Shawn";
 		public const string LastName = "Lin";
 		public const string SSN = "123456789";
@@ -32,16 +36,35 @@ namespace Slin.Masking.Tests
 
    <SOAP-ENV:Body xmlns:m = ""http://www.xyz.org/quotation"">
       <m:GetQuotationResponse>
-         <m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>
+         <!----><m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>
          <m:SSN>{SSN}</m:SSN>
          <m:User>
-			<m:FirstName dOB=""{DobStr}"">{FirstName}</m:FirstName>
+			<!----><m:FirstName dOB=""{DobStr}"">{FirstName}</m:FirstName>
 			<m:FirstName>{LastName}</m:FirstName>
 			<m:SSN>{SSN}</m:SSN>
 			<m:DOB dob=""{DobStr}"">{DobStr}</m:DOB>
 			<m:requestUrl>{UrlFullEncoded}</m:requestUrl>
 			<m:query>{UrlQuery1Encoded}</m:query>
             <m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""BAD</m:Body>
+			<m:kvplist dob=""{DobStr}"">
+               <!----><m:kvprow requestUrl=""{UrlFullEncoded}"">
+                   <m:Key>SSN</m:Key>
+                   <m:Value>{SSN}</m:Value>
+                   <m:Body dob=""{DobStr}"">{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>
+               </m:kvprow>
+               <m:kvprow dob=""{DobStr}"">
+                   <m:Key>DOB</m:Key>
+                   <m:Value>{DobStr}</m:Value>
+               </m:kvprow>
+               <m:kvprow body=""{{&quot;ssn&quot;:&quot;{SSN}&quot;,&quot;dob&quot;:&quot;{DobStr}&quot;}}"">
+                   <m:Key><m:DOB>{DobStr}</m:DOB></m:Key>
+                   <m:Value ssn=""{SSN}""><m:requestUrl>{UrlFullEncoded}</m:requestUrl></m:Value>
+               </m:kvprow>
+               <m:kvprow body=""&lt;data&gt;&lt;ssn&gt;{SSN}&lt;/ssn&gt;&lt;/data&gt;"">
+                   <m:Key>DOB</m:Key>
+                   <m:Value ssn=""{SSN}""><m:requestUrl>{UrlFullEncoded}</m:requestUrl></m:Value>
+               </m:kvprow>
+            </m:kvplist>
          </m:User>
       </m:GetQuotationResponse>
    </SOAP-ENV:Body>
@@ -66,6 +89,9 @@ namespace Slin.Masking.Tests
 
 			data.Add(new KeyValuePair<string, object>("user", DummyData.User));
 			data.Add(new KeyValuePair<string, object>("data", new { SSN = "123456789", PAN = DummyData.PAN }));
+			data.Add(new KeyValuePair<string, object>("Amount", 99.99m));
+			data.Add(new KeyValuePair<string, object>("transactionAmount", 99.99m));
+			data.Add(new KeyValuePair<string, object>("PrimaryAccountnumBER", "1234567890123456"));
 			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
 			data.Add(new KeyValuePair<string, object>("query", DummyData.UrlQuery2));
 			data.Add(new KeyValuePair<string, object>("requestUrl", DummyData.UrlFull));
@@ -75,11 +101,12 @@ namespace Slin.Masking.Tests
 				transId = "12",
 				amount = 9.99m,
 				ssn = DummyData.SSN,
+				from = "中国"
 			};
 			data.Add(new KeyValuePair<string, object>("objectfield", d1));
-
 			data.Add(new KeyValuePair<string, object>("kvpfield", DummyData.UrlQuery1));
-			data.Add(new KeyValuePair<string, object>("reserialize", JsonSerializer.Serialize(d1)));
+			data.Add(new KeyValuePair<string, object>("reserialize", JsonSerializer.Serialize(d1, new JsonSerializerOptions { Encoder = MyEncoder })));
+			data.Add(new KeyValuePair<string, object>("Key", new { Firstname = "Sghawn" }));
 			data.Add(new KeyValuePair<string, object>("ResponseBody", Xml1));
 			data.Add(new KeyValuePair<string, object>("kvplist", new List<KeyValuePair<string, object>>
 			{

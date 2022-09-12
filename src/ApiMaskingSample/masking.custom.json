@@ -1,0 +1,10 @@
+﻿{
+  "masking": {
+    "Rules": {
+      "amount": {
+        "KeyName": "^(transaction)?amount$(?#ignorecase)",
+        "Formatters": [ { "name": "null" } ]
+      }
+    }
+  }
+}

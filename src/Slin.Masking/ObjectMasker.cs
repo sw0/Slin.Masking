@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Unicode;
 using System.Xml.Linq;
+using System.Diagnostics.Contracts;
 
 namespace Slin.Masking
 {
@@ -19,15 +22,14 @@ namespace Slin.Masking
 	{
 		string MaskXmlElementString(XElement node);
 	}
-
 	public interface IObjectMasker : IJsonMasker, IXmlMasker, IUrlMasker
 	{
 		string MaskObject(object value);
 
-		/// <summary>
-		/// get if masking is enabled
-		/// </summary>
-		bool IsEnabled { get; }
+		///// <summary>
+		///// get if masking is enabled
+		///// </summary>
+		//bool IsEnabled { get; }
 	}
 
 	/// <summary>
@@ -46,8 +48,25 @@ namespace Slin.Masking
 
 		public KeyKeyValueKey()
 		{
-
 		}
+
+		public static implicit operator KeyKeyValueKey(string input)
+		{
+			if (input == null)
+				throw new ArgumentNullException(nameof(input));
+
+			var tmp = input.Trim().Split(',', ':');
+			if (tmp.Length != 2)
+			{
+#if DEBUG
+				throw new ArgumentException("input must use ',' or ':' to split the key and value");
+#else
+				return null;
+#endif
+			}
+			return new KeyKeyValueKey(tmp[0], tmp[1]);
+		}
+
 		public KeyKeyValueKey(string keyKey, string valKey)
 		{
 			if (string.IsNullOrEmpty(keyKey))
@@ -59,27 +78,33 @@ namespace Slin.Masking
 		}
 	}
 
+
 	/// <summary>
-	/// ObjectMasker can mask values for those properties set in rules
+	/// <see cref="ObjectMasker"/> is supposed to support to iterate the object and mask properties if the key/value matches the rules. 
+	/// The masking is actually performed by <see cref="IMasker"/>.
 	/// </summary>
 	public class ObjectMasker : IObjectMasker
 	{
-		private readonly IMasker _masker = null;
-		private readonly IObjectMaskingOptions _options;
+		protected readonly IMasker _masker = null;
+		protected readonly IObjectMaskingOptions _options;
 
-		private bool SerializedUnfoldable => _options.MaskJsonSerializedEnabled
+		protected bool MaskJsonSerializedEnabled => _options.MaskJsonSerializedEnabled
 			&& _options.SerializedKeys != null && _options.SerializedKeys.Any();
+		protected bool MaskXmlSerializedEnabled => _options.MaskXmlSerializedEnabled
+			&& _options.SerializedKeys != null && _options.SerializedKeys.Any();
+		protected bool MaskXmlSerializedOnXmlAttributeEnabled => _options.MaskXmlSerializedOnXmlAttributeEnabled;
+		protected bool MaskJsonSerializedOnXmlAttributeEnabled => _options.MaskJsonSerializedOnXmlAttributeEnabled;
 
-		private bool IsMaskUrlEnabled => _options.MaskUrlEnabled && _options.UrlKeys != null
+		protected bool IsMaskUrlEnabled => _options.MaskUrlEnabled && _options.UrlKeys != null
 			&& _options.UrlKeys.Any();
 
 		/// <summary>
 		/// indicates whether to support nested key-value-pairs. 
 		/// Like to support mask {"key":"ssn", "value":"123456789"}
 		/// </summary>
-		private bool MaskNestedKvpEnabled => _options.MaskNestedKvpEnabled;
+		protected bool MaskNestedKvpEnabled => _options.MaskNestedKvpEnabled;
 
-		public bool IsEnabled => _options.Enabled;
+		//public bool IsEnabled => _options.Enabled;
 
 		private static readonly List<KeyKeyValueKey> DefaultKeyValueNames = new List<KeyKeyValueKey> {
 			new KeyKeyValueKey("Key","Value"),
@@ -92,6 +117,11 @@ namespace Slin.Masking
 			_options = options ?? new ObjectMaskingOptions();
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="data"></param>
+		/// <returns></returns>
 		public string MaskObject(object data)
 		{
 			if (data == null)
@@ -101,19 +131,17 @@ namespace Slin.Masking
 			{
 				return MaskJsonObjectString(node);
 			}
-
-			if (data is XElement element)
+			else if (data is XElement element)
 				return MaskXmlElementString(element);
-			//if (data is XNode element2)
-			//	return MaskXmlElementString(element);
-
-			if (data is string json && TryParseJson(json, out node))
+			else if (data is XDocument xdoc)
+				return MaskXmlElementString(xdoc.Root);
+			else if (data is string json && TryParseJson(json, out node))
 			{
 				return MaskJsonObjectString(node);
 			}
-			else if (data is string xml && TryParseXDoc(xml, out element))
+			else if (data is string xml && TryParseXEle(xml, out var element2))
 			{
-				return MaskXmlElementString(element);
+				return MaskXmlElementString(element2);
 			}
 			else
 			{
@@ -122,13 +150,13 @@ namespace Slin.Masking
 					//var encoderSettings = new TextEncoderSettings();
 					//encoderSettings.AllowCharacters('\u0026', '&');
 					//encoderSettings.AllowRange(UnicodeRanges.BasicLatin);
-					//var jsonOptions = new JsonSerializerOptions()
-					//{
-					//	//Encoder = JavaScriptEncoder.Create(encoderSettings)
-					//	Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-					//};
+					var jsonOptions = new JsonSerializerOptions()
+					{
+						//Encoder = JavaScriptEncoder.Create(encoderSettings)
+						Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+					};
 					//TODO looks like it's Microsoft has bug here for SerializeToNode method to use Encoder
-					node = JsonSerializer.SerializeToNode(data);
+					node = JsonSerializer.SerializeToNode(data, jsonOptions);
 
 					return MaskJsonObjectString(node);
 				}
@@ -167,10 +195,11 @@ namespace Slin.Masking
 			}
 			else if (node is JsonObject obj)
 			{
-				var noneEmptyValueList = GetNotEmptyJsonValueItems(obj).ToList();
+				var noneEmptyValueList = NotEmptyJsonValueItems(obj).ToList();
+				//we need update node. so ToList()
 
-				if (MaskNestedKvpEnabled &&
-					noneEmptyValueList.Count >= 2 && noneEmptyValueList.Count < 5
+				if (MaskNestedKvpEnabled //&&
+										 //noneEmptyValueList.Count >= 2 && noneEmptyValueList.Count < 5
 					&& ContainsKeyValuePair(noneEmptyValueList, out string keyKeyName, out string valKeyName))
 				{
 					if (noneEmptyValueList.First(kvp => kvp.Key == keyKeyName).Value.AsValue().TryGetValue(out string key))
@@ -183,7 +212,7 @@ namespace Slin.Masking
 						if (!FirstJsonMaskAttempt(key, valKeyName, jval, obj, out value, out valueIsString)
 							&& value != null && value.Length > _options.ValueMinLength)
 						{
-							SerializedJsonMaskAttempt(key, value, valKeyName, obj);
+							SerializedMaskAttempt(key, value, valKeyName, obj);
 
 							UrlJsonMaskAttempt(key, value, valKeyName, obj);
 						}
@@ -249,7 +278,7 @@ namespace Slin.Masking
 						//		//todo Parse Json failed
 						//	}
 						//}
-						SerializedJsonMaskAttempt(key, value, key, obj);
+						SerializedMaskAttempt(key, value, key, obj);
 
 						////mask url
 						//if (IsMaskUrlEnabled && valueIsString
@@ -292,25 +321,14 @@ namespace Slin.Masking
 		/// </summary>
 		/// <param name="node"></param>
 		/// <returns></returns>
-		private IEnumerable<KeyValuePair<string, JsonNode>> GetNotEmptyJsonValueItems(JsonObject node)
+		private IEnumerable<KeyValuePair<string, JsonNode>> NotEmptyJsonValueItems(JsonObject node)
 		{
 			foreach (var item in node)
 			{
 				if (item.Value == null) continue;
-				if (item.Value is JsonValue jv)
+				if (item.Value is JsonValue)
 				{
 					yield return item;
-					//todo improve performance by returning JsonElement back also
-					//var v = jv.GetValue<JsonElement>();
-					//if (v.ValueKind == JsonValueKind.Number && _options.MaskJsonNumberEnabled)
-					//{
-					//	yield return item;
-					//}
-					//if (v.ValueKind == JsonValueKind.String && jv.GetValue<string>().Length >= _options.ValueMinLength) //todo I think we can put X here 
-					//	yield return item;
-					//	yield return new KeyValuePair<string, JsonNode>(item.Key, "53");
-
-					//todo we does not support number for now.
 				}
 			}
 		}
@@ -323,7 +341,7 @@ namespace Slin.Masking
 		/// <param name="keyName"></param>
 		/// <param name="valueName"></param>
 		/// <returns></returns>
-		private bool ContainsKeyValuePair(ICollection<KeyValuePair<string, JsonNode>> source, out string keyName, out string valueName, List<KeyKeyValueKey> eligibleKeyValueNames = null)
+		private bool ContainsKeyValuePair(IEnumerable<KeyValuePair<string, JsonNode>> source, out string keyName, out string valueName, List<KeyKeyValueKey> eligibleKeyValueNames = null)
 		{
 			keyName = valueName = null;
 
@@ -334,27 +352,16 @@ namespace Slin.Masking
 				var k = source.FirstOrDefault(x => x.Key == item.KeyKeyName);
 				if (k.Key != null && k.Value != null)
 				{
-					//var valueOfKey = ((JsonValue)k.Value).GetValue<JsonElement>();
-					//if (valueOfKey.ValueKind != JsonValueKind.String)
-					//	continue;
-
 					var v = source.FirstOrDefault(x => x.Key == item.ValueKeyName);
 
 					if (v.Key != null && v.Value != null)
 					{
-						//var valueOfValue = ((JsonValue)v.Value).GetValue<JsonElement>();
-
-						//if (valueOfValue.ValueKind != JsonValueKind.String 
-						//	&& valueOfValue.ValueKind != JsonValueKind.Number) //number check for Amount
-						//	continue;
-
 						keyName = k.Key;
 						valueName = v.Key;
 						return true;
 					}
 				}
 			}
-			//}
 
 			return false;
 		}
@@ -378,31 +385,86 @@ namespace Slin.Masking
 			return false;
 		}
 
-		private bool SerializedJsonMaskAttempt(string key, string value, string valueKeyName, JsonObject source)
+		private bool SerializedMaskAttempt(string key, string value, string valueKeyName, JsonObject source)
 		{
-			if (IsSerializedKey(key))
+			if (!IsSerializedKey(key)) return false;
+
+			try
 			{
-				try
+				if (MaskJsonSerializedEnabled && TryParseJson(value, out var parsedNode))
 				{
-					if (TryParseJson(value, out var parsedNode))
-					{
-						source[valueKeyName] = parsedNode;
+					source[valueKeyName] = parsedNode;
 
-						MaskObjectInternal(parsedNode);
+					MaskObjectInternal(parsedNode);
 
-						return true;
-					}
-					else if (TryParseXDoc(value, out var element))
-					{
-						var masked = MaskXmlElementString(element);
-						source[value] = masked;
-						return true;
-					}
+					return true;
 				}
-				catch (Exception)
+				else if (MaskXmlSerializedEnabled && TryParseXEle(value, out var element))
 				{
-					//todo Parse Json failed
+					var masked = MaskXmlElementString(element);
+					source[valueKeyName] = masked;
+					return true;
 				}
+			}
+			catch (Exception)
+			{
+				//todo Parse Json failed
+			}
+			return false;
+		}
+
+		private bool SerializedMaskAttempt(string key, XElement source)
+		{
+			if (!IsSerializedKey(key))
+				return false;
+			try
+			{
+				if (MaskJsonSerializedEnabled && TryParseJson(source.Value, out var parsedNode))
+				{
+					var masked = MaskObjectInternal(parsedNode);
+					source.Value = masked;
+					return true;
+				}
+				else if (MaskXmlSerializedEnabled && TryParseXEle(source.Value, out var element))
+				{
+					var masked = MaskXmlElementString(element);
+					source.Value = masked;
+					return true;
+				}
+			}
+			catch (Exception)
+			{
+				//todo Parse Json failed
+			}
+			return false;
+		}
+		private bool SerializedMaskAttempt(XAttribute source)
+		{
+			if (!IsSerializedKey(source.Name.LocalName))
+				return false;
+			try
+			{
+				if (MaskJsonSerializedEnabled && MaskJsonSerializedOnXmlAttributeEnabled
+					&& TryParseJson(source.Value, out var parsedNode))
+				{
+					//todo depth limit? for attribute, it's probably simple JSON, don't go too deeper.
+					var masked = MaskObjectInternal(parsedNode);
+					source.Value = masked;
+					return true;
+				}
+				else if (MaskXmlSerializedEnabled && MaskXmlSerializedOnXmlAttributeEnabled
+					&& TryParseXEle(source.Value, out var element))
+				{
+					//todo introduce a new configuration here?
+					//this should not happen I think.
+					var masked = MaskXmlElementString(element);
+					source.Value = masked;
+					return true;
+				}
+			}
+			catch (Exception)
+			{
+				//todo Parse Json failed
 			}
 			return false;
 		}
@@ -417,6 +479,32 @@ namespace Slin.Masking
 				var masked = _masker.MaskUrl(value);
 				source[valueKeyName] = masked;
 			}
+		}
+		private void UrlJsonMaskAttempt(string key, XElement source)
+		{
+			if (IsMaskUrlEnabled && !string.IsNullOrEmpty(source.Value)
+				&& _options.UrlKeys.Contains(key, _options.SerializedKeysCaseSensitive
+				? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+				&& IsLikeUrlOrQuery(source.Value))
+			{
+				var masked = _masker.MaskUrl(source.Value);
+				source.Value = masked;
+			}
+		}
+		private bool UrlJsonMaskAttempt(XAttribute source)
+		{
+			if (IsMaskUrlEnabled && !string.IsNullOrEmpty(source.Value)
+				&& _options.UrlKeys.Contains(source.Name.LocalName, _options.SerializedKeysCaseSensitive
+				? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
+				&& IsLikeUrlOrQuery(source.Value))
+			{
+				var masked = _masker.MaskUrl(source.Value);
+				source.Value = masked;
+
+				return true;
+			}
+
+			return false;
 		}
 		#endregion
 		#endregion
@@ -441,9 +529,10 @@ namespace Slin.Masking
 					{
 						attr.Value = masked;
 					}
-					else if (IsSerializedKey(attr.Name.LocalName))
+					else if (!UrlJsonMaskAttempt(attr))
 					{
-
+						//other masking attempts
+						SerializedMaskAttempt(attr);
 					}
 				}
 			}
@@ -451,10 +540,56 @@ namespace Slin.Masking
 			// read the element and do with your node 
 			if (element.HasElements)
 			{
-				// here you can reach nested node 
-				foreach (var item in element.Elements())
+				if (_options.MaskNestedKvpEnabled && ContainsKeyValuePair(element.Elements(), out var keyKeyName, out var valKeyName))
 				{
-					MaskXElementInternal(item);
+					var key = default(string);
+					var value = default(string);
+					XElement valueElement = null;
+
+					//get the key key and value and value element
+					foreach (var item in element.Elements())
+					{
+						if (item.Name.LocalName == keyKeyName && !item.HasElements)
+						{
+							key = item.Value;
+						}
+						else if (item.Name.LocalName == valKeyName && !item.HasElements)
+						{
+							value = item.Value;
+							valueElement = item;
+						}
+					}
+
+					Contract.Assert(!string.IsNullOrEmpty(key));
+
+					//hit here, key 
+					if (valueElement != null
+						&& _masker.TryMask(key, value, out var masked))
+					{
+						valueElement.Value = masked;
+					}
+					else if (valueElement != null)
+					{
+						SerializedMaskAttempt(key, valueElement);
+
+						UrlJsonMaskAttempt(key, valueElement);
+					}
+
+					foreach (var item in element.Elements())
+					{
+						if (item.Name.LocalName == keyKeyName && !!item.HasElements) continue;
+						if (item.Name.LocalName == valKeyName && !item.HasElements) continue;
+
+						MaskXElementInternal(item);
+					}
+				}
+				else
+				{
+					// here you can reach nested node 
+					foreach (var item in element.Elements())
+					{
+						MaskXElementInternal(item);
+					}
 				}
 			}
 			else
@@ -465,34 +600,47 @@ namespace Slin.Masking
 				{
 					element.Value = masked;
 				}
-				else if (IsSerializedKey(name))
+				else
 				{
-					try
-					{
-						if (TryParseJson(value, out var parsedNode))
-						{
-							element.Value = MaskObjectInternal(parsedNode);
-						}
-						else if (TryParseXDoc(element.Value, out var parsedElement))
-						{
-							element.Value = MaskXmlElementString(parsedElement);
-						}
-					}
-					catch (Exception)
-					{
-						//todo Parse Json failed
-					}
-				}
+					SerializedMaskAttempt(name, element);
 
-				//mask url
-				if (IsMaskUrlEnabled && _options.UrlKeys.Contains(name, _options.SerializedKeysCaseSensitive
-					? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
-					&& IsLikeUrlOrQuery(value))
-				{
-					masked = _masker.MaskUrl(value);
-					element.Value = masked;
+					UrlJsonMaskAttempt(name, element);
 				}
 			}
+		}
+		/// <summary>
+		/// source will be like: [{"Key":"DOB","Value":"2022-01-01"},{"Key":"SSN","Value":"123456789"}]
+		/// </summary>
+		/// <param name="source"></param>
+		/// <param name="eligibleKeyValueNames"></param>
+		/// <param name="keyName"></param>
+		/// <param name="valueName"></param>
+		/// <returns></returns>
+		private bool ContainsKeyValuePair(IEnumerable<XElement> source, out string keyName, out string valueName, List<KeyKeyValueKey> eligibleKeyValueNames = null)
+		{
+			keyName = valueName = null;
+
+			foreach (var item in eligibleKeyValueNames ?? DefaultKeyValueNames)
+			{
+				//here: item.Key is keyName, item.Value is value keyName. By default: it's "Key","Value".
+				//Let's make it simple here, that assuming the value type are strings for matched item for key and value.
+
+				var k = source.FirstOrDefault(x => x.HasElements == false && x.Name.LocalName == item.KeyKeyName);
+				if (k != null && !string.IsNullOrEmpty(k.Value))
+				{
+					var v = source.FirstOrDefault(x => x.HasElements == false && x.Name.LocalName == item.ValueKeyName);
+
+					if (v != null && v.Value != null && v.Value.Length > _options.ValueMinLength)
+					{
+						keyName = k.Name.LocalName;
+						valueName = v.Name.LocalName;
+						return true;
+					}
+				}
+			}
+			//}
+
+			return false;
 		}
 		#endregion
 
@@ -502,7 +650,7 @@ namespace Slin.Masking
 		{
 			node = null; value = value?.Trim();
 			//here I think for JSON, it at least has 15 char?...
-			if (value == null || value.Length < 15 || value == "null") return false;
+			if (value == null || value.Length < _options.JsonMinLength || value == "null") return false;
 
 			if (!(value.StartsWith("[") && value.EndsWith("]"))
 				&& !(value.StartsWith("{") && value.EndsWith("}")))
@@ -519,11 +667,17 @@ namespace Slin.Masking
 			}
 		}
 
-		bool TryParseXDoc(string value, out XElement doc)
+		/// <summary>
+		/// try parse XElement
+		/// </summary>
+		/// <param name="value"></param>
+		/// <param name="doc"></param>
+		/// <returns></returns>
+		bool TryParseXEle(string value, out XElement doc)
 		{
 			doc = null; value = value?.Trim();
 			//here I think for xml, it at least has 30 char?...
-			if (value == null || value.Length < 30) return false;
+			if (value == null || value.Length < _options.XmlMinLength) return false;
 			if (!value.StartsWith("<") || !value.EndsWith(">"))
 				return false;
 			try
@@ -559,7 +713,8 @@ namespace Slin.Masking
 
 		private bool IsSerializedKey(string key)
 		{
-			if (SerializedUnfoldable && _options.SerializedKeys.Contains(key,
+			if ((MaskJsonSerializedEnabled || MaskXmlSerializedEnabled)
+				&& _options.SerializedKeys.Contains(key,
 				_options.SerializedKeysCaseSensitive ? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase))
 				return true;
 

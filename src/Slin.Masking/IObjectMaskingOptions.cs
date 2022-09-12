@@ -4,16 +4,25 @@ namespace Slin.Masking
 {
 	public interface IObjectMaskingOptions
 	{
-		bool Enabled { get; set; }
-		bool MaskJsonNumberEnabled { get; set; }
-		bool MaskJsonSerializedEnabled { get; set; }
-		bool MaskUrlEnabled { get; set; }
-		bool MaskXmlSerializedEnabled { get; set; }
-		bool MaskNestedKvpEnabled { get; set; }
-		List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
-		List<string> SerializedKeys { get; set; }
-		bool SerializedKeysCaseSensitive { get; set; }
-		List<string> UrlKeys { get; set; }
-		int ValueMinLength { get; set; }
+		//bool Enabled { get; }
+		bool MaskJsonNumberEnabled { get; }
+		bool MaskJsonSerializedEnabled { get; }
+		bool MaskUrlEnabled { get; }
+		bool MaskXmlSerializedEnabled { get; }
+		bool MaskXmlSerializedOnXmlAttributeEnabled { get; }
+		bool MaskJsonSerializedOnXmlAttributeEnabled { get; }
+		bool MaskNestedKvpEnabled { get; }
+		List<KeyKeyValueKey> KeyKeyValueKeys { get; }
+		List<string> SerializedKeys { get; }
+		bool SerializedKeysCaseSensitive { get; }
+		List<string> UrlKeys { get; }
+
+		List<UrlMaskingPattern> UrlMaskingPatterns { get; }
+		/// <summary>
+		/// default: 3
+		/// </summary>
+		int ValueMinLength { get; }
+		int XmlMinLength { get; }
+		int JsonMinLength { get; }
 	}
 }

@@ -5,8 +5,6 @@ internal class Program
 	private static void Main(string[] args)
 	{
 		Console.WriteLine("Hello, World!");
-
-
 	}
 
 	public class Sample
@@ -59,7 +57,7 @@ internal class Program
 			});
 			profile.Rules.Add("name", new MaskRuleDefinition
 			{
-				KeyName = "^[fir|la]stname$",
+				KeyName = "^(fir|la)stname$(?#ignorecase)",
 				Formatters = new List<ValueFormatterDefinition> {
 					new ValueFormatterDefinition{ Format="L3"},
 				}

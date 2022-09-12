@@ -1,15 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace Slin.Masking
 {
-	public class MaskingProfile : IObjectMaskingOptions
+	public class MaskingProfile : IMaskingProfile
 	{
+
 		#region -- object masking settings --
-		/// <summary>
-		/// enabled by default
-		/// </summary>
-		public bool Enabled { get; set; } = true;
+		///// <summary>
+		///// enabled by default
+		///// </summary>
+		//public bool Enabled { get; set; } = true;
 
 		/// <summary>
 		/// default false. works with <see cref="UrlKeys"/>
@@ -35,7 +37,14 @@ namespace Slin.Masking
 		/// NOT SUPPORTED YET!!!
 		/// </summary>
 		public bool MaskXmlSerializedEnabled { get; set; } = true;
-
+		/// <summary>
+		/// default false
+		/// </summary>
+		public bool MaskXmlSerializedOnXmlAttributeEnabled { get; set; } = false;
+		/// <summary>
+		/// default false
+		/// </summary>
+		public bool MaskJsonSerializedOnXmlAttributeEnabled { get; set; } = false;
 		/// <summary>
 		/// Will be used to indicates comparison for Serialized Keys or Url Keys against property name
 		/// </summary>
@@ -55,12 +64,37 @@ namespace Slin.Masking
 		/// For name it might be short. So set it to 3
 		/// </summary>
 		public int ValueMinLength { get; set; } = 3;
+		/// <summary>
+		/// default: 30. If string length is less than N, it will bypass parsing Xml document.
+		/// </summary>
+		public int XmlMinLength { get; set; } = 30;
+		/// <summary>
+		/// default: 15. If string length is less than N, it will bypass parsing Json document.
+		/// </summary>
+		public int JsonMinLength { get; set; } = 15;
 		#endregion
 
+		#region -- masker settings --
+
+		///// <summary>
+		///// Masking Options for <see cref="IMasker"/> or <see cref="IUrlMasker"/>
+		///// </summary>
+		//public MaskingOptions MaskingOptions { get; set; }
+
+		public string RegexCheckChars { get; set; } = MaskingProfile.DefaultRegexCheckChars;
+
+		internal const string DefaultRegexCheckChars = "+*?[]|().\\^$";
+
 		/// <summary>
-		/// Masking Options for <see cref="IMasker"/> or <see cref="IUrlMasker"/>
+		/// Important: suggest ignore case. so default: true.
 		/// </summary>
-		public MaskingOptions MaskingOptions { get; set; }
+		public bool KeyedMaskerPoolIgnoreCase { get; set; } = true;
+
+		public int KeyNameLenLimitToCache { get; set; }
+
+		#endregion
+
+		#region -- masking settings: rules related properties --
 
 		/// <summary>
 		/// optional NamedFormatterDefinitions
@@ -81,10 +115,10 @@ namespace Slin.Masking
 		/// </summary>
 		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; } = new List<UrlMaskingPattern>();
 
-		//private Action OnProfileValidation { get; private set; }
+		#endregion
 
 		/// <summary>
-		/// TODO validation inside post configuration
+		/// validation inside post configuration. The important thing here is set NamedFormatterDefinitions formatters's name by item.key.
 		/// </summary>
 		/// <exception cref="Exception"></exception>
 		public void Normalize()
@@ -92,16 +126,21 @@ namespace Slin.Masking
 			foreach (var item in NamedFormatterDefintions)
 			{
 				//if (string.IsNullOrEmpty(item.Value.Name)) 
-				item.Value.Name = item.Key;
+				item.Value.Name = item.Key.ToLower();
 			}
 
+			if (string.IsNullOrWhiteSpace(RegexCheckChars)) {
+				RegexCheckChars = DefaultRegexCheckChars;
+			}
+
+#if DEBUG
 			foreach (var item in Rules)
 			{
 				if (item.Value.Formatters == null || item.Value.Formatters.Count == 0)
 				{
 					//todo wanning
 #if DEBUG
-					throw new Exception("Formatters should be be null or none set");
+					throw new Exception($"Formatters should be be null or none set. Rule key: {item.Key}");
 #endif
 				}
 
@@ -111,6 +150,7 @@ namespace Slin.Masking
 					//if(fmt.Name)
 				}
 			}
+#endif
 		}
 	}
 }

@@ -6,6 +6,12 @@ using System.Text.RegularExpressions;
 
 namespace Slin.Masking
 {
+	public sealed class MaskingConstants
+	{
+		public const string PatternCaseInsensitiveSuffix = "(?#caseinsensitive)";
+		public const string PatternCaseSensitiveSuffix = "(?#casesensitive)";
+	}
+
 	internal interface IKeyedMasker
 	{
 		string KeyName { get; }
@@ -19,9 +25,18 @@ namespace Slin.Masking
 	{
 		private readonly IMaskingContext _context;
 
+		/// <summary>
+		/// NOTE: KeyName by default is case-sensitive. 
+		/// If want it be case-sensitive, please use lower-cased '(?#casesensitive)' as suffix to indicate ignore case or not when using it's a regex. For example: '[first|last]name(?#casesensitive)'.
+		/// </summary>
 		public string KeyName { get; set; } = "";
 
 		public List<IValueFormatter> Formatters { get; set; }
+
+		/// <summary>
+		/// default: 30
+		/// </summary>
+		public int KeyNameLenLimitToCache { get; set; } = 30;
 
 		public KeyedMasker(IMaskingContext context, MaskRuleDefinition source)
 		{
@@ -31,7 +46,15 @@ namespace Slin.Masking
 				.Select(o => new ValueFormatter(context, o));
 
 			KeyName = source.KeyName;
+
+			if (source.IngoreKeyCase && !KeyName.EndsWith(MaskingConstants.PatternCaseInsensitiveSuffix))
+			{
+				KeyName += MaskingConstants.PatternCaseInsensitiveSuffix;
+			}
+
 			Formatters = new List<IValueFormatter>(formatters);
+
+			KeyNameLenLimitToCache = Math.Min(_context.Options.KeyNameLenLimitToCache, source.KeyNameLenLimitToCache);
 		}
 
 		//todo this should not be

@@ -13,11 +13,11 @@ namespace Slin.Masking
 {
 	internal interface IMaskingContext
 	{
+		IMaskingOptions Options { get; }
+
 		Regex GetOrAddRegex(string pattern, RegexOptions options);
 
 		Regex GetRequiredRegex(string pattern);
-
-		//bool IsEligible(string actualKeyName, string fieldValue);
 
 		bool IsLikePattern(string fieldName);
 
@@ -33,9 +33,9 @@ namespace Slin.Masking
 
 	internal class MaskingContext : IMaskingContext
 	{
-		protected Dictionary<string, ValueFormatterDefinition> NamedFormatters => _profile.NamedFormatterDefintions;
+		protected Dictionary<string, ValueFormatterDefinition> NamedFormatters => Options.NamedFormatterDefintions;
 
-		protected Dictionary<string, MaskRuleDefinition> Items => _profile.Rules;
+		protected Dictionary<string, MaskRuleDefinition> Items => Options.Rules;
 
 		//private readonly Dictionary<string, MaskRuleDefinition> _lookup = new Dictionary<string, MaskRuleDefinition>();
 
@@ -49,21 +49,21 @@ namespace Slin.Masking
 		/// <summary>
 		/// maybe it's not good to use public here, but it's intenal use. so just keep it here
 		/// </summary>
-		public List<UrlMaskingPattern> UrlMaskingPatterns => _profile.UrlMaskingPatterns;
+		public List<UrlMaskingPattern> UrlMaskingPatterns => Options.UrlMaskingPatterns;
 
-		private readonly MaskingProfile _profile;
+		public IMaskingOptions Options { get; }
 
 		public IMaskFormatter MaskFormatter { get; private set; }
 
 		private bool _initalized = false;
 
-		public MaskingContext(MaskingProfile profile, IMaskFormatter maskFormatter = null)
+		public MaskingContext(IMaskingOptions options, IMaskFormatter maskFormatter = null)
 		{
-			_profile = profile;
+			Options = options;
 
 			//todo print configurations
 
-			if (_profile.MaskingOptions.KeyCaseInsensitive)
+			if (Options.KeyedMaskerPoolIgnoreCase)
 			{
 				_pooled = new ConcurrentDictionary<string, KeyedMasker>(StringComparer.OrdinalIgnoreCase);
 			}
@@ -73,15 +73,6 @@ namespace Slin.Masking
 			}
 
 			MaskFormatter = maskFormatter ?? new MaskFormatter();
-
-			if (_profile.MaskingOptions == null)
-			{
-				_profile.MaskingOptions = MaskingOptions.Default;
-			}
-			else if (_profile.MaskingOptions.PatternCheckChars == null || _profile.MaskingOptions.PatternCheckChars.Count == 0)
-			{
-				_profile.MaskingOptions.PatternCheckChars = new List<char>(MaskingOptions.Default.PatternCheckChars);
-			}
 
 			Initialize();
 
@@ -106,8 +97,8 @@ namespace Slin.Masking
 					else
 					{
 						definition.Formatters.RemoveAt(i);
-						if (_profile.MaskingOptions.ThrowIfNamedProfileNotFound)
-							throw new Exception($"{nameof(_profile.NamedFormatterDefintions)} does not found: {formatter.Name}");
+
+						throw new Exception($"{nameof(Options.NamedFormatterDefintions)} does not found: {formatter.Name}");
 					}
 				}
 			}
@@ -118,9 +109,6 @@ namespace Slin.Masking
 		private void Initialize()
 		{
 			if (_initalized) throw new Exception("already initialized");
-
-			RegexOptions keyRegOptions = _profile.MaskingOptions.GetKeyNameRegexOptions();
-			RegexOptions valRegOptions = _profile.MaskingOptions.GetValuePatternRegexOptions();
 
 			var normalized = new List<KeyedMasker>();
 
@@ -141,13 +129,19 @@ namespace Slin.Masking
 					_pooled.TryAdd(item.KeyName, item);
 
 					if (IsLikePattern(item.KeyName))
-						GetOrAddRegex(item.KeyName, keyRegOptions);
+					{
+						if (item.KeyName.EndsWith("(?#casesensitive)"))
+							GetOrAddRegex(item.KeyName, RegexOptions.Compiled);
+						else
+							GetOrAddRegex(item.KeyName, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+					}
+
 
 					int idx = 0;
 					foreach (var fmter in item.Formatters)
 					{
-						if (IsLikePattern(fmter.ValuePattern))
-							GetOrAddRegex(fmter.ValuePattern, valRegOptions);
+						if (fmter.HasValuePatterned)
+							GetOrAddRegex(fmter.ValuePattern, fmter.IgnoreCase ? RegexOptions.Compiled | RegexOptions.IgnoreCase : RegexOptions.Compiled);
 
 						if (!string.IsNullOrEmpty(fmter.Format) && MaskFormatter.IsFormatMatched(fmter.Format))
 						{
@@ -164,9 +158,9 @@ namespace Slin.Masking
 				}
 			}
 
-			if (this.UrlMaskingPatterns != null)
+			if (UrlMaskingPatterns != null)
 			{
-				this.UrlMaskingPatterns.ForEach(item =>
+				UrlMaskingPatterns.ForEach(item =>
 				{
 					if (!item.Enabled) return;
 					if (string.IsNullOrWhiteSpace(item.Pattern)) return;
@@ -178,7 +172,7 @@ namespace Slin.Masking
 
 						PooledRegex.TryAdd(item.CacheKey, reg);
 					}
-					catch (Exception ex)
+					catch (Exception)
 					{
 						//todo logging						
 					}
@@ -191,7 +185,7 @@ namespace Slin.Masking
 
 		public bool IsLikePattern(string input)
 		{
-			return _profile.MaskingOptions.PatternCheckChars.Any(c => input.Contains(c));
+			return input != null && Options.RegexCheckChars.Any(c => input.Contains(c));
 		}
 
 		public Regex GetOrAddRegex(string pattern, RegexOptions options)
@@ -227,7 +221,10 @@ namespace Slin.Masking
 				{
 					if (GetRequiredRegex(item.KeyName).IsMatch(key))
 					{
-						_pooled.TryAdd(key, item);
+						//TODO maybe we'd better to add limits here
+						if (item.KeyNameLenLimitToCache <= 0 
+							|| key.Length < item.KeyNameLenLimitToCache)
+							_pooled.TryAdd(key, item);
 
 						return item;
 					}
@@ -235,21 +232,5 @@ namespace Slin.Masking
 			}
 			return null;
 		}
-
 	}
-
-	//public static class MaskingExtensions
-	//{
-	//	public static bool UseDefaultMasker(this IServiceCollection definition, string name)
-	//	{
-	//		if (definition.FieldNamePatterned)
-	//		{
-
-	//		}
-	//		else
-	//		{
-	//			if (name != definition.KeyName) return false;
-	//		}
-	//	}
-	//}
 }

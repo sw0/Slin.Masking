@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace Slin.Masking
 {
+	/// <summary>
+	/// ObjectMaskingOptions is options for <see cref="ObjectMasker"/>.
+	/// </summary>
 	public class ObjectMaskingOptions : IObjectMaskingOptions
 	{
 		/// <summary>
@@ -11,30 +14,37 @@ namespace Slin.Masking
 		public bool Enabled { get; set; } = true;
 
 		/// <summary>
-		/// default false. works with <see cref="UrlKeys"/>
+		/// default false. It works with <see cref="UrlKeys"/> and rules defined in <see cref="UrlMaskingPattern"/>.
 		/// </summary>
 		public bool MaskUrlEnabled { get; set; }
 
 		/// <summary>
-		/// specify which keys will treated as URL or Query(kvp). Will be used when <see cref="MaskUrlEnabled"/>
+		/// specify which keys will treated as URL or Query(kvp). Will be used when <see cref="MaskUrlEnabled"/> is true.
 		/// </summary>
 		public List<string> UrlKeys { get; set; } = new List<string>();
 
 		/// <summary>
-		/// SerializedKeys with string value value will be tried deserialized and get masked if <see cref="MaskJsonSerializedEnabled"/> or <see cref="MaskXmlSerializedEnabled"/>(Not implemented yet) is true.
+		/// SerializedKeys with string value value will be tried deserialized and get masked if <see cref="MaskJsonSerializedEnabled"/> or <see cref="MaskXmlSerializedEnabled"/> is true.
 		/// </summary>
 		public List<string> SerializedKeys { get; set; }
 
 		/// <summary>
-		/// default: true. When true, SerializedKeys
+		/// default: true. It works with <see cref="SerializedKeys"/>, <see cref="JsonMinLength"/>.
 		/// </summary>
 		public bool MaskJsonSerializedEnabled { get; set; } = true;
 
 		/// <summary>
-		/// NOT SUPPORTED YET!!!
+		/// default: false. It works with <see cref="SerializedKeys"/>, <see cref="XmlMinLength"/>.
 		/// </summary>
-		public bool MaskXmlSerializedEnabled { get; set; } = true;
-
+		public bool MaskXmlSerializedEnabled { get; set; } = false;
+		/// <summary>
+		/// default false.
+		/// </summary>
+		public bool MaskXmlSerializedOnXmlAttributeEnabled { get; set; } = false;
+		/// <summary>
+		/// default false
+		/// </summary>
+		public bool MaskJsonSerializedOnXmlAttributeEnabled { get; set; } = false;
 		/// <summary>
 		/// Will be used to indicates comparison for Serialized Keys or Url Keys against property name
 		/// </summary>
@@ -57,9 +67,23 @@ namespace Slin.Masking
 
 		/// <summary>
 		/// Default: 3. 
-		/// If value.Length < N, it mask engine will bypass it.
-		/// For name it might be short. So set it to 3
+		/// If value.Length is less then N, masker will bypass it, because it usually does not contain secnsitive data.
+		/// For name it might be short. So set it to 3. Like firstname, lastname.
 		/// </summary>
 		public int ValueMinLength { get; set; } = 3;
+		/// <summary>
+		/// default: 30. If string length is less than N, it will bypass parsing Xml document.
+		/// Because, such document is too small and probably does not contains data eligible for masking.
+		/// This is used when <see cref="MaskXmlSerializedEnabled"/> is enabled.
+		/// </summary>
+		public int XmlMinLength { get; set; } = 30;
+		/// <summary>
+		/// default: 15. If string length is less than N, it will bypass parsing Json document.
+		/// null or empty string is actually a simple document, probably does not contains data eligible for masking
+		/// This is used when <see cref="MaskJsonSerializedEnabled"/> is enabled.
+		/// </summary>
+		public int JsonMinLength { get; set; } = 15;
+
+		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; }
 	}
 }

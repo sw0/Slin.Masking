@@ -11,7 +11,9 @@ namespace Slin.Masking.Tests
 		{
 			var services = new ServiceCollection();
 			var configBuilder = new ConfigurationBuilder();
-			configBuilder.AddJsonFile("masking.json");
+			configBuilder
+				.AddJsonFile("masking.json")
+				.AddJsonFile("masking.custom.json", true);
 
 			var configuration = configBuilder.Build();
 
@@ -19,22 +21,21 @@ namespace Slin.Masking.Tests
 			services.Configure<MaskingProfile>(configuration.GetSection("Masking"))
 				.PostConfigure<MaskingProfile>((options) => options.Normalize());
 
-			services.AddScoped<MaskingProfile>(provider =>
+			services.AddScoped<IMaskingProfile>(provider =>
 			{
 				var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
 				return profile;
 			});
 			services.AddScoped<IObjectMaskingOptions>(provider =>
 			{
-				var profile = provider.GetRequiredService<MaskingProfile>();
+				var profile = provider.GetRequiredService<IMaskingProfile>();
 				return profile;
 			});
-
-			//services.AddScoped<ObjectMaskingOptions>(provider =>
-			//{
-			//	var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
-			//	return profile.ObjectMaskingOptions;
-			//});
+			services.AddScoped<IMaskingOptions>(provider =>
+			{
+				var profile = provider.GetRequiredService<IMaskingProfile>();
+				return profile;
+			});
 
 			services.AddScoped<IMasker, Masker>();
 			services.AddScoped<IUrlMasker, Masker>();

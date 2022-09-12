@@ -7,6 +7,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Text.Encodings.Web;
 using System;
+using NLog.Layouts;
 
 namespace Slin.Masking.NLog
 {
@@ -17,10 +18,13 @@ namespace Slin.Masking.NLog
 	{
 		public readonly IObjectMasker _objectMasker;
 
-
 		private string _mode = "object";
 		/// <summary>
-		/// Mode: OBJECT, URL, RESERIALIZE
+		/// Mode: 
+		/// - object (default)
+		/// - url
+		/// - reserialize
+		/// - disabled : masking is disabled
 		/// </summary>
 		public string Mode
 		{
@@ -45,202 +49,98 @@ namespace Slin.Masking.NLog
 		/// <param name="logEvent">Logging event.</param>
 		protected override void Append(StringBuilder builder, LogEventInfo logEvent)
 		{
-			if (logEvent.HasProperties)
+			if (logEvent.Properties == null || logEvent.Properties.Count == 0 || !logEvent.HasProperties)
+				return;
+
+			if (!string.IsNullOrEmpty(Item))
 			{
-				if (logEvent.Properties == null || logEvent.Properties.Count == 0)
-					return;
+				//NOTE: here it's case sensitive here!!!
+				if (!logEvent.Properties.ContainsKey(Item)) return;
+			}
 
-				if (!_objectMasker.IsEnabled)
+			if (Mode.StartsWith("disable"))//including disabled
+			{
+				if (string.IsNullOrEmpty(Item))
 				{
-					var converter = this.ResolveService<IJsonConverter>();
-					converter.SerializeObject(logEvent.Properties, builder);
-					return;
-				}
+					var converter = ResolveService<IJsonConverter>();
 
-				if (!string.IsNullOrEmpty(Item))
-				{
-					if (!logEvent.Properties.ContainsKey(Item)) return;
-				}
-
-				if (Mode == "url")
-				{
-					if (string.IsNullOrEmpty(Item)) return;//todo warning
-
-					if (!logEvent.Properties.TryGetValue(Item, out var value))
+					var started = false;
+					builder.Append('{');
+					foreach (var item in logEvent.Properties)
 					{
-						return;
-					}
-					if (value is string url)
-					{
-						var masked = _objectMasker.MaskUrl(url);
-						builder.Append(string.Concat("\"", masked, "\""));
-					}
-					else
-					{
-						MaskObject(value, builder);
-					}
-				}
-				else if (Mode == "reserialize")
-				{
-					if (!string.IsNullOrEmpty(Item) && logEvent.Properties.TryGetValue(Item, out var value))
-					{
-						if (value == null)
-							return;
+						if (started) builder.Append(',');
+						else { started = true; }
 
-						if (value is string str)
-						{
-							if ((str.StartsWith("{") && str.EndsWith("}")
-							|| str.StartsWith("[") && str.EndsWith("]")))
-							{
-								try
-								{
-									var data = JsonObject.Parse(str);
-
-									var serialized = JsonSerializer.SerializeToNode(data, new JsonSerializerOptions
-									{
-										Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-									});
-
-									var masked = _objectMasker.MaskJsonObjectString(serialized);
-									builder.Append(masked);
-								}
-								catch (Exception)
-								{
-									//todo logging
-									builder.Append("\"parsed failed\"");
-								}
-							}
-							else
-							{
-								builder.Append(str);
-							}
-						}
-						else
-						{
-							MaskObject(value, builder);
-						}
+						builder.Append('"').Append(item.Key)
+							.Append('"').Append(':');
+						converter.SerializeObject(item.Value, builder);
 					}
+					builder.Append('}');
 				}
 				else
 				{
-					object data;
-					if (string.IsNullOrEmpty(Item))
-					{
-						data = logEvent.Properties;
-					}
-					else
-					{
-						logEvent.Properties.TryGetValue(Item, out data);
-					}
+					var value = logEvent.Properties[Item];
 
-					MaskObject(data, builder);
+					if (value != null)
+					{
+						var converter = this.ResolveService<IJsonConverter>();
+						converter.SerializeObject(value, builder);
+					}
 				}
-				//try { System.IO.File.WriteAllText(@"c:\tmp\abcd.log", serialized); } catch { }
+				return;
 			}
-		}
-
-		private void MaskObject(object data, StringBuilder builder)
-		{
-			if (data != null)
+			else if (Mode == "url")
 			{
-				var serialized = JsonSerializer.SerializeToNode(data, new JsonSerializerOptions
-				{
-					Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-				});
+				if (string.IsNullOrEmpty(Item)) return;//todo warning
 
-				var masked = _objectMasker.MaskJsonObjectString(serialized);
-				builder.Append(masked);
+				if (!logEvent.Properties.TryGetValue(Item, out var value))
+				{
+					return;
+				}
+				if (value is string url)
+				{
+					var masked = _objectMasker.MaskUrl(url);
+					builder.Append(string.Concat("\"", masked, "\""));
+				}
+				else
+				{
+					var masked = _objectMasker.MaskObject(value);
+					builder.Append(string.Concat("\"", masked, "\""));
+				}
+			}
+			else if (Mode == "reserialize")
+			{
+				if (!string.IsNullOrEmpty(Item) && logEvent.Properties.TryGetValue(Item, out var value))
+				{
+					if (value == null)
+						return;
+
+					var masked = _objectMasker.MaskObject(value);
+					builder.Append(masked);
+				}
+				else
+				{
+					//warnning
+					//do nothing, item is not set!
+				}
+			}
+			else
+			{
+				object data;
+				if (string.IsNullOrEmpty(Item))
+				{
+					data = logEvent.Properties;
+				}
+				else
+				{
+					logEvent.Properties.TryGetValue(Item, out data);
+				}
+				if (data != null)
+				{
+					var masked = _objectMasker.MaskObject(data);
+					builder.Append(masked);
+				}
 			}
 		}
 	}
-
-
-	//[LayoutRenderer("event-property-object-masker")]
-	//[ThreadAgnostic]
-	//[MutableUnsafe]
-	//public class EventPropertyObjectMaskLayoutRenderer : LayoutRenderer
-	//{
-	//	public readonly IObjectMasker _objectMasker;
-
-	//	[DefaultParameter]
-	//	public string PropertyName { get; set; }
-
-	//	public EventPropertyObjectMaskLayoutRenderer() : base()
-	//	{
-	//		_objectMasker = ResolveService<IObjectMasker>();
-	//	}
-
-	//	/// <summary>
-	//	/// Renders the specified environmental information and appends it to the specified <see cref="T:System.Text.StringBuilder" />.
-	//	/// </summary>
-	//	/// <param name="builder">The <see cref="T:System.Text.StringBuilder" /> to append the rendered data to.</param>
-	//	/// <param name="logEvent">Logging event.</param>
-	//	protected override void Append(StringBuilder builder, LogEventInfo logEvent)
-	//	{
-	//		if (logEvent.Properties.TryGetValue(PropertyName, out object value) && value != null)
-	//		{
-	//			if (_objectMasker.IsEnabled)
-	//			{
-	//				var serialized = JsonSerializer.SerializeToNode(value, new JsonSerializerOptions
-	//				{
-	//					Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-	//				});
-
-	//				var masked = _objectMasker.MaskJsonObjectString(serialized);
-	//				builder.Append(masked);
-
-	//			}
-	//			else
-	//			{
-	//				var converter = this.ResolveService<IJsonConverter>();
-	//				converter.SerializeObject(value, builder);
-	//			}
-	//		}
-	//	}
-	//}
-
-	//[LayoutRenderer("masked-url")]
-	//[ThreadAgnostic]
-	//[MutableUnsafe]
-	//public class EventPropertyUrlMaskLayoutRenderer : LayoutRenderer
-	//{
-	//	private readonly IObjectMasker _objectMasker = null;
-
-	//	[DefaultParameter]
-	//	public string PropertyName { get; set; }
-	//	//public List<string> Patterns { get; set; }
-
-	//	public EventPropertyUrlMaskLayoutRenderer() : base()
-	//	{
-	//		_objectMasker = this.ResolveService<IObjectMasker>();
-	//	}
-
-	//	/// <summary>
-	//	/// Renders the specified environmental information and appends it to the specified <see cref="T:System.Text.StringBuilder" />.
-	//	/// </summary>
-	//	/// <param name="builder">The <see cref="T:System.Text.StringBuilder" /> to append the rendered data to.</param>
-	//	/// <param name="logEvent">Logging event.</param>
-	//	protected override void Append(StringBuilder builder, LogEventInfo logEvent)
-	//	{
-	//		if (logEvent.Properties.TryGetValue(PropertyName, out object value) && value != null && (value is string || value is Uri))
-	//		{
-	//			//if (_objectMasker.IsEnabled)
-	//			//{
-	//			//	var serialized = JsonSerializer.SerializeToNode(value, new JsonSerializerOptions
-	//			//	{
-	//			//		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-	//			//	});
-
-	//			//	var masked = _objectMasker.MaskJsonObjectString(serialized);
-	//			//	builder.Append(masked);
-
-	//			//}
-	//			//else
-	//			//{
-	//			//	var converter = this.ResolveService<IJsonConverter>();
-	//			//	converter.SerializeObject(value, builder);
-	//			//}
-	//		}
-	//	}
-	//}
 }

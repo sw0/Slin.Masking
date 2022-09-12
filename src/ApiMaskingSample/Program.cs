@@ -5,32 +5,11 @@ using NLog.Web;
 using Slin.Masking;
 using Slin.Masking.NLog;
 
-var logger = LogManager.Setup(setupBuilder: (setupBuilder) =>
-{
-	var configBuilder = new ConfigurationBuilder();
-	configBuilder.AddJsonFile("masking.json")
-	.AddJsonFile("masking.user.json", true);
-	var cfg = configBuilder.Build();
+var logger = LogManager
+	.Setup(setupBuilder: (setupBuilder) => setupBuilder.UseMasking("masking.json"))
+	.GetCurrentClassLogger();
 
-	var profile = cfg.GetSection("masking").Get<MaskingProfile>();
-	profile.Normalize();
-
-	var masker = new Masker(profile);
-
-	//setupBuilder.SetupSerialization(serialization =>
-	//{
-	//	serialization.RegisterJsonConverter(new JsonConverter2());
-	//});
-	setupBuilder.SetupExtensions(s =>
-	   //s.RegisterLayoutRenderer("trace_id", (logevent) => CorrelationIdentifier.TraceId.ToString())
-	   s.RegisterSingletonService<IMasker>(masker)
-	   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))	   
-	   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
-	   //.RegisterLayoutRenderer<EventPropertyObjectMaskLayoutRenderer>("event-property-object-masker")
-	   //.RegisterLayoutRenderer<EventPropertyObjectMaskLayoutRenderer>("event-property-url-masker")
-	);
-}).GetCurrentClassLogger();
-NLog.LogManager.ConfigurationChanged += (object? sender, NLog.Config.LoggingConfigurationChangedEventArgs e) =>
+LogManager.ConfigurationChanged += (object? sender, NLog.Config.LoggingConfigurationChangedEventArgs e) =>
 {
 	NLog.LogManager.Configuration.Reload();
 	NLog.LogManager.ReconfigExistingLoggers();
@@ -44,7 +23,7 @@ try
 
 	// Add services to the container.
 	builder.Configuration.AddJsonFile("masking.json")
-	.AddJsonFile("masking.user.json", true);
+	.AddJsonFile("masking.custom.json", true);
 	
 	builder.Services.AddControllers();
 	// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -64,7 +43,7 @@ try
 		logging.RequestBodyLogLimit = 40960;
 		logging.ResponseBodyLogLimit = 40960;
 	});
-	builder.Services.AddSingleton<MaskingProfile>(sp =>
+	builder.Services.AddSingleton<IMaskingProfile>(sp =>
 	{
 		var cfg = sp.GetRequiredService<IConfiguration>();
 		var profile = cfg.GetSection("masking").Get<MaskingProfile>();
@@ -72,11 +51,11 @@ try
 	});
 	builder.Services.AddSingleton<IObjectMaskingOptions>(sp =>
 	{
-		return sp.GetRequiredService<MaskingProfile>();
-		//var cfg = sp.GetRequiredService<IConfiguration>();
-
-		//var logMaskOptions = cfg.GetSection("masking:ObjectMaskingOptions").Get<ObjectMaskingOptions>();
-		//return logMaskOptions;
+		return sp.GetRequiredService<IMaskingProfile>();
+	});
+	builder.Services.AddSingleton<IMaskingOptions>(sp =>
+	{
+		return sp.GetRequiredService<IMaskingProfile>();
 	});
 	builder.Services.AddSingleton<IMasker, Masker>();
 	builder.Services.AddSingleton<IObjectMasker, ObjectMasker>();
@@ -112,7 +91,6 @@ try
 		};
 
 		MappedDiagnosticsLogicalContext.Set("correlcationId", value);
-		MappedDiagnosticsLogicalContext.Set("correlcationId2", DateTime.Now.Ticks.ToString());
 		await next(context);
 	});
 
