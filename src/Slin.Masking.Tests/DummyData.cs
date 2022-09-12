@@ -31,6 +31,8 @@ namespace Slin.Masking.Tests
 		public const string UrlFull = Url1 + UrlQuery2;
 		public const string UrlFullEncoded = Url1 + UrlQuery2Encoded;
 
+		public static readonly byte[] ImageData = new byte[0];
+
 		public const string Xml1 = $@"<?xml version = ""1.0""?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV = ""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle = ""http://www.w3.org/2001/12/soap-encoding"">
 
@@ -83,6 +85,12 @@ namespace Slin.Masking.Tests
 			Balance = 9999.99m,
 		};
 
+		static DummyData()
+		{
+			ImageData = new byte[200];
+			Random.Shared.NextBytes(ImageData);
+		}
+
 		public static List<KeyValuePair<string, object>> CreateLogEntry()
 		{
 			var data = new List<KeyValuePair<string, object>>();
@@ -95,6 +103,7 @@ namespace Slin.Masking.Tests
 			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
 			data.Add(new KeyValuePair<string, object>("query", DummyData.UrlQuery2));
 			data.Add(new KeyValuePair<string, object>("requestUrl", DummyData.UrlFull));
+			data.Add(new KeyValuePair<string, object>("imagedata", DummyData.ImageData));
 
 			var d1 = new
 			{

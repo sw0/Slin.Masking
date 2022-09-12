@@ -59,6 +59,8 @@ namespace Slin.Masking
 
 		public MaskingContext(IMaskingOptions options, IMaskFormatter maskFormatter = null)
 		{
+			if(options == null)	throw new ArgumentNullException("options");
+
 			Options = options;
 
 			//todo print configurations

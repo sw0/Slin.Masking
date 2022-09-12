@@ -17,24 +17,31 @@ namespace Slin.Masking.NLog
 		/// <param name="jsonFile"></param>
 		public static void UseMasking(this ISetupBuilder setupBuilder, string jsonFile = "masking.json")
 		{
-			var fn = System.IO.Path.GetFileName(jsonFile);
+			try
+			{
+				var fn = System.IO.Path.GetFileNameWithoutExtension(jsonFile);
 
-			var configBuilder = new ConfigurationBuilder();
-			configBuilder.AddJsonFile($"{fn}.json")
-			.AddJsonFile($"{fn}.custom.json", true);
-			var cfg = configBuilder.Build();
+				var configBuilder = new ConfigurationBuilder();
+				configBuilder.AddJsonFile($"{fn}.json")
+				.AddJsonFile($"{fn}.custom.json", true);
+				var cfg = configBuilder.Build();
 
-			var profile = cfg.GetSection("masking").Get<MaskingProfile>();
-			profile.Normalize();
+				var profile = cfg.GetSection("masking").Get<MaskingProfile>();
+				profile.Normalize();
 
-			var masker = new Masker(profile);
+				var masker = new Masker(profile);
 
-			setupBuilder.SetupExtensions(s =>
-			   s.RegisterSingletonService<IMaskingProfile>(profile)
-			   //.RegisterSingletonService<IMasker>(masker)
-			   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
-			   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
-			);
+				setupBuilder.SetupExtensions(s =>
+				   s.RegisterSingletonService<IMaskingProfile>(profile)
+				   //.RegisterSingletonService<IMasker>(masker)
+				   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
+				   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
+				);
+			}
+			catch (Exception)
+			{
+				throw;
+			}
 		}
 
 		/// <summary>
@@ -44,16 +51,23 @@ namespace Slin.Masking.NLog
 		/// <param name="profile"></param>
 		public static void UseMasking(this ISetupBuilder setupBuilder, IMaskingProfile profile)
 		{
-			profile.Normalize();
+			try
+			{
+				profile.Normalize();
 
-			var masker = new Masker(profile);
+				var masker = new Masker(profile);
 
-			setupBuilder.SetupExtensions(s => s
-			.RegisterSingletonService<IMaskingProfile>(profile)
-			//.RegisterSingletonService<IMasker>(masker)
-			.RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
-			.RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
-			);
+				setupBuilder.SetupExtensions(s => s
+				.RegisterSingletonService<IMaskingProfile>(profile)
+				//.RegisterSingletonService<IMasker>(masker)
+				.RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
+				.RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
+				);
+			}
+			catch (Exception)
+			{
+				throw;
+			}
 		}
 	}
 }

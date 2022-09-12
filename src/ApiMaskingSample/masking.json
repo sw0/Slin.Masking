@@ -97,7 +97,8 @@
       "Password": { "Formatters": [ { "Format": "*" } ] },
       "PhoneNumber": { "Formatters": [ { "Format": "L4" } ] },
       "temperatureC": { "Formatters": [ { "Format": "null" } ] },
-      "temperaturef": { "Formatters": [ { "name": "null" } ] }
+      "temperaturef": { "Formatters": [ { "name": "null" } ] },
+      "imaGeData": { "Formatters": [ { "name": "REDACTED" } ] }
     }
   }
 }

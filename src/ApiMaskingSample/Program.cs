@@ -15,7 +15,7 @@ LogManager.ConfigurationChanged += (object? sender, NLog.Config.LoggingConfigura
 	NLog.LogManager.ReconfigExistingLoggers();
 };
 
-logger.Debug("init main");
+logger.Debug($"init main. Slin.Masking version: {typeof(Masker).Assembly.GetName().Version}, Slin.Masking.NLog version: {typeof(NLogExtensions).Assembly.GetName().Version}");
 
 try
 {
