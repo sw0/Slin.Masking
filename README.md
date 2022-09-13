@@ -232,11 +232,10 @@ Here, Slin.Masking.NLog is opinioned for JSON layout. In Slin.Masking.NLog, `Eve
 
 It has following properties:
 
-1. Mode, and `Mode` must be one of these: `object`, `url`,`reserialize` and `disabled` (**all case-sensitive here!**). `object` is default value.
+1. Mode, and `Mode` must be one of these: `object`, `url`,`reserialize` (**all case-sensitive here!**). `object` is default value.
    * object: it will try mask the object base on the rules. 
    * url: need work with property `Item`. it will try to get the speicific item as string and mask it.
    * reserialize: need `Item` specified. It will get the value by specific key set in `Item`, and try to deserialize it as JSON or XML document and mask the object.
-   * disabled: it will not mask, and use normal JSON serializer defined in NLog.
 2. Item, it's used to specify the specific object by key set in `Item` here and do the masking.
 
 Example:
@@ -262,6 +261,14 @@ Example:
 ```xml
 <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize}" />
 ```
+
+4. Disabled and render log without masking but use normal JSON serializer defined in NLog.
+
+   ```
+   <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize:Disabled=true}" />
+   ```
+
+   
 
 # Details
 

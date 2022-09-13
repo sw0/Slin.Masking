@@ -15,7 +15,7 @@
 		<PackageReference Include="NLog.Web.AspNetCore" Version="5.1.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		<PackageReference Include="System.ObjectModel" Version="4.3.0" />
-		<PackageReference Include="Slin.Masking.NLog" Version="0.1.18" />
+		<PackageReference Include="Slin.Masking.NLog" Version="0.1.21" />
 	</ItemGroup>
 
 	<ItemGroup>

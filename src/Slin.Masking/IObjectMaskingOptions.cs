@@ -4,7 +4,7 @@ namespace Slin.Masking
 {
 	public interface IObjectMaskingOptions
 	{
-		//bool Enabled { get; }
+		bool Enabled { get; }
 		bool MaskJsonNumberEnabled { get; }
 		bool MaskJsonSerializedEnabled { get; }
 		bool MaskUrlEnabled { get; }

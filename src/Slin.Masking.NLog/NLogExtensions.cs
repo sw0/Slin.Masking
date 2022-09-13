@@ -35,7 +35,7 @@ namespace Slin.Masking.NLog
 				   s.RegisterSingletonService<IMaskingProfile>(profile)
 				   //.RegisterSingletonService<IMasker>(masker)
 				   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
-				   .RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
+				   .RegisterLayoutRenderer<EventPropertiesMaskerLayoutRenderer>("event-properties-masker")
 				);
 			}
 			catch (Exception)
@@ -61,7 +61,7 @@ namespace Slin.Masking.NLog
 				.RegisterSingletonService<IMaskingProfile>(profile)
 				//.RegisterSingletonService<IMasker>(masker)
 				.RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
-				.RegisterLayoutRenderer<EventPropertiesMaskLayoutRenderer>("event-properties-masker")
+				.RegisterLayoutRenderer<EventPropertiesMaskerLayoutRenderer>("event-properties-masker")
 				);
 			}
 			catch (Exception)

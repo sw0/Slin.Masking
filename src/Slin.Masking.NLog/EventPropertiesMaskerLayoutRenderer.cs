@@ -14,7 +14,7 @@ namespace Slin.Masking.NLog
 	[LayoutRenderer("event-properties-masker")]
 	[ThreadAgnostic]
 	[MutableUnsafe]
-	public class EventPropertiesMaskLayoutRenderer : LayoutRenderer
+	public class EventPropertiesMaskerLayoutRenderer : LayoutRenderer
 	{
 		public readonly IObjectMasker _objectMasker;
 
@@ -24,7 +24,6 @@ namespace Slin.Masking.NLog
 		/// - object (default)
 		/// - url
 		/// - reserialize
-		/// - disabled : masking is disabled
 		/// </summary>
 		public string Mode
 		{
@@ -33,11 +32,16 @@ namespace Slin.Masking.NLog
 		}
 
 		/// <summary>
+		/// - disabled : masking is disabled
+		/// </summary>
+		public bool Disabled { get; set; }
+
+		/// <summary>
 		/// Property Name
 		/// </summary>
 		public string Item { get; set; }
 
-		public EventPropertiesMaskLayoutRenderer() : base()
+		public EventPropertiesMaskerLayoutRenderer() : base()
 		{
 			_objectMasker = ResolveService<IObjectMasker>();
 		}
@@ -58,7 +62,7 @@ namespace Slin.Masking.NLog
 				if (!logEvent.Properties.ContainsKey(Item)) return;
 			}
 
-			if (Mode.StartsWith("disable"))//including disabled
+			if (Disabled || !_objectMasker.Enabled)//including disabled
 			{
 				if (string.IsNullOrEmpty(Item))
 				{

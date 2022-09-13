@@ -26,10 +26,10 @@ namespace Slin.Masking
 	{
 		string MaskObject(object value);
 
-		///// <summary>
-		///// get if masking is enabled
-		///// </summary>
-		//bool IsEnabled { get; }
+		/// <summary>
+		/// get if masking is enabled
+		/// </summary>
+		bool Enabled { get; }
 	}
 
 	/// <summary>
@@ -104,7 +104,10 @@ namespace Slin.Masking
 		/// </summary>
 		protected bool MaskNestedKvpEnabled => _options.MaskNestedKvpEnabled;
 
-		//public bool IsEnabled => _options.Enabled;
+		/// <summary>
+		/// Enabled is exposed to caller. It has no internal logic check on it inside <see cref="ObjectMasker"/>.
+		/// </summary>
+		public bool Enabled => _options.Enabled;
 
 		private static readonly List<KeyKeyValueKey> DefaultKeyValueNames = new List<KeyKeyValueKey> {
 			new KeyKeyValueKey("Key","Value"),

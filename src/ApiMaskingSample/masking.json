@@ -1,5 +1,6 @@
 {
   "Masking": {
+    "Enabled": true, //default: true
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
     "MaskXmlSerializedEnabled": true, //Not Implemented

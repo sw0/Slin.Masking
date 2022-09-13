@@ -8,10 +8,10 @@ namespace Slin.Masking
 	{
 
 		#region -- object masking settings --
-		///// <summary>
-		///// enabled by default
-		///// </summary>
-		//public bool Enabled { get; set; } = true;
+		/// <summary>
+		/// enabled by default
+		/// </summary>
+		public bool Enabled { get; set; } = true;
 
 		/// <summary>
 		/// default false. works with <see cref="UrlKeys"/>
