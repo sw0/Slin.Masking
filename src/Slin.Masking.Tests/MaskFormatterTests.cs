@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using Slin.Masking;
 using Xunit;
+using System.Text.RegularExpressions;
 
 namespace Slin.Masking.Tests
 {
@@ -15,6 +16,7 @@ namespace Slin.Masking.Tests
 		[InlineData("{0:L2}")]
 		[InlineData("{0:R2}")]
 		[InlineData("{0:L2R2}")]
+		[InlineData("{0:##*##}")]
 		public void NullStringTest(string format)
 		{
 			var input = default(string);
@@ -39,6 +41,7 @@ namespace Slin.Masking.Tests
 		[InlineData("{0:L2}", "")]
 		[InlineData("{0:R2}", "")]
 		[InlineData("{0:L2R2}", "")]
+		[InlineData("{0:##*##}", "")]
 		public void EmptyStringTest(string format, string expected)
 		{
 			var input = "";
@@ -104,8 +107,10 @@ namespace Slin.Masking.Tests
 		[InlineData("{0:L2R2}", "12*****89")]
 		[InlineData("{0:L3R3}", "123***789")]
 		[InlineData("{0:L9R9}", "123456789")]
+		[InlineData("{0:L12R3}", "123456789")]
 		[InlineData("{0:L3R6}", "123456789")]
 		[InlineData("{0:L5R5}", "123456789")]
+		[InlineData("{0:#####*#####}", "123456789")]
 		public void SSNTest(string format, string expected)
 		{
 			var ssn = "123456789";
@@ -120,10 +125,12 @@ namespace Slin.Masking.Tests
 		[InlineData("{0:L2*3}", "12***")]
 		[InlineData("{0:R2*}", "*******89")]
 		[InlineData("{0:L2*3R2}", "12***89")]
+		[InlineData("{0:##***##}", "12***89")]
 		[InlineData("{0:L3*3R3}", "123***789")]
 		[InlineData("{0:L9*3R9}", "123456789")]
 		[InlineData("{0:L3*3R6}", "123456789")]
 		[InlineData("{0:L5*3R5}", "123456789")]
+		[InlineData("{0:#####***#####}", "123456789")]
 		public void SSNTest2(string format, string expected)
 		{
 			var ssn = "123456789";
@@ -136,6 +143,7 @@ namespace Slin.Masking.Tests
 		[InlineData("{0:*}", "****************")]
 		[InlineData("{0:L4*3R4}", "1234***3456")]
 		[InlineData("{0:L3*R3}", "123**********456")]
+		[InlineData("{0:###*###}", "123**********456")]
 		public void PanTest(string format, string expected)
 		{
 			var pan = "1234567890123456";
@@ -148,7 +156,26 @@ namespace Slin.Masking.Tests
 		[InlineData("Shawn", "{0:*}", "*****")]
 		[InlineData("Shawn", "{0:L2*}", "Sh***")]
 		[InlineData("Shawn", "{0:L3*R3}", "Shawn")]
+		[InlineData("Shawn", "{0:###*###}", "Shawn")]
 		public void NameTest(string input, string format, string expected)
+		{
+			var value = string.Format(new MaskFormatter(), format, input);
+			Assert.Equal(expected, value);
+		}
+
+		[Theory]
+		[InlineData("Shawn@jd.com", "{0:*@}", "*****@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:L2*@}", "Sh***@jd.com")]
+		[InlineData("a@jd.com", "{0:L3*R3@}", "a@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:L3*R3@}", "Shawn@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:###*###@}", "Shawn@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:L2*3R4@}", "Shawn@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:L1*3R1@}", "S***n@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:L1*5R1@}", "S***n@jd.com")]
+		[InlineData("Shawn@jd.com", "{0:#*****#@}", "S***n@jd.com")]
+		[InlineData("ShawnLin@jd.com", "{0:#********#@}", "S******n@jd.com")]
+		[InlineData("ShawnLin@jd.com", "{0:L2*8R2@}", "Sh****in@jd.com")]
+		public void EmailTest(string input, string format, string expected)
 		{
 			var value = string.Format(new MaskFormatter(), format, input);
 			Assert.Equal(expected, value);

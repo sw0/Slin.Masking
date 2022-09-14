@@ -22,8 +22,8 @@ In NetCore application (including Console or Web application). We need to do fol
 
 > 1. Install package
 
-```
-dotnet package add Slin.Masking.NLog
+```powershell
+dotnet add package Slin.Masking.NLog
 ```
 
 > 2. Setup NLog
@@ -70,7 +70,7 @@ var logger = LogManager
 
 ## Masking options 
 
-are list below. And all these options are optional, if you're not clear about what it does, let it be or remove them from json file, hence default values will be used.
+Masking options are list below. And all these options are optional, if you're not clear about what it does, let it be or remove them from json file, hence default values will be used.
 
 * MaskUrlEnabled
 * MaskJsonSerializedEnabled
@@ -94,6 +94,7 @@ Masking rules settings contains:
 ```json
 {
   "Masking": {
+    "Enabled": true, //default: true
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
     "MaskXmlSerializedEnabled": true, //Not Implemented
@@ -109,10 +110,6 @@ Masking rules settings contains:
       {
         "KeyKeyName": "key",
         "ValueKeyName": "value"
-      },
-      {
-        "KeyKeyName": "key",
-        "ValueKeyName": "val"
       }
     ],
     "ValueMinLength": 3, //if key matched, but value's length <=3, it will skip masking.
@@ -141,34 +138,23 @@ Masking rules settings contains:
       "null": { "Format": "null" },
       "Empty": { "Format": "EMPTY" },
       "REDACTED": { "Format": "REDACTED" },
-      "Remove": { "RemoveNode": true }, //todo not supported yet, do we need it?
-      "PAN15": {
-        "ValuePattern": "^\\d{15}$",
-        "Format": "L6*R4",
+      "password": { "Format": "*6" },
+      "dob": { "Format": "REDACTED" },
+      "name": { "Format": "L2*" },
+      "ssn": { "Format": "*" },
+      "phone": { "Format": "L3R4" },
+      "email": {
+        "Format": "L3*@",
+        "Description": "email is special, shawn@a.cn will be masked as 'sha**@a.cn'"
+      },
+      "pan": {
+        "ValuePattern": "^\\d{15,16}$",
+        "Format": "L4*R4",
         //IgnoreCase is working with ValuePattern.
         "IgnoreCase": false,
         "Enabled": true //default true
       },
-      "PAN16": { //just for sample here to use two different formatter base on length difference
-        "ValuePattern": "^\\d{16}$",
-        "Format": "L4*R4",
-        //IgnoreCase is working with ValuePattern.
-        "IgnoreCase": false
-      },
-      "DOB": {
-        //"KeyName": "^DOB$|^DateOfBirth$",
-        "Format": "REDACTED"
-      },
-      "Name": {
-        "Format": "L2*"
-      },
-      "SSN": {
-        "Format": "*"
-      },
-      "Email": {
-        "Format": "L3*",
-        "Description": "email is special, that it will be separated by '@' to two parts. use normal format for these two part separately"
-      }
+      "Remove": { "RemoveNode": true } //todo not supported yet, do we need it?
     },
     "Rules": {
       //NOTE: rule key by default is case-insensitive, so does name of formatter. 
@@ -179,25 +165,23 @@ Masking rules settings contains:
         "KeyName": "^pan|PersonalAccountNumber|PrimaryAccountNumber$",
         //IgnoreKeyCase is working with KeyName
         "IgnoreKeyCase": true,
-        "Formatters": [
-          { "Name": "Pan15" },
-          { "Name": "pan16" }
-        ]
+        "Formatters": [ { "Name": "pan" } ]
       },
       "Balance": { "Formatters": [ { "Format": "null" } ] },
       "FirstName": { "Formatters": [ { "Name": "Name" } ] },
       "LastName": { "Formatters": [ { "Name": "Name" } ] },
       "Email": { "Formatters": [ { "Name": "email" } ] },
       "Password": { "Formatters": [ { "Format": "*" } ] },
-      "PhoneNumber": { "Formatters": [ { "Format": "L4" } ] },
-      "temperatureC": { "Formatters": [ { "Format": "null" } ] },
-      "temperaturef": { "Formatters": [ { "name": "null" } ] }
+      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] },
+      "imaGeData": { "Formatters": [ { "name": "REDACTED" } ] }
     }
   }
 }
 ```
 
+**NOTE:**
 
+Optional, you can add another file `masking.custom.json`, which can overwrite those in `masking.json`.
 
 ## nlog.config file
 
@@ -236,7 +220,8 @@ It has following properties:
    * object: it will try mask the object base on the rules. 
    * url: need work with property `Item`. it will try to get the speicific item as string and mask it.
    * reserialize: need `Item` specified. It will get the value by specific key set in `Item`, and try to deserialize it as JSON or XML document and mask the object.
-2. Item, it's used to specify the specific object by key set in `Item` here and do the masking.
+2. Item, it's used to specify the specific object by key set in `Item` here and do the masking. If item is not found in event properties, it does nothing.
+3. Disabled: Boolean, default `true`, which is used to indicates whether enable masking or not!
 
 Example:
 
@@ -262,9 +247,9 @@ Example:
 <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize}" />
 ```
 
-4. Disabled and render log without masking but use normal JSON serializer defined in NLog.
+4. Disabled and render log without masking but use normal JSON serializer defined in NLog. Add `Disabled=true`.
 
-   ```
+   ```xml
    <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize:Disabled=true}" />
    ```
 
@@ -305,11 +290,24 @@ MaskFormat contains 3 parts and special cases.
 
 For example:
 
-* `L2`
-* `R2`
-* `*`
-* `L4*R4`
-* `L4*6R4`
+* `L2` : keep left 2 chars
+* `R2` : keep right 2 chars
+* `*`: mask all chars as '*'.
+* `L4*`, same as `L4`
+* `L4*4`: keep max 4 '*' after masking.
+* `L4*R4`: Keep left 4 and right 4 chars.
+* `L4*6R4`: keep left 4 and right 4 chars, and put 6 '*' at maximum in middle.
+* `*6R4`
+
+Note: the compose of these 3 parts are in order: Left , Middle and right. So such format is invalid: `R4*4`, `*` must be put before `R` and after `L`; or `*4L4`, `*` must be put after 'L4';
+
+Another way, using '#' and '*', for example:
+
+* `#*#`
+* `##**`
+* `##***###`: equals `L2*3R3`
+* `*##`: equals`*1R2`
+* `**##`
 
 #### Special cases
 
@@ -326,7 +324,7 @@ For example:
 
 ## Slin.Masking.NLog
 
+Slin.Masking.NLog is built on Slin.Masking. It provides class `EventPropertiesMaskLayoutRenderer` with name `event-properties-masker`.
 
-
-
+So you can easily integrate it with NLog, for more details, please refer to section Get Started.
 

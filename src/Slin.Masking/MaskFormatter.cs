@@ -5,8 +5,11 @@ using System.Text.RegularExpressions;
 
 namespace Slin.Masking
 {
-	public class MaskFormatterOptions
+	internal class MaskFormatterOptions
 	{
+		/*
+		 * NOTE: when EmailMode, Left,Middel,Right is only for email left part(username, aka before '@').
+		 */
 		public int Left { get; set; }
 		public int Middle { get; set; } = 16;
 		public int Right { get; set; }
@@ -14,7 +17,27 @@ namespace Slin.Masking
 
 		public int MaxLength { get; set; } = 16;
 
-		public void Normalize(int inputLength)
+		public bool IsEmailMode { get; set; }
+
+		//public string OriginalValues { get; } = string.Empty;
+
+		public int ActualLength { get; set; }
+
+		/// <summary>
+		/// the index of '@' in value. used only when it's email mode.
+		/// </summary>
+		public int OriginalAtCharIndex { get; set; } = -1;
+
+		private void CalcResultCharCount(int inputLength)
+		{
+			Normalize(inputLength);
+
+			var total = Left + Middle + Right;
+
+			ActualLength = Math.Min(total, inputLength);
+		}
+
+		private void Normalize(int inputLength)
 		{
 			var max = Math.Min(inputLength, MaxLength);
 
@@ -23,20 +46,67 @@ namespace Slin.Masking
 
 			if (Left > 0 || Right > 0)
 			{
-				Middle = Middle > 0 ? Middle : (max - Right);
+				Middle = Middle > 0 ? Middle : Math.Max(0, (max - Right - Left));
+
+				if (Left > max) { Left = max; Right = 0; }
+				else if (Right > max) { Left = 0; Right = max; }
+				else if (Left + Right > max)
+				{
+					Right = max - Left;
+				}
 			}
 		}
 
-		public int CalcResultCharCount(int inputLength)
+		public MaskFormatterOptions(Match m, string value)
 		{
-			Normalize(inputLength);
+			IsEmailMode = m.Value.EndsWith("@");
 
-			var total = Left + Middle + Right;
-			//if (Left > 0 && Middle == 0 && Right == 0)
-			//	return Math.Min(inputLength, MaxLength);
-			//if (Left == 0 && Middle == 0 && Right > 0)
-			//	return Math.Min(inputLength, MaxLength);
-			return Math.Min(total, inputLength);
+			if (IsEmailMode)
+			{
+				OriginalAtCharIndex = value.LastIndexOf('@');
+
+				if (OriginalAtCharIndex == -1 || value.Length - OriginalAtCharIndex <= 5 || value.Length <= 5)
+				{
+					//Not Email if no '@'
+					//and not a email probably if length is enough. at least 'a@a.cn'
+					IsEmailMode = false;
+					OriginalAtCharIndex = -1;
+				}
+			}
+
+			string gvLeft = m.Groups["left"].Value;
+			string gvMid = m.Groups["middle"].Value;
+			string gvRight = m.Groups["right"].Value;
+			string gvChar = m.Groups["char"].Value;
+
+			if (gvLeft.StartsWith("#") || gvRight.StartsWith("#") || gvChar.Length > 1)
+			{
+				//mode like ###***###, ***
+				Left = gvLeft.Length;
+				Right = gvRight.Length;
+				if (gvChar.Length != 1) Middle = gvChar.Length;//here use gvChar for middle
+				Char = '*';
+			}
+			else
+			{
+				//mode like L2*3R2, *
+				Left = gvLeft == "" ? 0 : Convert.ToInt32(gvLeft);
+				Middle = gvMid == "" ? 0 : Convert.ToInt32(gvMid);
+				Right = gvRight == "" ? 0 : Convert.ToInt32(gvRight);
+				Char = gvChar == "" ? '*' : gvChar[0];
+			}
+
+			//OriginalValues = $"Original: Left: {Left}, Middle:{Middle}, Right: {Right}";
+
+			if (IsEmailMode)
+			{
+				CalcResultCharCount(OriginalAtCharIndex);
+				ActualLength += value.Length - OriginalAtCharIndex;
+			}
+			else
+			{
+				CalcResultCharCount(value.Length);
+			}
 		}
 	}
 
@@ -61,10 +131,13 @@ namespace Slin.Masking
 		{
 			var str = @"^REDACTED|EMPTY$"
 			+ @"|^REPLACEMENT=(?<replacement>.{0,30})$"
-			+ @"|^(?<char>[\*xX])(?<middle>\d{1,2})?$"
-			+ @"|^L(?<left>\d{1,2})(?:(?<char>[\*xX])(?<middle>\d{1,2})?)?$"
-			+ @"|^R(?<right>\d{1,2})(?:(?<char>[\*xX])(?<middle>\d{1,2})?)?$"
-			+ @"|^L(?<left>\d{1,2})(?:(?<char>[\*xX])(?<middle>\d{1,2})?)?R(?<right>\d{1,2})$";
+			+ @"|^(?<char>\*+)(?<middle>\d{1,2})?@?$"
+			+ @"|^L(?<left>\d{1,2})(?:(?<char>\*)(?<middle>\d{1,2})?)?@?$"
+			+ @"|^R(?<right>\d{1,2})(?:(?<char>\*)(?<middle>\d{1,2})?)?@?$"
+			+ @"|^L(?<left>\d{1,2})(?:(?<char>\*)(?<middle>\d{1,2})?)?R(?<right>\d{1,2})@?$"
+			+ @"|^(?<left>#{1,10})(?<char>\*{1,10})(?<right>#{1,10})@?$"
+			+ @"|^(?<left>#{1,10})(?<char>\*{1,10})@?$"
+			+ @"|^(?<char>\*{1,10})(?<right>#{1,10})@?$";
 
 			REG_FMT = new Regex(str, RegexOptions.Compiled);
 		}
@@ -81,6 +154,11 @@ namespace Slin.Masking
 		{
 			//special case here, that null result is not supported for Formatter.
 			if (format == "null") return true;
+			if (format == "" || format == null) return false;
+
+			//all the formats begins one of: L:Left,R:Right or REPLACEMENT,E:EMPTY,* or #
+			if ("LRE*#".IndexOf(format[0]) == -1 || format.Length > 30)
+				return false;
 
 			var m = REG_FMT.Match(format);
 
@@ -93,77 +171,97 @@ namespace Slin.Masking
 			//That is original value will actually be returned in String.Format(new MaskFormatter(), "{0:null}", arg).
 			if (format == "null") return null;
 			//cases
-			var m = REG_FMT.Match(format);
-			if (m.Success)
+			//all the formats begins one of: L:Left,R:Right or REPLACEMENT,E:EMPTY,* or #
+			if ("LRE*#".IndexOf(format[0]) == -1 || format.Length > 30)
 			{
-				if (arg == null) throw new Exception("null object is not allowed for masking");//let's bypass this in code that should not passing null while masking
+				//Console.WriteLine($" INVALID FORMAT 1: {format}");
+				return HandleOtherFormats(format, arg);
+			}
 
-				//Console.WriteLine("format: {0}, type: {1}", fmt, t.Name);
-				var t = arg.GetType();
+			var m = REG_FMT.Match(format);
+			if (!m.Success)
+			{
+				//Console.WriteLine($" NOT matched 2: {format}");
+				return HandleOtherFormats(format, arg);
+			}
+			if (arg == null) throw new Exception("null object is not allowed for masking");//let's bypass this in code that should not passing null while masking
 
+			//Console.WriteLine("format: {0}, type: {1}", fmt, t.Name);
+			var t = arg.GetType();
 
-				if (t.Name == "String")
+			if (t.Name == "String")
+			{
+				var value = arg.ToString();
+				if (string.IsNullOrEmpty(value)) return value;
+
+				//special case:REDACTED
+				if (format == "REDACTED") return format;
+				//special case:EMPTY
+				if (format == "EMPTY") return "";
+				if (format == "null")
 				{
-					var value = arg.ToString();
-					if (string.IsNullOrEmpty(value)) return value;
+					return null;
+				}
+				else if (format.StartsWith("REPLACEMENT="))
+				{
+					return m.Groups["replacement"].Value;
+				}
 
-					//special case:REDACTED
-					if (format == "REDACTED") return format;
-					//special case:EMPTY
-					if (format == "EMPTY") return "";
-					if (format == "null")
+				var parameters = new MaskFormatterOptions(m, value);
+
+				//var length = parameters.CalcResultCharCount(value.Length);
+				//$"Format: Left:{parameters.Left},Middle:{parameters.Middle},Right:{parameters.Right}! length:{length}"
+				//.Dump($"format: {fmt}");
+
+				var chars = new char[parameters.ActualLength];//(new string(parameters.Char, length)).AsSpan();
+				for (var i = 0; i < parameters.ActualLength; i++) chars[i] = parameters.Char;
+
+				if (parameters.IsEmailMode)
+				{
+					var lenStartsFromAtChar = value.Length - parameters.OriginalAtCharIndex;
+
+					//fill @xyz.abc
+					value.CopyTo(parameters.OriginalAtCharIndex, chars,
+						parameters.OriginalAtCharIndex - (value.Length - parameters.ActualLength),
+						lenStartsFromAtChar);
+
+					var emailLeftPartLen = parameters.ActualLength - lenStartsFromAtChar;
+
+					//var actualLeft = Math.Min(emailLeftPartLen, parameters.Left);
+					if (parameters.Left > 0)
 					{
-						return null;
+						value.CopyTo(0, chars, 0, parameters.Left);
 					}
-					else if (format.StartsWith("REPLACEMENT="))
+
+					if (parameters.Right > 0)
 					{
-						return m.Groups["replacement"].Value;
+						//value.AsSpan(value.Length - parameters.Right, parameters.Right)
+						//.CopyTo(chars.AsSpan(length - parameters.Right, parameters.Right));
+						value.CopyTo(value.Length - parameters.Right - lenStartsFromAtChar, chars, parameters.ActualLength - parameters.Right - lenStartsFromAtChar, parameters.Right);
 					}
-
-					var parameters = new MaskFormatterOptions
-					{
-						Left = m.Groups["left"].Value == "" ? 0 : Convert.ToInt32(m.Groups["left"].Value),
-						Middle = m.Groups["middle"].Value == "" ? 0 : Convert.ToInt32(m.Groups["middle"].Value),
-						Right = m.Groups["right"].Value == "" ? 0 : Convert.ToInt32(m.Groups["right"].Value),
-						Char = m.Groups["char"].Value == "" ? '*' : m.Groups["char"].Value[0]
-					};
-					var length = parameters.CalcResultCharCount(value.Length);
-					//$"Format: Left:{parameters.Left},Middle:{parameters.Middle},Right:{parameters.Right}! length:{length}"
-					//.Dump($"format: {fmt}");
-
-					var chars = new char[length];//(new string(parameters.Char, length)).AsSpan();
-					for (var i = 0; i < length; i++) chars[i] = parameters.Char;
-
+				}
+				else
+				{
 					if (parameters.Left > 0)
 					{
 						value.CopyTo(0, chars, 0, parameters.Left);
 						//value.AsSpan(0, parameters.Left).CopyTo(chars);
 					}
-					//if (parameters.Right > 0 && parameters.Left > 0)
-					//{
-					//	//value.AsSpan(value.Length - parameters.Right - 1, parameters.Right)
-					//	//.CopyTo(chars.AsSpan(parameters.Left + parameters.Middle, parameters.Right));
-					//	value.CopyTo(value.Length - parameters.Right - 1, chars, parameters.Left + parameters.Middle, parameters.Right);
-					//}
 					if (parameters.Right > 0)
 					{
 						//value.AsSpan(value.Length - parameters.Right, parameters.Right)
 						//.CopyTo(chars.AsSpan(length - parameters.Right, parameters.Right));
-						value.CopyTo(value.Length - parameters.Right, chars, length - parameters.Right, parameters.Right);
+						value.CopyTo(value.Length - parameters.Right, chars, parameters.ActualLength - parameters.Right, parameters.Right);
 					}
+				}
 
-					return new string(chars);
-				}
-				else
-				{
-					//todo 
-					Console.WriteLine($" NOT string type: {t.FullName} in MaskFormatter");
-					return HandleOtherFormats(format, arg);
-				}
+
+				return new string(chars);
 			}
 			else
 			{
-				Console.WriteLine($" NOT matched: {format}");
+				//todo 
+				Console.WriteLine($" NOT string type: {t.FullName} in MaskFormatter");
 				return HandleOtherFormats(format, arg);
 			}
 		}
