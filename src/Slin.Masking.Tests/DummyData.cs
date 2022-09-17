@@ -22,7 +22,7 @@ namespace Slin.Masking.Tests
 		public const string DobStr = "1988-01-01";
 		public static readonly DateTime DOB = new(1988, 1, 1);
 
-		public const string UrlQuery1 = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界";
+		public const string UrlQuery1 = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界&accesstoken="+ AccessToken;
 		public const string UrlQuery1Encoded = "ssn=123456789&amp;pan=1234567890123456&amp;dob=1988-07-14";
 		public const string UrlQuery2 = "?" + UrlQuery1;
 		public const string UrlQuery2Encoded = "?" + UrlQuery1Encoded;
@@ -32,6 +32,7 @@ namespace Slin.Masking.Tests
 		public const string UrlFullEncoded = Url1 + UrlQuery2Encoded;
 
 		public static readonly byte[] ImageData = new byte[0];
+		public const string AccessToken = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 		public const string Xml1 = $@"<?xml version = ""1.0""?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV = ""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle = ""http://www.w3.org/2001/12/soap-encoding"">
@@ -40,8 +41,10 @@ namespace Slin.Masking.Tests
       <m:GetQuotationResponse>
          <!----><m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>
          <m:SSN>{SSN}</m:SSN>
+         <m:authorization>Bearer {AccessToken}</m:authorization>
+         <m:accessToken>Bearer {AccessToken}</m:accessToken>
          <m:User>
-			<!----><m:FirstName dOB=""{DobStr}"">{FirstName}</m:FirstName>
+			<m:FirstName dOB=""{DobStr}"">{FirstName}</m:FirstName>
 			<m:FirstName>{LastName}</m:FirstName>
 			<m:SSN>{SSN}</m:SSN>
 			<m:DOB dob=""{DobStr}"">{DobStr}</m:DOB>
@@ -49,7 +52,7 @@ namespace Slin.Masking.Tests
 			<m:query>{UrlQuery1Encoded}</m:query>
             <m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""BAD</m:Body>
 			<m:kvplist dob=""{DobStr}"">
-               <!----><m:kvprow requestUrl=""{UrlFullEncoded}"">
+               <m:kvprow requestUrl=""{UrlFullEncoded}"">
                    <m:Key>SSN</m:Key>
                    <m:Value>{SSN}</m:Value>
                    <m:Body dob=""{DobStr}"">{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>

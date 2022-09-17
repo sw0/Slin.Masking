@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Slin.Masking;
 using Xunit;
 using System.Text.RegularExpressions;
+using Xunit.Abstractions;
 
 namespace Slin.Masking.Tests
 {
@@ -27,7 +28,7 @@ namespace Slin.Masking.Tests
 			{
 				var value = string.Format(new MaskFormatter(), format, input);
 
-				throw new Exception("Should not reach here");
+				//throw new Exception("Should not reach here");
 			}
 			catch (Exception ex)
 			{
@@ -164,9 +165,29 @@ namespace Slin.Masking.Tests
 		}
 
 		[Theory]
+		[InlineData("Shawn", "{0:*}", "*****")]
+		[InlineData("Shawn", "{0:L2*}", "Sh***")]
+		[InlineData("Shawn", "{0:L3*R3}", "Shawn")]
+		[InlineData("Shawn", "{0:###*###}", "Shawn")]
+		[InlineData("Shawn", "*", "*****")]
+		[InlineData("Shawn", "L2*", "Sh***")]
+		[InlineData("Shawn", "L3*R3", "Shawn")]
+		[InlineData("Shawn", "###*###", "Shawn")]
+		public void ExtensionMethodTest(string input, string format, string expected)
+		{
+			var value = input.Mask(format);
+
+			Assert.Equal(expected, value);
+		}
+
+		[Theory]
+		[InlineData("Shawn@jd.com", "{0:@}", "Shawn@jd.com")]//invalid format, no masking
 		[InlineData("Shawn@jd.com", "{0:*@}", "*****@jd.com")]
 		[InlineData("Shawn@jd.com", "{0:L2*@}", "Sh***@jd.com")]
+		[InlineData("Shawn@@jd.com", "{0:L2*@}", "Sh****@jd.com")]
+		[InlineData("Shawnabcdefghijklmno@@jd.com", "{0:L2*@}", "Sh**************@jd.com")]
 		[InlineData("a@jd.com", "{0:L3*R3@}", "a@jd.com")]
+		[InlineData("shawn@jd.com", "{0:L9*R3@}", "shawn@jd.com")]
 		[InlineData("Shawn@jd.com", "{0:L3*R3@}", "Shawn@jd.com")]
 		[InlineData("Shawn@jd.com", "{0:###*###@}", "Shawn@jd.com")]
 		[InlineData("Shawn@jd.com", "{0:L2*3R4@}", "Shawn@jd.com")]

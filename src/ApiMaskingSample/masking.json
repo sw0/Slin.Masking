@@ -3,9 +3,9 @@
     "Enabled": true, //default: true
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
-    "MaskXmlSerializedEnabled": true, //Not Implemented
-    "MaskXmlSerializedOnXmlAttributeEnabled": true, //default false
-    "MaskJsonSerializedOnXmlAttributeEnabled": true, //default false
+    "MaskXmlSerializedEnabled": true, //default: true
+    "MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
+    "MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
     "MaskJsonNumberEnabled": true, //this works only in JSON
     "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
     "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
@@ -42,8 +42,16 @@
       //  default true of Enabled.
       //  Enabled: default true. BUT no need to set it to False here.
       "null": { "Format": "null" },
-      "Empty": { "Format": "EMPTY" },
-      "REDACTED": { "Format": "REDACTED" },
+      "empty": { "Format": "EMPTY" },
+      "redacted": { "Format": "REDACTED" },
+      "credential_long": {
+        "Format": "L9*4R6",
+        "ValuePattern": ".{24,}"
+      },
+      "credential_short": {
+        "Format": "L3*4R3",
+        "ValuePattern": ".{10,24}"
+      },
       "password": { "Format": "*6" },
       "dob": { "Format": "REDACTED" },
       "name": { "Format": "L2*" },
@@ -64,7 +72,15 @@
     },
     "Rules": {
       //NOTE: rule key by default is case-insensitive, so does name of formatter. 
-      //It's controlled by setting:KeyCaseInsensitive
+      //It's controlled by property:IgnoreKeyCase, default is true
+      "authorization": {
+        "KeyName": "^authorization|access_token|accesstoken|code$",
+        "IgnoreKeyCase": true,
+        "Formatters": [
+          { "Name": "credential_long" },
+          { "Name": "credential_short" }
+        ]
+      },
       "SSN": { "Formatters": [ { "Name": "SSN" } ] },
       "DOB": { "Formatters": [ { "Name": "dob" } ] },
       "Pan": {

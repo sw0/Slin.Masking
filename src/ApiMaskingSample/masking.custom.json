@@ -1,24 +1,24 @@
 ﻿{
   "masking": {
     "NamedFormatterDefintions": {
-      "PAN15": {
-        "ValuePattern": "^\\d{15}$",
+      "PAN14": {
+        "ValuePattern": "^\\d{14}$",
         "Format": "L6*R4",
         //IgnoreCase is working with ValuePattern.
         "IgnoreCase": false,
         "Enabled": true //default true
-      },
-      "PAN16": { //just for sample here to use two different formatter base on length difference
-        "ValuePattern": "^\\d{16}$",
-        "Format": "L4*R4",
-        //IgnoreCase is working with ValuePattern.
-        "IgnoreCase": false
       }
     },
     "Rules": {
       "amount": {
         "KeyName": "^(transaction)?amount$(?#ignorecase)",
         "Formatters": [ { "name": "null" } ]
+      },
+      "pan": {
+        "Formatters": [
+          { "Name": "pan" },
+          { "Name": "pan14" } //for test purpose
+        ]
       },
       "temperatureC": { "Formatters": [ { "Format": "null" } ] },
       "temperaturef": { "Formatters": [ { "name": "null" } ] }

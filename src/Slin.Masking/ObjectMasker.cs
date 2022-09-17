@@ -27,7 +27,7 @@ namespace Slin.Masking
 		string MaskObject(object value);
 
 		/// <summary>
-		/// get if masking is enabled
+		/// Indicates enabled or not. Just used as global setting. Not affecting ObjectMasker actually.
 		/// </summary>
 		bool Enabled { get; }
 	}

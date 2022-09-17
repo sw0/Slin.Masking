@@ -99,7 +99,7 @@ namespace Slin.Masking
 					else
 					{
 						definition.Formatters.RemoveAt(i);
-
+						
 						throw new Exception($"{nameof(Options.NamedFormatterDefintions)} does not found: {formatter.Name}");
 					}
 				}

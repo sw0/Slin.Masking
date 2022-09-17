@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Slin.Masking.Tests")]
 
 namespace Slin.Masking
 {

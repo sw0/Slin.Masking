@@ -2,11 +2,16 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
+using Xunit.Abstractions;
 
 namespace Slin.Masking.Tests
 {
 	public abstract class TestBase
 	{
+		ITestOutputHelper _output;
+		public TestBase(ITestOutputHelper testOutputHelper)
+		{ _output = testOutputHelper; }
+
 		protected IServiceCollection CreateServiceCollection(Action<IServiceCollection> setup = null)
 		{
 			var services = new ServiceCollection();
@@ -21,17 +26,17 @@ namespace Slin.Masking.Tests
 			services.Configure<MaskingProfile>(configuration.GetSection("Masking"))
 				.PostConfigure<MaskingProfile>((options) => options.Normalize());
 
-			services.AddScoped<IMaskingProfile>(provider =>
+			services.AddSingleton<IMaskingProfile>(provider =>
 			{
 				var profile = provider.GetRequiredService<IOptions<MaskingProfile>>()!.Value;
 				return profile;
 			});
-			services.AddScoped<IObjectMaskingOptions>(provider =>
+			services.AddSingleton<IObjectMaskingOptions>(provider =>
 			{
 				var profile = provider.GetRequiredService<IMaskingProfile>();
 				return profile;
 			});
-			services.AddScoped<IMaskingOptions>(provider =>
+			services.AddSingleton<IMaskingOptions>(provider =>
 			{
 				var profile = provider.GetRequiredService<IMaskingProfile>();
 				return profile;
@@ -53,5 +58,7 @@ namespace Slin.Masking.Tests
 
 			return provider;
 		}
+
+		protected void WriteLine(string msg) => _output.WriteLine(msg);
 	}
 }

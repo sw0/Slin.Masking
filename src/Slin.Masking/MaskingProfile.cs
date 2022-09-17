@@ -139,9 +139,7 @@ namespace Slin.Masking
 				if (item.Value.Formatters == null || item.Value.Formatters.Count == 0)
 				{
 					//todo wanning
-#if DEBUG
 					throw new Exception($"Formatters should be be null or none set. Rule key: {item.Key}");
-#endif
 				}
 
 				foreach (var fmt in item.Value.Formatters)

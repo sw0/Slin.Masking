@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.1.22</AssemblyVersion>
-		<FileVersion>0.1.22</FileVersion>
-		<Version>0.1.22</Version>
+		<AssemblyVersion>0.1.24</AssemblyVersion>
+		<FileVersion>0.1.24</FileVersion>
+		<Version>0.1.24</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>

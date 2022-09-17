@@ -10,23 +10,14 @@ using System.Text.Json;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using System.Text;
+using Xunit.Abstractions;
 
 namespace Slin.Masking.Tests
 {
 	public class MaskerTests : TestBase
 	{
-		[Fact]
-		public void MaskProfileTest()
-		{
-			var profile = CreateProvider().GetService<IOptions<MaskingProfile>>()!.Value;
-
-			Assert.True(profile.Rules.Count > 0);
-			Assert.True(profile.NamedFormatterDefintions.Count > 0);
-			Assert.True(profile.Rules.All(x => !string.IsNullOrEmpty(x.Key)));
-			Assert.True(profile.Rules.All(x => x.Value.Formatters != null));
-		}
-
-
+		public MaskerTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
+		{ }
 		[Theory]
 		[InlineData("FirstName", "Shawn", "Sh***")]
 		[InlineData("SSN", "123456789", "*********")]
@@ -35,34 +26,15 @@ namespace Slin.Masking.Tests
 		[InlineData("PAN", "1234567890123456", "1234********3456")]
 		[InlineData("PaN", "1234567890123456", "1234********3456")]
 		[InlineData("Primaryaccountnumber", "1234567890123456", "1234********3456")]
-		[InlineData("Pan", "123456789012345", "123456*****2345")]
-		[InlineData("PAN", "123456789012345", "123456*****2345")]
-		[InlineData("PaN", "123456789012345", "123456*****2345")]
-		[InlineData("Primaryaccountnumber", "123456789012345", "123456*****2345")]
-		[InlineData("personalaccountnumber", "123456789012345", "123456*****2345")]
+		[InlineData("Pan", "12345678912345", "123456****2345")]
+		[InlineData("PAN", "12345678912345", "123456****2345")]
+		[InlineData("PaN", "12345678912345", "123456****2345")]
+		[InlineData("Primaryaccountnumber", "12345678912345", "123456****2345")]
+		[InlineData("personalaccountnumber", "12345678912345", "123456****2345")]
 		[InlineData("DOB", "2022-08-29T23:56:32.1895861", "REDACTED")]
 		[InlineData("temperatureF", "4", null)]
 		public void MaskerTest(string key, string value, string expected)
 		{
-			//var data = new[] {
-			//	new{Key="FirstName", Value ="Shawn",  Expected ="Sh***" },
-			//	new{Key="SSN", Value ="123456789",  Expected ="*********" },
-			//	new{Key="SsN", Value ="123456789",  Expected ="*********" },
-			//	//16 PAN
-			//	new{Key="Pan", Value ="1234567890123456", Expected ="1234********3456" },
-			//	new{Key="PAN", Value ="1234567890123456", Expected ="1234********3456" },
-			//	new{Key="PaN", Value ="1234567890123456", Expected ="1234********3456" },
-			//	new{Key="Primaryaccountnumber", Value ="1234567890123456", Expected ="1234********3456" },
-			//	//15 PAN
-			//	new{Key="Pan", Value ="123456789012345", Expected ="123456*****2345" },
-			//	new{Key="PAN", Value ="123456789012345", Expected ="123456*****2345" },
-			//	new{Key="PaN", Value ="123456789012345", Expected ="123456*****2345" },
-			//	new{Key="Primaryaccountnumber", Value ="123456789012345", Expected ="123456*****2345" },
-			//	new{Key="personalaccountnumber", Value ="123456789012345", Expected ="123456*****2345" },
-			//	new{Key="DOB", Value ="2022-08-29T23:56:32.1895861", Expected ="REDACTED" },
-			//	new{Key="temperatureF", Value ="4", Expected = default(string) }
-			//};
-
 			var provider = CreateProvider();
 
 			//var context = new MaskingContext(profile);
@@ -99,28 +71,6 @@ namespace Slin.Masking.Tests
 
 				var result = engine.MaskUrl(url);
 				Assert.Equal(expected, result);
-			}
-		}
-
-
-		[Fact]
-		public void XmlMaskTest()
-		{
-			var xml = DummyData.Xml1;
-
-			var provider = CreateProvider();
-
-			//var context = new MaskingContext(profile);
-			using (provider.CreateScope())
-			{
-				var engine = provider.GetRequiredService<IObjectMasker>();
-
-				Assert.NotNull(engine);
-
-				var data = DummyData.CreateLogEntry();
-
-				var result = engine.MaskObject(data);
-				Assert.True(result != null);
 			}
 		}
 	}
