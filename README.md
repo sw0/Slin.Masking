@@ -262,31 +262,31 @@ Example:
 
 1. Just use `event-properties-masker`, it will mask all the items in log data.
 
-```xml
-<attribute name="details" encode="false" layout="${event-properties-masker}" />
-```
+    ```xml
+    <attribute name="details" encode="false" layout="${event-properties-masker}" />
+    ```
 
 2. Specify `Item`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive.
 
-```xml
-<attribute name="data1" encode="false" layout="${event-properties-masker:Item=data1}" />
-```
+    ```xml
+    <attribute name="data1" encode="false" layout="${event-properties-masker:Item=data1}" />
+    ```
 
 3. Specify `Item` and `Mode` of `url`, `reserialize`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive.
 
-```xml
-<attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestUrl:Mode=url}" />
-```
+    ```xml
+    <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestUrl:Mode=url}" />
+    ```
 
-```xml
-<attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize}" />
-```
+    ```xml
+    <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize}" />
+    ```
 
 4. Disabled and render log without masking but use normal JSON serializer defined in NLog. Add `Disabled=true`.
 
-   ```xml
-   <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize:Disabled=true}" />
-   ```
+    ```xml
+    <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize:Disabled=true}" />
+    ```
 
    
 

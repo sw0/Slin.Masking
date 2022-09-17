@@ -11,15 +11,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Content Include="..\Slin.Masking\masking.template.json" Link="masking.json">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.1" />
 		<PackageReference Include="NLog.Web.AspNetCore" Version="5.1.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		<PackageReference Include="System.ObjectModel" Version="4.3.0" />
 		<PackageReference Include="Slin.Masking.NLog" Version="0.1.21" />
 	</ItemGroup>
-
-	<ItemGroup>
-	  <!--<ProjectReference Include="..\Slin.Masking.NLog\Slin.Masking.NLog.csproj" />-->
-  </ItemGroup>
 
 </Project>

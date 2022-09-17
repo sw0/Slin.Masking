@@ -1,6 +1,6 @@
 {
   "Masking": {
-    "Enabled": true, //default: true
+    "Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
     "MaskXmlSerializedEnabled": true, //default: true

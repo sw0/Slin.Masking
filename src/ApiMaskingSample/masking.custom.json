@@ -1,5 +1,6 @@
 ﻿{
   "masking": {
+    "UrlKeys": [ "url" ],
     "NamedFormatterDefintions": {
       "PAN14": {
         "ValuePattern": "^\\d{14}$",

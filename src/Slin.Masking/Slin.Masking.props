@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.1.25</AssemblyVersion>
-		<FileVersion>0.1.25</FileVersion>
-		<Version>0.1.25</Version>
+		<AssemblyVersion>0.1.30</AssemblyVersion>
+		<FileVersion>0.1.30</FileVersion>
+		<Version>0.1.30</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -13,9 +13,10 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
-			0.1.25: performance improve on MaskFormatter.
+			0.1.30: include masking.template.json file.
+			0.1.26: performance improve on MaskFormatter.
 			- MaskFormatter, MaskEngine, Masker, JsonMasker
-			- Format: Left char count to keep + MaskChar with optional char count + Right char count to keep. 
+			- Format: Left char count to keep + MaskChar with optional char count + Right char count to keep.
 			-    Exmaple: L2*4R2, L4*R4, L2, R4, *
 			- Another style of format: '###***###', which works same as 'L3*3R3'. There is slight difference in a few edge case. No worries.
 			- Special format: null, REDACTED, REPLACEMENT=xxx

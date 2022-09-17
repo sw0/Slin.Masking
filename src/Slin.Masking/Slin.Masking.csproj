@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 	<Import Project=".\Slin.Masking.props" />
 
 	<PropertyGroup>
@@ -6,7 +6,17 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <PackageReference Include="System.Text.Json" Version="6.0.5" />
+		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<Content Include="masking.template.json">
+			<pack>true</pack>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="README.md">
+			<pack>true</pack>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 </Project>

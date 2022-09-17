@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\ApiMaskingSample\masking.json" Link="masking.json">
+    <Content Include="..\Slin.Masking\masking.template.json" Link="masking.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="..\ApiMaskingSample\masking.custom.json" Link="masking.custom.json">
