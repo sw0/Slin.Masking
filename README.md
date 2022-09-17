@@ -441,7 +441,7 @@ public class SampleClass{
         };
         
         var outputString = _masker.MaskObject(data);
-        
+        return outputString;
     }
 }
 ```
