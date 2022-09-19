@@ -1,4 +1,4 @@
-{
+﻿{
   "Masking": {
     "Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
@@ -23,7 +23,7 @@
     "JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
     "SerializedKeysCaseSensitive": false,
     //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
-    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
+    "UrlKeys": [ "requestUrl", "query" ],
     "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
     "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
@@ -94,8 +94,7 @@
       "LastName": { "Formatters": [ { "Name": "Name" } ] },
       "Email": { "Formatters": [ { "Name": "email" } ] },
       "Password": { "Formatters": [ { "Format": "*" } ] },
-      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] },
-      "dataInBytes": { "Formatters": [ { "name": "REDACTED" } ] } //this works actually
+      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] }
     }
   }
 }

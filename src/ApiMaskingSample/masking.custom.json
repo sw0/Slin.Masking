@@ -1,6 +1,6 @@
 ﻿{
   "masking": {
-    "UrlKeys": [ "url" ],
+    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
     "NamedFormatterDefintions": {
       "PAN14": {
         "ValuePattern": "^\\d{14}$",
@@ -21,6 +21,7 @@
           { "Name": "pan14" } //for test purpose
         ]
       },
+      "dataInBytes": { "Formatters": [ { "name": "REDACTED" } ] }, //this works actually
       "temperatureC": { "Formatters": [ { "Format": "null" } ] },
       "temperaturef": { "Formatters": [ { "name": "null" } ] }
     }

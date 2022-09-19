@@ -8,13 +8,16 @@ Slin.Masking contains following two projects:
 
 1. Slin.Masking 
 
-`Slin.Masking` provides basic masking feature, base on given key and value or URL. Masking rules are required, either by configuration file or programing way to get `IMaskingProfile` instance. 
+`Slin.Masking` provides basic masking features.
+
+* You can use `MaskFormatter` to do the masking by format you provided, like "*" for example.
+* Or you can use `Masker` to do masking base on given key and value or URL. Masking rules are required, either by configuration file or programing way to get `IMaskingProfile` instance. 
 
 If you just want to mask something without NLog, you can just this package.
 
 2. Slin.Masking.NLog
 
-If you're using NLog to write JSON format log files, this is fit for you. `Slin.Masking.NLog` provides a couple of extension methods that allow developer easier to use masking along with NLog. It needs a bit changes in `NLog.config` file. 
+Slin.Masking.NLog is built base on `Slin.Masking`. If you're using NLog to write JSON format log files, this is fit for you. `Slin.Masking.NLog` provides a couple of extension methods that allow developer easier to use masking along with NLog. It needs a bit changes in `NLog.config` file. 
 
 If you don't use NLog, but you want masking, you can just refer to `Slin.Masking`.
 
@@ -266,13 +269,21 @@ Example:
     <attribute name="details" encode="false" layout="${event-properties-masker}" />
     ```
 
-2. Specify `Item`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive.
+2. Specify `Item`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive before v0.1.30; after v0.1.30, it became case-insensitive.
 
     ```xml
     <attribute name="data1" encode="false" layout="${event-properties-masker:Item=data1}" />
     ```
 
-3. Specify `Item` and `Mode` of `url`, `reserialize`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive.
+3. Excludes specific properties by names, joint with `,`, this will be ignored if `Item` is set. Property names here is case-insensitive. Example:
+
+    ```xml
+    <attribute name="details" encode="false" layout="${event-properties-masker:excludeproperties=excludedx,excludedy:disabled=false}" />
+    ```
+
+    In above layout attribute, properties with name "excludedx" and "excluedy" will not get rendered. 
+
+4. Specify `Item` and `Mode` of `url`, `reserialize`, it will mask the specific value in log data by key set in `Item`. Note, it's case sensitive.
 
     ```xml
     <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestUrl:Mode=url}" />
@@ -282,7 +293,7 @@ Example:
     <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize}" />
     ```
 
-4. Disabled and render log without masking but use normal JSON serializer defined in NLog. Add `Disabled=true`.
+5. Disabled and render log without masking but use normal JSON serializer defined in NLog. Add `Disabled=true`.
 
     ```xml
     <attribute name="requestUrl" encode="false" layout="${event-properties-masker:Item=requestBody:Mode=reserialize:Disabled=true}" />

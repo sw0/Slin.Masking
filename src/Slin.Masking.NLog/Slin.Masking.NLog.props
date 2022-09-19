@@ -3,7 +3,7 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.1.30</AssemblyVersion>
+		<AssemblyVersion>0.1.32</AssemblyVersion>
 		<FileVersion>0.1.30</FileVersion>
 		<Version>0.1.30</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
@@ -20,12 +20,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
-			It provides 
-			- MaskFormatter, MaskEngine, Masker, JsonMasker
-			- Format: Left char count to keep + MaskChar with optional char count + Right char count to keep.
-			-    Exmaple: L2*4R2, L4*R4, L2, R4, *
-			- Another style of format: '###***###', which works same as 'L3*3R3'. There is slight difference in a few edge case. No worries.
-			- Special format: null, REDACTED, REPLACEMENT=xxx
+			v0.1.32: refer to latest slin.masking; For EventPropertiesMaskerLayoutRenderer, make Item case-insensitive, make Mode as default parameter and introduce new property named ExcludeProperties, it can be set like 'propkey1,propkey2'.
 		</PackageReleaseNotes>
 		<copyright>Copyright 2019-2026</copyright>
 		<PackageTags>MaskEngine, Masking, Mask, JsonMasker</PackageTags>

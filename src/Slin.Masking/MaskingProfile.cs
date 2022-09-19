@@ -96,11 +96,22 @@ namespace Slin.Masking
 
 		#region -- masking settings: rules related properties --
 
+		private Dictionary<string, ValueFormatterDefinition> _namedFormatterDefintions;
 		/// <summary>
 		/// optional NamedFormatterDefinitions
 		/// </summary>
-		public Dictionary<string, ValueFormatterDefinition> NamedFormatterDefintions { get; set; }
-			= new Dictionary<string, ValueFormatterDefinition>(StringComparer.OrdinalIgnoreCase);
+		public Dictionary<string, ValueFormatterDefinition> NamedFormatterDefintions
+		{
+			get { return _namedFormatterDefintions; }
+			set
+			{
+				if (value != null)
+					_namedFormatterDefintions = new Dictionary<string, ValueFormatterDefinition>(value, StringComparer.OrdinalIgnoreCase);
+				else
+					_namedFormatterDefintions = value;
+			}
+		}
+		//= new Dictionary<string, ValueFormatterDefinition>(StringComparer.OrdinalIgnoreCase);
 
 		//todo use MaskRuleDefinitionCollection?
 		public Dictionary<string, MaskRuleDefinition> Rules { get; set; } = new Dictionary<string, MaskRuleDefinition>();
@@ -129,7 +140,8 @@ namespace Slin.Masking
 				item.Value.Name = item.Key.ToLower();
 			}
 
-			if (string.IsNullOrWhiteSpace(RegexCheckChars)) {
+			if (string.IsNullOrWhiteSpace(RegexCheckChars))
+			{
 				RegexCheckChars = DefaultRegexCheckChars;
 			}
 

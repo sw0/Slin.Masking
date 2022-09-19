@@ -10,6 +10,7 @@ using System.Text.Json.Nodes;
 using System.Text.Unicode;
 using System.Xml.Linq;
 using System.Diagnostics.Contracts;
+using System.Text;
 
 namespace Slin.Masking
 {
@@ -25,6 +26,8 @@ namespace Slin.Masking
 	public interface IObjectMasker : IJsonMasker, IXmlMasker, IUrlMasker
 	{
 		string MaskObject(object value);
+
+		//void MaskObject(object value, StringBuilder builder);
 
 		/// <summary>
 		/// Indicates enabled or not. Just used as global setting. Not affecting ObjectMasker actually.
@@ -120,6 +123,11 @@ namespace Slin.Masking
 			_options = options ?? new ObjectMaskingOptions();
 		}
 
+		//public void MaskObject(object value, StringBuilder builder)
+		//{
+		//	throw new NotImplementedException();
+		//}
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -203,11 +211,14 @@ namespace Slin.Masking
 
 				if (MaskNestedKvpEnabled //&&
 										 //noneEmptyValueList.Count >= 2 && noneEmptyValueList.Count < 5
-					&& ContainsKeyValuePair(noneEmptyValueList, out string keyKeyName, out string valKeyName))
+										 //&& IsKeyValuePairObject(obj, out string keyKeyName, out string valKeyName)
+					&& ContainsKeyValuePair(noneEmptyValueList, out string keyKeyName, out string valKeyName)
+					)
 				{
 					if (noneEmptyValueList.First(kvp => kvp.Key == keyKeyName).Value.AsValue().TryGetValue(out string key))
 					{
-						var jval = (JsonValue)noneEmptyValueList.First(kvp => kvp.Key == valKeyName).Value;
+						obj.TryGetPropertyValue(valKeyName, out var valNode);
+						var jval = valNode as JsonValue;
 
 						var value = default(string);
 						var valueIsString = true;
@@ -247,51 +258,10 @@ namespace Slin.Masking
 						if (value == null || value.Length <= _options.ValueMinLength)
 							continue;
 
-						//if (!jval.TryGetValue<string>(out var value))
-						//{
-						//	isString = false;
-						//	//if not string, it would be ValueKind.Number 
-						//	value = jval.GetValue<double>().ToString();
-						//}
-						//if (_masker.TryMask(key, value, out string masked))
-						//{
-						//	obj[item.Key] = masked;
-						//	continue;
-						//}
-
-						////mask serialized item
-						//if (IsSerializedKey(key))
-						//{
-						//	try
-						//	{
-						//		if (TryParseJson(value, out var parsedNode))
-						//		{
-						//			obj[item.Key] = parsedNode;
-
-						//			MaskObjectInternal(parsedNode);
-						//		}
-						//		else if (TryParseXDoc(value, out var element))
-						//		{
-						//			var masked = MaskXmlElementString(element);
-						//			obj[item.Key] = masked;
-						//		}
-						//	}
-						//	catch (Exception)
-						//	{
-						//		//todo Parse Json failed
-						//	}
-						//}
+						//mask serialized (xml or JSON)
 						SerializedMaskAttempt(key, value, key, obj);
 
-						////mask url
-						//if (IsMaskUrlEnabled && valueIsString
-						//	&& _options.UrlKeys.Contains(item.Key, _options.SerializedKeysCaseSensitive
-						//	? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
-						//	&& IsLikeUrlOrQuery(value))
-						//{
-						//	var masked = _masker.MaskUrl(value);
-						//	obj[item.Key] = masked;
-						//}
+						//mask url
 						if (valueIsString)
 							UrlJsonMaskAttempt(key, value, key, obj);
 					}
@@ -363,6 +333,25 @@ namespace Slin.Masking
 						valueName = v.Key;
 						return true;
 					}
+				}
+			}
+
+			return false;
+		}
+
+		private bool IsKeyValuePairObject(JsonObject source, out string keyKeyName, out string valKeyName, List<KeyKeyValueKey> eligibleKeyValueNames = null)
+		{
+			keyKeyName = valKeyName = null;
+
+			foreach (var item in eligibleKeyValueNames ?? DefaultKeyValueNames)
+			{
+				if (source.TryGetPropertyValue(item.KeyKeyName, out var keyNode)
+					&& keyNode != null && keyNode is JsonValue a
+					&& source.TryGetPropertyValue(item.ValueKeyName, out var valNode))
+				{
+					keyKeyName = item.KeyKeyName;
+					valKeyName = item.ValueKeyName;
+					return true;
 				}
 			}
 
@@ -518,7 +507,9 @@ namespace Slin.Masking
 		{
 			MaskXElementInternal(element);
 
-			return element.ToString();
+			var result = element.ToString(SaveOptions.DisableFormatting);
+
+			return result;
 		}
 
 		private void MaskXElementInternal(XElement element)

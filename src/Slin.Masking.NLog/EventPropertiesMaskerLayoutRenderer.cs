@@ -8,6 +8,8 @@ using System.Text.RegularExpressions;
 using System.Text.Encodings.Web;
 using System;
 using NLog.Layouts;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Slin.Masking.NLog
 {
@@ -19,6 +21,7 @@ namespace Slin.Masking.NLog
 		public readonly IObjectMasker _objectMasker;
 
 		private string _mode = "object";
+		[DefaultParameter]
 		/// <summary>
 		/// Mode: 
 		/// - object (default)
@@ -36,8 +39,20 @@ namespace Slin.Masking.NLog
 		/// </summary>
 		public bool Disabled { get; set; }
 
+		private List<string> _excludeProperties;
+
 		/// <summary>
-		/// Property Name
+		/// it can be set like 'field1,field2,field3'. If <see cref="Item"/> is set, this property will be ignored.
+		/// </summary>
+		public string ExcludeProperties
+		{
+			get { return _excludeProperties == null ? "" : string.Join(",", _excludeProperties); }
+			set { _excludeProperties = value?.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)?.ToList(); }
+		}
+
+		/// <summary>
+		/// Property Name. 
+		/// <remarks>after v0.1.30, it's became case-insensitive.</remarks>
 		/// </summary>
 		public string Item { get; set; }
 
@@ -56,11 +71,6 @@ namespace Slin.Masking.NLog
 			if (logEvent.Properties == null || logEvent.Properties.Count == 0 || !logEvent.HasProperties)
 				return;
 
-			if (!string.IsNullOrEmpty(Item))
-			{
-				//NOTE: here it's case sensitive here!!!
-				if (!logEvent.Properties.ContainsKey(Item)) return;
-			}
 
 			if (Disabled || !_objectMasker.Enabled)//including disabled
 			{
@@ -70,7 +80,9 @@ namespace Slin.Masking.NLog
 
 					var started = false;
 					builder.Append('{');
-					foreach (var item in logEvent.Properties)
+					foreach (var item in logEvent.Properties.Where(kvp =>
+					_excludeProperties == null || _excludeProperties.Count == 0
+					|| !_excludeProperties.Contains(kvp.Key?.ToString(), StringComparer.OrdinalIgnoreCase)))
 					{
 						if (started) builder.Append(',');
 						else { started = true; }
@@ -83,7 +95,7 @@ namespace Slin.Masking.NLog
 				}
 				else
 				{
-					var value = logEvent.Properties[Item];
+					var value = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
 
 					if (value != null)
 					{
@@ -97,10 +109,11 @@ namespace Slin.Masking.NLog
 			{
 				if (string.IsNullOrEmpty(Item)) return;//todo warning
 
-				if (!logEvent.Properties.TryGetValue(Item, out var value))
-				{
+				var value = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
+
+				if (value == null)
 					return;
-				}
+
 				if (value is string url)
 				{
 					var masked = _objectMasker.MaskUrl(url);
@@ -114,30 +127,33 @@ namespace Slin.Masking.NLog
 			}
 			else if (Mode == "reserialize")
 			{
-				if (!string.IsNullOrEmpty(Item) && logEvent.Properties.TryGetValue(Item, out var value))
-				{
-					if (value == null)
-						return;
+				if (string.IsNullOrEmpty(Item)) return;//todo warning
 
-					var masked = _objectMasker.MaskObject(value);
-					builder.Append(masked);
-				}
-				else
-				{
-					//warnning
-					//do nothing, item is not set!
-				}
+				var value = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
+
+				if (value == null)
+					return;
+
+				var masked = _objectMasker.MaskObject(value);
+				builder.Append(masked);
 			}
 			else
 			{
-				object data;
+				object data = null;
 				if (string.IsNullOrEmpty(Item))
 				{
 					data = logEvent.Properties;
+
+					if (_excludeProperties != null && _excludeProperties.Any())
+					{
+						data = logEvent.Properties.Where(kvp =>
+							!_excludeProperties.Contains(kvp.Key?.ToString(), StringComparer.OrdinalIgnoreCase))
+						.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+					}
 				}
 				else
 				{
-					logEvent.Properties.TryGetValue(Item, out data);
+					data = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
 				}
 				if (data != null)
 				{
