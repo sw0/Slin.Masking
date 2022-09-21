@@ -23,6 +23,7 @@ namespace Slin.Masking
 	{
 		string MaskXmlElementString(XElement node);
 	}
+
 	public interface IObjectMasker : IJsonMasker, IXmlMasker, IUrlMasker
 	{
 		string MaskObject(object value);

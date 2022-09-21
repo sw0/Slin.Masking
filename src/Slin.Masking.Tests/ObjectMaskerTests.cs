@@ -16,6 +16,8 @@ using System.Data;
 using System.Net;
 using System.Numerics;
 using System.Runtime.Intrinsics.X86;
+using static Slin.Masking.Tests.DummyData;
+using System.Text.Json.Nodes;
 
 namespace Slin.Masking.Tests
 {
@@ -23,12 +25,6 @@ namespace Slin.Masking.Tests
 	{
 		public ObjectMaskerTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
 		{ }
-
-
-		private string SquareBrackes(string str)
-		{
-			return string.Concat("[", str, "]");
-		}
 
 		public static IEnumerable<object[]> DummyDataRows =>
 			new List<object[]>
@@ -133,6 +129,10 @@ namespace Slin.Masking.Tests
 		{
 			profile!.MaskXmlSerializedEnabled = true;
 			profile!.MaskXmlSerializedOnXmlAttributeEnabled = true;
+			profile.ArrayItemHandleMode = ArrayItemHandleMode.SingleItemAsValue;
+
+			profile.UrlKeys = new List<string> { "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" };
+			profile.KeyKeyValueKeys.Add(new KeyKeyValueKey("key", "val"));
 
 			profile.NamedFormatterDefintions.Add("pAN14", new ValueFormatterDefinition
 			{
@@ -164,30 +164,33 @@ namespace Slin.Masking.Tests
 		}
 
 
-		[Theory]
-		//[MemberData(nameof(DummyDataRows))]
-		[ClassData(typeof(DummyDataTestRows))]
-		public void MaskDummyDataUserTest(string[] keys, string expected)
-		{
-			var profile = GetMaskingProfile();
+		//[Theory]
+		////[MemberData(nameof(DummyDataRows))]
+		//[ClassData(typeof(DummyDataTestRows))]
+		//public void MaskDummyDataUserTest(string[] keys, string expected)
+		//{
+		//	var profile = GetMaskingProfile();
 
-			ModifyProfile(profile);
+		//	ModifyProfile(profile);
 
-			var masker = new Masker(profile);
-			var objectMasker = new ObjectMasker(masker, profile);
+		//	var masker = new Masker(profile);
+		//	var objectMasker = new ObjectMasker(masker, profile);
 
-			var dummyData = DummyData.CreateLogEntry();
+		//	var dummyData = CreateLogEntry();
 
-			var data = dummyData.Picks(keys);
+		//	var data = dummyData.Picks(keys);
 
-			var actual = objectMasker.MaskObject(data);
+		//	var actual = objectMasker.MaskObject(data);
 
-			Assert.True(actual != null);
+		//	Assert.True(actual != null);
 
-			Assert.Equal(expected, actual);
+		//	File.AppendAllText("c:\\work\\a.log", String.Join(',', keys) + ":\r\n");
+		//	File.AppendAllText("c:\\work\\a.log", actual);
 
-			WriteLine($"test on data with keys '{string.Join(',', keys)}' good");
-		}
+		//	Assert.Equal(expected, actual);
+
+		//	WriteLine($"test on data with keys '{string.Join(',', keys)}' good");
+		//}
 
 		[Fact]
 		public void MaskDummyDataTest()
@@ -206,7 +209,7 @@ namespace Slin.Masking.Tests
 				var masker = new Masker(profile);
 				var objectMasker = new ObjectMasker(masker, profile);
 
-				var data = DummyData.CreateLogEntry();
+				var data = CreateLogEntry();
 
 				var result = output1 = objectMasker.MaskObject(data);
 
@@ -223,7 +226,7 @@ namespace Slin.Masking.Tests
 				var masker = new Masker(profile);
 				var objectMasker = new ObjectMasker(masker, profile);
 
-				var data = DummyData.CreateLogEntry();
+				var data = CreateLogEntry();
 
 				var result = output2 = objectMasker.MaskObject(data);
 
@@ -235,31 +238,152 @@ namespace Slin.Masking.Tests
 
 		#region -- try using StringBuilder. TODO --
 
-		[Fact]
-		public void TryMaskWithStringBuilderTest()
+		public class TestRows : TheoryData<string, string, string>
 		{
-			var provider = CreateProvider();
-
-			using (provider.CreateScope())
+			public TestRows()
 			{
-				var profile = provider.GetRequiredService<IMaskingProfile>() as MaskingProfile;
+				//simple types
+				Add(Keys.boolOfTrue, Masked.boolOfTrue, "true");
+				Add(Keys.ssn, Masked.ssn, Quotes(SSN));
+				Add(Keys.dob, Masked.dob, Quotes(DobStr));
+				Add("ts", "{\"ts\":\"5.99ms\"}", Quotes("5.99ms"));
+				Add(Keys.PrimaryAccountnumBER, Masked.PrimaryAccountnumBER, Quotes(PAN));
+				Add(Keys.transactionAmount, Masked.transactionAmount, Amount.ToString());
 
-				var masker = new Masker(profile);
-				var objectMasker = new ObjectMasker(masker, profile);
+				//object
+				Add(Keys.data, Masked.data, Unpack(Masked.data));
+				Add(Keys.user, Masked.user, Unpack(Masked.user));
+				Add(Keys.kvp, Masked.kvp, Unpack(Masked.kvp));
+				Add(Keys.kvpObj, Masked.kvpObj, Unpack(Masked.kvpObj));
+				Add(Keys.kvpCls, Masked.kvpCls, Unpack(Masked.kvpCls));
+				Add(Keys.Key, Masked.Key, Unpack(Masked.Key));
+				//headers array of key-values
+				Add(Keys.flatHeaders, Masked.flatHeaders, Unpack(Masked.flatHeaders));
+				Add(Keys.headers, Masked.headers, Unpack(Masked.headers));
 
-				var data = DummyData.CreateLogEntry();
+				//url, query/form-data? support decode?
+				Add(Keys.query, Masked.query, Quotes(UrlQueryWithQuestionMark));
+				Add(Keys.formdata, Masked.formdata, Quotes(UrlQuery));
+				Add(Keys.requestUrl, Masked.requestUrl, Quotes(UrlFull));
 
-				var sb = new StringBuilder();
+				//arrays
+				Add(Keys.dataInBytes, Masked.dataInBytes, Quotes(Convert.ToBase64String(DataInBytes)));
+				Add(Keys.arrayOfInt, Masked.arrayOfInt, Unpack(Masked.arrayOfInt));
+				Add(Keys.arrayOfStr, Masked.arrayOfStr, Unpack(Masked.arrayOfStr));
+				Add(Keys.arrayOfObj, Masked.arrayOfObj, Unpack(Masked.arrayOfObj));
+				Add(Keys.arrayOfKvpCls, Masked.arrayOfKvpCls, Unpack(Masked.arrayOfKvpCls));
 
-				var dicData = data.ToDictionary(x => x.Key, x => x.Value);
-				var element = JsonSerializer.SerializeToElement(data);
-				var element2 = JsonSerializer.SerializeToElement(dicData);
+				//arrays complex
+				Add(Keys.arrayOfKvp, Masked.arrayOfKvp, Unpack(Masked.arrayOfKvp));
+				Add(Keys.arrayOfKvpNested, Masked.arrayOfKvpNested, Unpack(Masked.arrayOfKvpNested));
+				Add(Keys.dictionary, Masked.dictionary, Unpack(Masked.dictionary));
+				Add(Keys.dictionaryNested, Masked.dictionaryNested, Unpack(Masked.dictionaryNested));
 
-				//var doc = JsonSerializer.SerializeToDocument(data);
-				MaskJsonElement(null, element, sb);
-
-				WriteLine(sb.ToString());
+				//reserialize JSON
+				Add(Keys.reserialize, Masked.reserialize, Quotes(Masked.reserializeNoMask));
 			}
+
+			private string Unpack(string json)
+			{
+				var result = json.Substring(0, json.Length - 1).Substring(json.IndexOf(':') + 1);
+				return result;
+			}
+		}
+
+		private IMaskingProfile _profile;
+		private Masker _masker;
+
+		[Theory]
+		//[MemberData(nameof(DummyDataRows))]
+		[ClassData(typeof(TestRows))]
+		public void MaskBuilder1Test(string keys, string expected, string expectedOnlyValue)
+		{
+			var profile = GetMaskingProfile();
+			ModifyProfile(profile);
+
+			var masker = new Masker(profile);
+			var jsonMasker = new JsonMasker(masker, profile);
+
+			var data = CreateLogEntry().Picks(keys.Split(','));
+
+			StringBuilder sb = new StringBuilder();
+			StringBuilder sb2 = new StringBuilder();
+			jsonMasker.MaskObject(data, sb);
+
+
+			if (data.Count == 1)
+			{
+				jsonMasker.MaskObject(data.First().Value, sb2);
+			}
+
+			var actual = sb.ToString();
+			var actual2 = sb2.ToString();
+
+			Assert.Equal(expected, actual);
+			Assert.Equal(expectedOnlyValue, actual2);
+		}
+
+		[Theory]
+		//[MemberData(nameof(DummyDataRows))]
+		[ClassData(typeof(TestRows))]
+		public void MaskBuilderTest(string keys, string expected, string expectedOnlyValue)
+		{
+			var profile = GetMaskingProfile();
+			_profile = profile;
+			ModifyProfile(profile);
+
+			var masker = _masker = new Masker(profile);
+			var objectMasker = new ObjectMasker(masker, profile);
+
+			var jsonMasker = new JsonMasker(masker, profile);
+
+			var data = CreateLogEntry().Picks(keys.Split(','));
+
+			var sb = new StringBuilder();
+			var sb2 = new StringBuilder();
+
+			var jsonOptions = new JsonSerializerOptions()
+			{
+				Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+			};
+			var element = JsonSerializer.SerializeToElement(data, jsonOptions);
+
+			MaskJsonElement(null, element, sb);
+
+			if (data.Count == 1)
+			{
+				var element2 = JsonSerializer.SerializeToElement(data.First().Value, jsonOptions);
+				MaskJsonElement(null, element2, sb2);
+			}
+
+			var actual = sb.ToString();
+			var actual2 = sb2.ToString();
+#if DEBUG
+			var file = @"c:\work\a.log";
+			File.WriteAllText(file, actual);
+
+			if (actual2.Length > 0)
+			{
+				File.AppendAllText(file, "\r\n\r\nexpectedOnlyValue:\r\n" + expectedOnlyValue);
+				File.AppendAllText(file, "\r\n\r\nactual2:\r\n" + actual2);
+			}
+#endif
+			WriteLine(keys + "  expected:");
+			WriteLine(actual);
+
+			WriteLine("\r\n\r\n");
+			WriteLine("expectedOnlyValue:");
+			WriteLine(expectedOnlyValue);
+
+			WriteLine("\r\n\r\n");
+			WriteLine("actual2:");
+			WriteLine(actual2);
+
+			Assert.Equal(expected, actual);
+
+			Assert.Equal(expectedOnlyValue, actual2);
+			Assert.NotEqual(actual2, actual);
+
 		}
 
 		private void MaskJsonElement(string? propertyName, JsonElement element, StringBuilder builder)
@@ -273,63 +397,119 @@ namespace Slin.Masking.Tests
 					builder.Append("null");
 					break;
 				case JsonValueKind.Object:
-					builder.Append('{');
-					var isKvp = IsKvpObject(element, out string keyKey, out var key, out string valKey, out var value);
-					if (isKvp)
 					{
-						var keyName = key.GetString();
-						builder.Append('"').Append(keyName).Append('"').Append(':');
-						//builder.Append('{');
-						MaskJsonElement(keyName, value, builder);
-						//builder.Append('}');
-					}
-					foreach (var child in element.EnumerateObject())
-					{
-						//todo skip properties of key and value
-						if (isKvp && (child.Name == keyKey || child.Name == valKey))
-							continue;
-
+						builder.Append('{');
+						var isKvp = IsKvpObject(element, out string keyKey, out var key, out string valKey, out var value);
 						if (isKvp)
+						{
+							var keyName = key.GetString();
+							builder.Append('"').Append(keyKey).Append('"').Append(':')
+								.Append('"').Append(keyName).Append('"').Append(',')
+								.Append('"').Append(valKey).Append('"').Append(':');
+							MaskJsonElement(keyName, value, builder);
+						}
+						foreach (var child in element.EnumerateObject())
+						{
+							//todo skip properties of key and value
+							if (isKvp && (child.Name == keyKey || child.Name == valKey))
+								continue;
+
+							if (isKvp)
+								builder.Append(',');
+
+							MaskProperty(child, builder);
 							builder.Append(',');
 
-						MaskProperty(child, builder);
-						builder.Append(',');
+							if (!previousAppeared)
+								previousAppeared = true;
+						}
 
-						if (!previousAppeared)
-							previousAppeared = true;
+						if (previousAppeared)
+						{
+							builder.Remove(builder.Length - 1, 1);
+						}
+						builder.Append('}');
 					}
-
-					if (previousAppeared)
-					{
-						builder.Remove(builder.Length - 1, 1);
-					}
-					builder.Append('}');
 					break;
 				case JsonValueKind.Array:
 					builder.Append('[');
 
-					foreach (var child in element.EnumerateArray())
+					var treatSingleArrayItemAsValue = true;
+					if (treatSingleArrayItemAsValue && !string.IsNullOrEmpty(propertyName) && element.EnumerateArray().Count() == 1)
 					{
-						MaskJsonElement(null, child, builder);
-
-						builder.Append(',');
-
-						if (!previousAppeared)
-							previousAppeared = true;
+						foreach (var child in element.EnumerateArray())
+						{
+							if (child.ValueKind == JsonValueKind.String
+								|| (_profile.MaskJsonNumberEnabled && child.ValueKind == JsonValueKind.Number))
+							{
+								MaskJsonElement(propertyName, child, builder);
+							}
+							else
+							{
+								MaskJsonElement(null, child, builder);
+							}
+						}
 					}
-
-					if (previousAppeared)
+					else
 					{
-						builder.Remove(builder.Length - 1, 1);
+						foreach (var child in element.EnumerateArray())
+						{
+							MaskJsonElement(null, child, builder);
+
+							builder.Append(',');
+
+							if (!previousAppeared)
+								previousAppeared = true;
+						}
+
+						if (previousAppeared)
+						{
+							builder.Remove(builder.Length - 1, 1);
+						}
 					}
 					builder.Append(']');
 					break;
 				case JsonValueKind.String:
 					//todo 
-					builder.Append(string.Concat("\"", element.GetString(), "\"")); //todo quote
+					{
+						var value = element.GetString();
+
+						if (!string.IsNullOrEmpty(propertyName) && _masker.TryMask(propertyName, value, out var masked))
+						{
+							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
+						}
+						else if (_profile.MaskUrlEnabled && _profile.UrlKeys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
+						{
+							masked = _masker.MaskUrl(value, true);
+
+							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
+						}
+						else if (propertyName != null && value != null && SerializedMaskAttempt(propertyName, value, builder))
+						{
+							//do nothing
+						}
+						else
+						{
+							//todo if Url enabled
+							builder.Append(string.Concat("\"", value, "\"")); //todo quote
+						}
+					}
 					break;
 				case JsonValueKind.Number:
-					builder.Append(element.GetRawText());
+					{
+						if (!string.IsNullOrEmpty(propertyName) && _profile.MaskJsonNumberEnabled && _masker.TryMask(propertyName, element.GetRawText(), out var masked))
+						{
+							if (masked == null) builder.Append("null");
+							else if (masked != null && masked.All(char.IsDigit))
+								builder.Append(masked);
+							else
+								builder.Append(string.Concat('"', masked, '"'));
+						}
+						else
+						{
+							builder.Append(element.GetRawText());
+						}
+					}
 					break;
 				case JsonValueKind.True:
 					builder.Append(element.GetRawText());
@@ -350,7 +530,53 @@ namespace Slin.Masking.Tests
 			builder.Append('"').Append(property.Name).Append('"').Append(':');
 			MaskJsonElement(property.Name, property.Value, builder);
 		}
+		private bool SerializedMaskAttempt(string key, string value, StringBuilder builder)
+		{
+			if (!_profile.MaskJsonSerializedEnabled || !_profile.SerializedKeys.Contains(key, StringComparer.OrdinalIgnoreCase)) return false;
 
+			try
+			{
+				if (_profile.MaskJsonSerializedEnabled && TryParseJson(value, out var parsedNode))
+				{
+					//source[valueKeyName] = parsedNode;
+
+					MaskJsonElement(key, parsedNode!.Value, builder);
+
+					return true;
+				}
+				//else if (MaskXmlSerializedEnabled && TryParseXEle(value, out var element))
+				//{
+				//	var masked = MaskXmlElementString(element);
+				//	source[valueKeyName] = masked;
+				//	return true;
+				//}
+			}
+			catch (Exception)
+			{
+				//todo Parse Json failed
+			}
+			return false;
+		}
+
+		bool TryParseJson(string value, out JsonElement? node)
+		{
+			node = null; value = value?.Trim();
+			//here I think for JSON, it at least has 15 char?...
+			if (value == null || value.Length < _profile.JsonMinLength || value == "null") return false;
+
+			if (!(value.StartsWith("[") && value.EndsWith("]"))
+				&& !(value.StartsWith("{") && value.EndsWith("}")))
+				return false;
+
+			var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(value), new JsonReaderOptions { });
+
+			if (JsonElement.TryParseValue(ref reader, out var nodex))
+			{
+				node = nodex.Value;
+				return true;
+			}
+			return false;
+		}
 		private bool IsKvpList(JsonElement ele, out string keyKey, out JsonElement key, out string valKey, out JsonElement value)
 		{
 			keyKey = valKey = "";
@@ -388,21 +614,24 @@ namespace Slin.Masking.Tests
 
 			int flag = 0;
 			int count = ele.EnumerateObject().Count();
-			keyKey = "Key";
-			valKey = "Value";
-			if (ele.TryGetProperty(keyKey, out key))
+			foreach (var kv in _profile.KeyKeyValueKeys)
 			{
-				if (key.ValueKind == JsonValueKind.String)
+				keyKey = kv.KeyKeyName;
+				valKey = kv.ValueKeyName;
+				if (ele.TryGetProperty(keyKey, out key))
 				{
-					flag |= 1;
+					if (key.ValueKind == JsonValueKind.String)
+					{
+						flag |= 1;
+					}
 				}
+				if (ele.TryGetProperty(valKey, out value))
+				{
+					flag |= 2;
+				}
+				if (flag == 3) return true;
 			}
-			if (ele.TryGetProperty(valKey, out value))
-			{
-				flag |= 2;
-			}
-			return flag == 3 && count == 2;
-			//todo not checking count?
+			return false;
 		}
 		#endregion
 	}

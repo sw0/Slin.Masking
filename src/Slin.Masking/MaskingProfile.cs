@@ -72,6 +72,25 @@ namespace Slin.Masking
 		/// default: 15. If string length is less than N, it will bypass parsing Json document.
 		/// </summary>
 		public int JsonMinLength { get; set; } = 15;
+		/// <summary>
+		/// default: 64
+		/// </summary>
+		public int JsonMaxDepth { get; set; } = 64;//default
+
+		/// <summary>
+		/// allowed characters
+		/// </summary>
+		public string JsonAllowedCharacters { get; set; }
+
+		/// <summary>
+		/// allowed unicoderanges, i.e. CjkUnifiedIdeographs
+		/// </summary>
+		public string[] JsonAllowedUnicodeRanges { get; set; }
+
+		/// <summary>
+		/// default: Default
+		/// </summary>
+		public ArrayItemHandleMode ArrayItemHandleMode { get; set; }
 		#endregion
 
 		#region -- masker settings --

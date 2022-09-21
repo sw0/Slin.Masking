@@ -6,40 +6,42 @@
 		{
 			var actual = "";
 
-			actual = SquareBrackes(DummyData.Masked.user);
+			actual = DummyData.Masked.user;
 
 			Add(new[] { DummyData.Keys.user }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.data);
+			actual = DummyData.Masked.data;
 			Add(new[] { DummyData.Keys.data }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.amount);
+			actual = CurlyBraces(DummyData.Masked.amount);
 			Add(new[] { DummyData.Keys.amount }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.transactionAmount);
+			actual = CurlyBraces(DummyData.Masked.transactionAmount);
 			Add(new[] { DummyData.Keys.transactionAmount }, actual);
 
-			actual = SquareBrackes(string.Concat(DummyData.Masked.amount, ",", DummyData.Masked.transactionAmount));
+			actual = CurlyBraces(string.Concat(DummyData.Masked.amount, ",", DummyData.Masked.transactionAmount));
 			Add(new[] { DummyData.Keys.amount, DummyData.Keys.transactionAmount }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.query);
+			actual = CurlyBraces(DummyData.Masked.query);
 			Add(new[] { DummyData.Keys.query }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.requestUrl);
+			actual = CurlyBraces(DummyData.Masked.requestUrl);
 			Add(new[] { DummyData.Keys.requestUrl }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.dataInBytes);
+			actual = CurlyBraces(DummyData.Masked.dataInBytes);
 			Add(new[] { DummyData.Keys.dataInBytes }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.ResponseBody);
+			actual = CurlyBraces(DummyData.Masked.ResponseBody);
 			Add(new[] { DummyData.Keys.ResponseBody }, actual);
 
-			actual = SquareBrackes(DummyData.Masked.kvplist);
-			Add(new[] { DummyData.Keys.kvplist }, actual);
-
-			actual = SquareBrackes(DummyData.Masked.dictionary);
+			actual = CurlyBraces(DummyData.Masked.dictionary);
 			Add(new[] { DummyData.Keys.dictionary }, actual);
 
+		}
+
+		public static string CurlyBraces(string str)
+		{
+			return string.Concat("{", str, "}");
 		}
 		public static string SquareBrackes(string str)
 		{

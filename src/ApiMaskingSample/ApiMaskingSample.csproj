@@ -8,6 +8,7 @@
 
 	<ItemGroup>
 		<Compile Include="..\Slin.Masking.Tests\DummyData.cs" Link="DummyData.cs" />
+		<Compile Include="..\Slin.Masking.Tests\DummyData.Masked.cs" Link="DummyData.Masked.cs" />
 	</ItemGroup>
 
 	<ItemGroup>

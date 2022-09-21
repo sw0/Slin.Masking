@@ -4,6 +4,7 @@ using NLog;
 using NLog.Web;
 using Slin.Masking;
 using Slin.Masking.NLog;
+using ApiMaskingSample;
 
 var logger = LogManager
 	.Setup(setupBuilder: (setupBuilder) => setupBuilder.UseMasking("masking.json"))
@@ -63,6 +64,9 @@ try
 	builder.Host
 	//.UseMaskableNLog(null);
 	.UseNLog();
+
+	//var x = builder.Configuration.GetValue<DayOfWeek>("testEnum");  //tested, either int or string works
+	//var x2 = builder.Configuration.GetValue<DayOfWeek>("testEnumInt");
 
 	var app = builder.Build();
 

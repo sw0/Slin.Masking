@@ -16,32 +16,6 @@ namespace Slin.Masking.Tests
 
 	public partial class DummyData
 	{
-		public sealed class Keys
-		{
-			public const string user = nameof(user);
-			public const string data = nameof(data);
-			public const string amount = nameof(amount);
-			public const string transactionAmount = nameof(transactionAmount);
-			public const string PrimaryAccountnumBER = nameof(PrimaryAccountnumBER);
-			public const string query = nameof(query);
-			public const string requestUrl = nameof(requestUrl);
-			public const string dataInBytes = nameof(dataInBytes);
-			public const string objectfield = nameof(objectfield);
-			public const string kvpfield = nameof(kvpfield);
-			public const string reserialize = nameof(reserialize);
-			public const string Key = nameof(Key);
-			public const string ResponseBody = nameof(ResponseBody);
-			public const string ssn = nameof(ssn);
-			public const string dob = nameof(dob);
-			public const string kvplist = nameof(kvplist);
-			public const string dictionary = nameof(dictionary);
-			public const string kvp1 = nameof(kvp1);
-			public const string excludedX = nameof(excludedX);
-			public const string excludedY = nameof(excludedY);
-			public const string Authorization = nameof(Authorization);
-			public const string headers = nameof(headers);
-		}
-
 		public static readonly JavaScriptEncoder MyEncoder = JavaScriptEncoder.Create(UnicodeRanges.All);
 
 		public const string FirstName = "Shawn";
@@ -49,18 +23,19 @@ namespace Slin.Masking.Tests
 		public const string SSN = "123456789";
 		public const string PAN = "1234567890123456";
 		public const string DobStr = "1988-01-01";
+		public const decimal Amount = 9.99m;
 		public static readonly DateTime DOB = new(1988, 1, 1);
 
-		public const string UrlQuery1 = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界&accesstoken=" + AccessToken;
+		public const string UrlQuery = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界&accesstoken=" + AccessToken;
 		public const string UrlQuery1Encoded = "ssn=123456789&amp;pan=1234567890123456&amp;dob=1988-07-14";
-		public const string UrlQuery2 = "?" + UrlQuery1;
+		public const string UrlQueryWithQuestionMark = "?" + UrlQuery;
 		public const string UrlQuery2Encoded = "?" + UrlQuery1Encoded;
 
 		public const string Url1 = "https://jd.com/firstname/shawn/lastname/lin";
-		public const string UrlFull = Url1 + UrlQuery2;
+		public const string UrlFull = Url1 + UrlQueryWithQuestionMark;
 		public const string UrlFullEncoded = Url1 + UrlQuery2Encoded;
 
-		public static readonly byte[] DataInBytes = new byte[0];
+		public static readonly byte[] DataInBytes = new byte[] { 147, 60, 217, 97, 159, 120, 123, 223, 72, 80, 239, 21, 138, 213, 44, 157, 246, 183, 25, 122, 72, 178, 15, 99, 189, 73, 64, 164, 228, 72, 190, 168, 10, 217, 251, 168, 235 };
 		public const string AccessToken = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 		//basic auth: Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"))
@@ -120,60 +95,106 @@ namespace Slin.Masking.Tests
 			Balance = 9999.99m,
 		};
 
-		static DummyData()
+		public static IDictionary<string, object> CreateLogEntry()
 		{
-			DataInBytes = new byte[200];
-			Random.Shared.NextBytes(DataInBytes);
-		}
+			var data = new Dictionary<string, object>();
 
-		public static List<KeyValuePair<string, object>> CreateLogEntry()
-		{
-			var data = new List<KeyValuePair<string, object>>();
+			var kvp = new KeyValuePair<string, object>(Keys.ssn, SSN);
+			var kvplist = new[]{
+					new KeyValuePair<string,object>(Keys.ssn, SSN),
+					new KeyValuePair<string,object>(Keys.dob, DobStr)
+				};
+			var kvpCls = new KvpClass { Key = "ssn", Value = SSN };
 
-			data.Add(new KeyValuePair<string, object>(Keys.user, DummyData.User));
-			data.Add(new KeyValuePair<string, object>(Keys.data, new { SSN = "123456789", PAN = DummyData.PAN }));
-			data.Add(new KeyValuePair<string, object>(Keys.amount, 99.99m));
-			data.Add(new KeyValuePair<string, object>(Keys.transactionAmount, 99.99m));
-			data.Add(new KeyValuePair<string, object>(Keys.PrimaryAccountnumBER, "1234567890123456"));
-			data.Add(new KeyValuePair<string, object>("ts", "5.99ms"));
-			data.Add(new KeyValuePair<string, object>(Keys.query, DummyData.UrlQuery2));
-			data.Add(new KeyValuePair<string, object>(Keys.requestUrl, DummyData.UrlFull));
-			data.Add(new KeyValuePair<string, object>(Keys.dataInBytes, DummyData.DataInBytes));
+			data.Add(Keys.boolOfTrue, true);
+			data.Add(Keys.ssn, SSN);
+			data.Add(Keys.dob, DobStr);
+			data.Add(Keys.amount, Amount);
+			data.Add(Keys.transactionAmount, Amount);
+			data.Add(Keys.PrimaryAccountnumBER, "1234567890123456");
+			data.Add("ts", "5.99ms");
 
-			var d1 = new
+			data.Add(Keys.query, UrlQueryWithQuestionMark);
+			data.Add(Keys.formdata, UrlQuery);
+			data.Add(Keys.requestUrl, UrlFull);
+
+
+			var d1 = new { id = 1, amount = 9.99m, ssn = SSN };
+			var kvpObj = new { key = "ssn", val = SSN, amount = Amount };
+
+			data.Add(Keys.user, User);
+			data.Add(Keys.data, new { SSN = SSN, PAN = PAN });
+			data.Add(Keys.kvp, kvp);
+			data.Add(Keys.kvpObj, kvpObj);
+			data.Add(Keys.kvpCls, kvpCls);
+			data.Add(Keys.Key, new { Firstname = "Shawn" });
+
+			data.Add(Keys.arrayOfInt, new[] { 1, 2, 3 });
+			data.Add(Keys.arrayOfStr, new[] { "good", "bad", "ugly" });
+			data.Add(Keys.arrayOfObj, new[] { d1 });
+			data.Add(Keys.arrayOfKvpCls, new[] { kvpCls });
+			data.Add(Keys.dataInBytes, DataInBytes);
+
+
+
+			data.Add(Keys.arrayOfKvp, new List<KeyValuePair<string, object>>
 			{
-				transId = "12",
-				amount = 9.99m,
-				ssn = DummyData.SSN,
-				from = "中国"
+				new KeyValuePair<string,object>(Keys.ssn, SSN),
+				new KeyValuePair<string,object>(Keys.dob, DobStr ),
+				new KeyValuePair<string,object>(Keys.requestUrl, Url1 )
+			});
+
+			var arrOfKvpNested = new List<KeyValuePair<string, object>>
+			{
+				new KeyValuePair<string,object>(Keys.ssn, SSN),
+				new KeyValuePair<string,object>(Keys._nestedKvp, kvp),
+				new KeyValuePair<string,object>(Keys._nestedKvpList, kvplist),
+				new KeyValuePair<string,object>(Keys._nestedObj, d1 )
 			};
-			data.Add(new KeyValuePair<string, object>(Keys.objectfield, d1));
-			data.Add(new KeyValuePair<string, object>(Keys.kvpfield, DummyData.UrlQuery1));
-			data.Add(new KeyValuePair<string, object>(Keys.reserialize, JsonSerializer.Serialize(d1, new JsonSerializerOptions { Encoder = MyEncoder })));
-			data.Add(new KeyValuePair<string, object>(Keys.Key, new { Firstname = "Sghawn" }));
-			data.Add(new KeyValuePair<string, object>(Keys.ResponseBody, Xml1));
-			data.Add(new KeyValuePair<string, object>(Keys.kvplist, new List<KeyValuePair<string, object>>
-			{
-				new KeyValuePair<string, object>(Keys.ssn, DummyData.SSN ),
-				new KeyValuePair<string, object>(Keys.dob, DummyData.DobStr ),
-				new KeyValuePair<string, object>(Keys.requestUrl, DummyData.Url1 )
-			}));
-			data.Add(new KeyValuePair<string, object>(Keys.dictionary, new List<KeyValuePair<string, object>>
-			{
-				new KeyValuePair<string, object>(Keys.ssn, DummyData.SSN ),
-				new KeyValuePair<string, object>(Keys.dob, DummyData.DobStr ),
-				new KeyValuePair<string, object>(Keys.requestUrl, DummyData.Url1 )
-			}));
-			data.Add(new KeyValuePair<string, object>(Keys.kvp1, new { key = "ssn", val = DummyData.SSN }));
-			data.Add(new KeyValuePair<string, object>(Keys.excludedX, new { key = "ssn", val = DummyData.SSN }));
-			data.Add(new KeyValuePair<string, object>(Keys.excludedY, "ok"));
 
-			var headers = new List<KeyValuePair<string, string[]>> {
-				new KeyValuePair<string, string[]>(Keys.Authorization, new string[] { AuthorizationBasic }),
-				new KeyValuePair<string, string[]>("X-Request-Id", new string[] { Guid.NewGuid().ToString() })
+			data.Add(Keys.arrayOfKvpNested, arrOfKvpNested);
+
+
+			data.Add(Keys.dictionary, new Dictionary<string, object>
+			{
+				{ Keys.ssn, SSN },
+				{ Keys.dob, DobStr },
+			});
+
+			data.Add(Keys.dictionaryNested, new Dictionary<string, object>
+			{
+				{ Keys.transactionAmount, 8.59m },
+				{ Keys.ssn, SSN },
+				{ Keys._nestedObj, d1 },
+				{ Keys._nestedKvp, kvp},
+				{ Keys._nestedKvpList, kvplist},
+			});
+
+
+
+
+			data.Add(Keys.reserialize, JsonSerializer.Serialize(arrOfKvpNested, new JsonSerializerOptions { Encoder = MyEncoder }));
+
+			data.Add(Keys.ResponseBody, Xml1);
+			data.Add(Keys.excludedX, new { key = "ssn", val = SSN });
+			data.Add(Keys.excludedY, "ok");
+
+			var headers = new List<KeyValuePair<string, object[]>> {
+				new KeyValuePair<string, object[]>(Keys.Authorization, new string[] { AuthorizationBasic }),
+				new KeyValuePair<string, object[]>(Keys.amount, new object[] {Amount }),
+				new KeyValuePair<string, object[]>("X-Request-Id", new string[] { Guid.Parse("1f53f1b6-862e-4f9f-ac83-def5b81f69eb").ToString() })
 				};
 
-			data.Add(new KeyValuePair<string, object>(Keys.headers, headers));
+			data.Add(Keys.headers, headers);
+
+			//actually same as arrayOfKvp
+			var flatHeaders = new List<KeyValuePair<string, object>> {
+				new KeyValuePair<string, object>(Keys.Authorization,  AuthorizationBasic ),
+				new KeyValuePair<string, object>(Keys.amount,  Amount ),
+				new KeyValuePair<string, object>("X-Request-Id", Guid.Parse("1f53f1b6-862e-4f9f-ac83-def5b81f69eb").ToString())
+				};
+
+			data.Add(Keys.flatHeaders, flatHeaders);
 
 			return data;
 		}
@@ -181,9 +202,15 @@ namespace Slin.Masking.Tests
 
 	public static class DummyDataExtensions
 	{
-		public static List<KeyValuePair<string, object>> Picks(this List<KeyValuePair<string, object>> source, params string[] keys2keep)
+		public static IDictionary<string, object> Picks(this IDictionary<string, object> source, params string[] keys2keep)
 		{
+			var result = source.Where(x => keys2keep.Contains(x.Key)).ToList();
 
+			return result.ToDictionary(x => x.Key, x => x.Value);
+		}
+
+		public static IEnumerable<KeyValuePair<string, object>> Picks(this IEnumerable<KeyValuePair<string, object>> source, params string[] keys2keep)
+		{
 			var result = source.Where(x => keys2keep.Contains(x.Key)).ToList();
 
 			return result;
