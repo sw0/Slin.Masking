@@ -11,25 +11,6 @@ using System.Threading.Tasks;
 
 namespace Slin.Masking
 {
-	internal interface IMaskingContext
-	{
-		IMaskingOptions Options { get; }
-
-		Regex GetOrAddRegex(string pattern, RegexOptions options);
-
-		Regex GetRequiredRegex(string pattern);
-
-		bool IsLikePattern(string fieldName);
-
-		IKeyedMasker GetKeyedMasker(string key, string value);
-
-		IMaskFormatter MaskFormatter { get; }
-
-		/// <summary>
-		/// [optional] Only used for URL masking.
-		/// </summary>
-		List<UrlMaskingPattern> UrlMaskingPatterns { get; }
-	}
 
 	internal class MaskingContext : IMaskingContext
 	{

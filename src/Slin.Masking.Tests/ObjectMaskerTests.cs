@@ -18,10 +18,11 @@ using System.Numerics;
 using System.Runtime.Intrinsics.X86;
 using static Slin.Masking.Tests.DummyData;
 using System.Text.Json.Nodes;
+using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace Slin.Masking.Tests
 {
-	public class ObjectMaskerTests : TestBase
+	public partial class ObjectMaskerTests : TestBase
 	{
 		public ObjectMaskerTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
 		{ }
@@ -238,71 +239,21 @@ namespace Slin.Masking.Tests
 
 		#region -- try using StringBuilder. TODO --
 
-		public class TestRows : TheoryData<string, string, string>
-		{
-			public TestRows()
-			{
-				//simple types
-				Add(Keys.boolOfTrue, Masked.boolOfTrue, "true");
-				Add(Keys.ssn, Masked.ssn, Quotes(SSN));
-				Add(Keys.dob, Masked.dob, Quotes(DobStr));
-				Add("ts", "{\"ts\":\"5.99ms\"}", Quotes("5.99ms"));
-				Add(Keys.PrimaryAccountnumBER, Masked.PrimaryAccountnumBER, Quotes(PAN));
-				Add(Keys.transactionAmount, Masked.transactionAmount, Amount.ToString());
-
-				//object
-				Add(Keys.data, Masked.data, Unpack(Masked.data));
-				Add(Keys.user, Masked.user, Unpack(Masked.user));
-				Add(Keys.kvp, Masked.kvp, Unpack(Masked.kvp));
-				Add(Keys.kvpObj, Masked.kvpObj, Unpack(Masked.kvpObj));
-				Add(Keys.kvpCls, Masked.kvpCls, Unpack(Masked.kvpCls));
-				Add(Keys.Key, Masked.Key, Unpack(Masked.Key));
-				//headers array of key-values
-				Add(Keys.flatHeaders, Masked.flatHeaders, Unpack(Masked.flatHeaders));
-				Add(Keys.headers, Masked.headers, Unpack(Masked.headers));
-
-				//url, query/form-data? support decode?
-				Add(Keys.query, Masked.query, Quotes(UrlQueryWithQuestionMark));
-				Add(Keys.formdata, Masked.formdata, Quotes(UrlQuery));
-				Add(Keys.requestUrl, Masked.requestUrl, Quotes(UrlFull));
-
-				//arrays
-				Add(Keys.dataInBytes, Masked.dataInBytes, Quotes(Convert.ToBase64String(DataInBytes)));
-				Add(Keys.arrayOfInt, Masked.arrayOfInt, Unpack(Masked.arrayOfInt));
-				Add(Keys.arrayOfStr, Masked.arrayOfStr, Unpack(Masked.arrayOfStr));
-				Add(Keys.arrayOfObj, Masked.arrayOfObj, Unpack(Masked.arrayOfObj));
-				Add(Keys.arrayOfKvpCls, Masked.arrayOfKvpCls, Unpack(Masked.arrayOfKvpCls));
-
-				//arrays complex
-				Add(Keys.arrayOfKvp, Masked.arrayOfKvp, Unpack(Masked.arrayOfKvp));
-				Add(Keys.arrayOfKvpNested, Masked.arrayOfKvpNested, Unpack(Masked.arrayOfKvpNested));
-				Add(Keys.dictionary, Masked.dictionary, Unpack(Masked.dictionary));
-				Add(Keys.dictionaryNested, Masked.dictionaryNested, Unpack(Masked.dictionaryNested));
-
-				//reserialize JSON
-				Add(Keys.reserialize, Masked.reserialize, Quotes(Masked.reserializeNoMask));
-			}
-
-			private string Unpack(string json)
-			{
-				var result = json.Substring(0, json.Length - 1).Substring(json.IndexOf(':') + 1);
-				return result;
-			}
-		}
-
 		private IMaskingProfile _profile;
 		private Masker _masker;
 
 		[Theory]
-		//[MemberData(nameof(DummyDataRows))]
-		[ClassData(typeof(TestRows))]
-		public void MaskBuilder1Test(string keys, string expected, string expectedOnlyValue)
+		[ClassData(typeof(JsonMaskerTestRows))]
+		public void JsonMaskerBuilder1Test(string keys, string expected, string expectedOnlyValue)
 		{
 			var profile = GetMaskingProfile();
 			ModifyProfile(profile);
 
 			var masker = new Masker(profile);
 			var jsonMasker = new JsonMasker(masker, profile);
+			var xmlMasker = new XmlMasker(masker, profile);
+			jsonMasker.SetXmlMasker(xmlMasker);
+			xmlMasker.SetJsonMasker(jsonMasker);
 
 			var data = CreateLogEntry().Picks(keys.Split(','));
 
@@ -310,10 +261,10 @@ namespace Slin.Masking.Tests
 			StringBuilder sb2 = new StringBuilder();
 			jsonMasker.MaskObject(data, sb);
 
-
 			if (data.Count == 1)
 			{
-				jsonMasker.MaskObject(data.First().Value, sb2);
+				var value = data.First().Value;
+				jsonMasker.MaskObject(value, sb2);
 			}
 
 			var actual = sb.ToString();
@@ -324,9 +275,91 @@ namespace Slin.Masking.Tests
 		}
 
 		[Theory]
-		//[MemberData(nameof(DummyDataRows))]
-		[ClassData(typeof(TestRows))]
-		public void MaskBuilderTest(string keys, string expected, string expectedOnlyValue)
+		[ClassData(typeof(XmlMaskerInvalidTestRows))]
+		public void XmlMaskerInvalidTest(string xml, bool valid, string expected)
+		{
+			XmlMaskerTestInternal(nameof(XmlMaskerInvalidTest), xml, valid, expected);
+		}
+
+		[Theory]
+		[ClassData(typeof(XmlMaskerTestRows))]
+		public void XmlMaskerTest(string xml, bool valid, string expected)
+		{
+			XmlMaskerTestInternal(nameof(XmlMaskerTest), xml, valid, expected);
+		}
+
+
+		[Theory]
+		[ClassData(typeof(XmlJsonMaskerTestRows))]
+		public void XmlWithJsonMaskerTest(string xml, bool valid, string expected)
+		{
+			XmlMaskerTestInternal(nameof(XmlWithJsonMaskerTest), xml, valid, expected);
+		}
+
+		private void XmlMaskerTestInternal(string testName, string xml, bool valid, string expected)
+		{
+			var profile = GetMaskingProfile();
+			ModifyProfile(profile);
+
+			var masker = new Masker(profile);
+			var xmlMasker = new XmlMasker(masker, profile);
+			var jsonMasker = new JsonMasker(masker, profile);
+			xmlMasker.SetJsonMasker(jsonMasker);
+			jsonMasker.SetXmlMasker(xmlMasker);
+
+			var objMasker = new ObjectMasker(masker, profile);
+
+			var parsed = xmlMasker.TryParse(xml, out var ele);
+
+			Assert.True(valid == parsed, "failed to parse the XML");
+
+			if (parsed)
+			{
+				var actual = xmlMasker.MaskXmlElementString(ele);
+
+				var parsed2 = xmlMasker.TryParse(xml, out var ele2);
+				Assert.True(parsed2, "should be true, as it was parsed successfully");
+				var actual2 = objMasker.MaskObject(ele2);
+
+#if DEBUG
+				var file = @$"c:\work\slin.masking.tests\{testName}_{DateTime.Now:HHmm}.txt";
+
+				if (!Directory.Exists(Path.GetDirectoryName(file)))
+				{
+					Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+				}
+
+				if (!File.Exists(file))
+				{
+					File.WriteAllText(file, $"{testName} test cases:" + Environment.NewLine);
+				}
+
+				File.AppendAllText(file, "input:" + Environment.NewLine);
+				File.AppendAllText(file, xml + Environment.NewLine + Environment.NewLine);
+
+				File.AppendAllText(file, "actual:" + Environment.NewLine);
+				File.AppendAllText(file, actual + Environment.NewLine + Environment.NewLine);
+
+				File.AppendAllText(file, "expected:" + Environment.NewLine + expected
+					+ Environment.NewLine + Environment.NewLine
+					+ $"[expected==actual]: {expected == actual}" + Environment.NewLine);
+				File.AppendAllText(file, new string('-', 100)
+					+ Environment.NewLine + Environment.NewLine);
+#endif
+				Assert.Equal(expected, actual);
+
+				//Compare with two ways: MaskObject va MaskXmlElementString
+				//NOTE here there is a known issue that JsonNode has a bug:
+				var expected2 = expected.Replace("&amp;amp;", "&amp;").Replace("&amp;", "&");
+				var actual3 = actual2.Replace("\\u0026","&").Replace("&amp;amp;", "&amp;").Replace("&amp;", "&")
+					.Replace("\\u4E2D\\u56FD", "中国").Replace("\\u4E16\\u754C", "世界");
+				Assert.Equal(expected2, actual3);
+			}
+		}
+
+		[Theory]
+		[ClassData(typeof(JsonMaskerTestRows))]
+		public void JsonMaskerBuilderTest(string keys, string expected, string expectedOnlyValue)
 		{
 			var profile = GetMaskingProfile();
 			_profile = profile;
@@ -359,7 +392,12 @@ namespace Slin.Masking.Tests
 			var actual = sb.ToString();
 			var actual2 = sb2.ToString();
 #if DEBUG
-			var file = @"c:\work\a.log";
+			var file = @$"c:\work\slin.masking.tests\{nameof(JsonMaskerBuilderTest)}_{DateTime.Now:HHmm}.txt";
+
+			if (!Directory.Exists(Path.GetDirectoryName(file)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+			}
 			File.WriteAllText(file, actual);
 
 			if (actual2.Length > 0)

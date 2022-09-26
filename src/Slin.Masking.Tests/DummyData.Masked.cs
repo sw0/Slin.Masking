@@ -16,6 +16,8 @@ namespace Slin.Masking.Tests
 		public sealed class Keys
 		{
 			public const string boolOfTrue = nameof(boolOfTrue);
+			public const string FirstName = nameof(FirstName);
+			public const string LastName = nameof(LastName);
 			public const string ssn = nameof(ssn);
 			public const string dob = nameof(dob);
 			public const string amount = nameof(amount);
@@ -28,6 +30,7 @@ namespace Slin.Masking.Tests
 			public const string kvpObj = nameof(kvpObj);
 			public const string kvpCls = nameof(kvpCls);
 			public const string Key = nameof(Key);
+			public const string Value = nameof(Value);
 
 			public const string dataInBytes = nameof(dataInBytes);
 			public const string arrayOfInt = nameof(arrayOfInt);
@@ -46,6 +49,7 @@ namespace Slin.Masking.Tests
 			public const string dictionaryNested = nameof(dictionaryNested);
 
 			public const string query = nameof(query);
+			public const string queryEncoded = nameof(query);
 			public const string formdata = nameof(formdata);
 			public const string requestUrl = nameof(requestUrl);
 
@@ -57,6 +61,7 @@ namespace Slin.Masking.Tests
 
 			public const string objectfield = nameof(objectfield);
 			public const string reserialize = nameof(reserialize);
+			public const string Body = nameof(Body);
 			public const string ResponseBody = nameof(ResponseBody);
 
 			public const string excludedX = nameof(excludedX);
@@ -101,9 +106,11 @@ namespace Slin.Masking.Tests
 
 
 			//url, query/form-data
-			public const string query = "{\"query\":\"?ssn=*********&pan=1234********3456&dob=REDACTED&from=中国&to=世界&accesstoken=123456789****uvwxyz\"}";
+			public const string query = "{\"query\":\"ssn=*********&pan=1234********3456&dob=REDACTED&from=中国&to=世界&accesstoken=123456789****uvwxyz\"}";
+			public const string queryEncoded = "{\"query\":\"ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz\"}";
 			public const string formdata = "{\"formdata\":\"ssn=*********&pan=1234********3456&dob=REDACTED&from=中国&to=世界&accesstoken=123456789****uvwxyz\"}";
 			public const string requestUrl = "{\"requestUrl\":\"https://jd.com/firstname/sh***/lastname/li*?ssn=*********&pan=1234********3456&dob=REDACTED&from=中国&to=世界&accesstoken=123456789****uvwxyz\"}";
+			public const string requestUrlEncoded = "{\"requestUrl\":\"https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz\"}";
 
 			//headers, treatSingleArrayItemAsValue
 			public const string flatHeaders = "{\"flatHeaders\":[{\"Key\":\"Authorization\",\"Value\":\"dXNlcm5hb****dvcmQ=\"},{\"Key\":\"amount\",\"Value\":null},{\"Key\":\"X-Request-Id\",\"Value\":\"1f53f1b6-862e-4f9f-ac83-def5b81f69eb\"}]}";
@@ -113,7 +120,12 @@ namespace Slin.Masking.Tests
 
 			public const string reserialize = "{\"reserialize\":[{\"Key\":\"ssn\",\"Value\":\"*********\"},{\"Key\":\"nestedKvp\",\"Value\":{\"Key\":\"ssn\",\"Value\":\"*********\"}},{\"Key\":\"nestedKvpList\",\"Value\":[{\"Key\":\"ssn\",\"Value\":\"*********\"},{\"Key\":\"dob\",\"Value\":\"REDACTED\"}]},{\"Key\":\"nestedObj\",\"Value\":{\"id\":1,\"amount\":null,\"ssn\":\"*********\"}}]}";
 			public const string reserializeNoMask = "[{\"Key\":\"ssn\",\"Value\":\"123456789\"},{\"Key\":\"nestedKvp\",\"Value\":{\"Key\":\"ssn\",\"Value\":\"123456789\"}},{\"Key\":\"nestedKvpList\",\"Value\":[{\"Key\":\"ssn\",\"Value\":\"123456789\"},{\"Key\":\"dob\",\"Value\":\"1988-01-01\"}]},{\"Key\":\"nestedObj\",\"Value\":{\"id\":1,\"amount\":9.99,\"ssn\":\"123456789\"}}]";
-			public const string ResponseBody = "";
+			public const string ResponseBody = @"{""ResponseBody"":""<SOAP-ENV:Envelope xmlns:SOAP-ENV=""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle=""http://www.w3.org/2001/12/soap-encoding""><SOAP-ENV:Body xmlns:m=""http://www.xyz.org/quotation""><m:GetResponse><m:Body>{""FirstName"":""Sh***"",""ssn"":""*********""}</m:Body><m:SSN>*********</m:SSN><m:authorization>Bearer 12****uvwxyz</m:authorization><m:accessToken>Bearer 12****uvwxyz</m:accessToken><m:User><m:FirstName dOB=""REDACTED"">Sh***</m:FirstName><m:FirstName>Li*</m:FirstName><m:SSN>*********</m:SSN><m:DOB dob=""REDACTED"">REDACTED</m:DOB><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl><m:query>ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:query><m:Body>{""FirstName"":""Shawn"",""ssn"":""123456789""BAD</m:Body><m:kvplist dob=""REDACTED""><m:kvprow requestUrl=""https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz""><m:Key>SSN</m:Key><m:Value>*********</m:Value><m:Body dob=""REDACTED"">{""FirstName"":""Sh***"",""ssn"":""*********""}</m:Body></m:kvprow><m:kvprow dob=""REDACTED""><m:Key>DOB</m:Key><m:Value>REDACTED</m:Value></m:kvprow><m:kvprow body=""{&quot;ssn&quot;:&quot;123456789&quot;,&quot;dob&quot;:&quot;1988-01-01&quot;}""><m:Key><m:DOB>REDACTED</m:DOB></m:Key><m:Value ssn=""*********""><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl></m:Value></m:kvprow><m:kvprow body=""&lt;data&gt;&lt;ssn&gt;*********&lt;/ssn&gt;&lt;/data&gt;""><m:Key>DOB</m:Key><m:Value ssn=""*********""><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl></m:Value></m:kvprow></m:kvplist></m:User></m:GetResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>""}";
+
+
+			public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrlEncoded.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
+			public static readonly string BodyOfXml = $"<data><ssn>{DummyData.SSN.Mask("*")}</ssn><Dob>{DummyData.DobStr.Mask("REDACTED")}</Dob><requestUrl>{requestUrlEncoded.Unpack(true)}</requestUrl></data>";
+			public static readonly string BodyOfXml4Embed = BodyOfXml.Replace("&amp;", "&amp;amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
 		}
 

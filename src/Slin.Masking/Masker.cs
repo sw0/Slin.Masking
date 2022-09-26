@@ -8,38 +8,6 @@
 	using System.Web;
 
 	/// <summary>
-	/// IMasker interface. Masking value as long as key/value matches the rules defined.
-	/// It also support <see cref="IUrlMasker"/>
-	/// </summary>
-	public interface IMasker: IUrlMasker
-	{
-		/// <summary>
-		/// mask the value if the key is configured in masking rules.
-		/// </summary>
-		/// <param name="key">key</param>
-		/// <param name="value">value</param>
-		/// <param name="masked">masked result</param>
-		/// <returns>if masker found, whatever it's masked or not, it will be true</returns>
-		bool TryMask(string key, string value, out string masked);
-	}
-
-	/// <summary>
-	/// IUrlMasker interface
-	/// </summary>
-	public interface IUrlMasker
-	{
-		/// <summary>
-		/// Mask Url base on patterns using named group name, for query, by default it will use query parameter name.
-		/// Profile.UrlMaskingPatterns is used by default as mask rules.
-		/// </summary>
-		/// <param name="url"></param>
-		/// <param name="maskParamters">default:true, to extract key value from query and process masking</param>
-		/// <param name="overwrittenPatterns">if provided, it will overwrite those provied in profile</param>
-		/// <returns></returns>
-		string MaskUrl(string url, bool maskParamters = true, params UrlMaskingPattern[] overwrittenPatterns);
-	}
-
-	/// <summary>
 	/// default Masker
 	/// </summary>
 	public class Masker : IMasker

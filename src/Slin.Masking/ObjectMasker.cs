@@ -14,75 +14,6 @@ using System.Text;
 
 namespace Slin.Masking
 {
-	public interface IJsonMasker
-	{
-		string MaskJsonObjectString(JsonNode node);
-	}
-
-	public interface IXmlMasker
-	{
-		string MaskXmlElementString(XElement node);
-	}
-
-	public interface IObjectMasker : IJsonMasker, IXmlMasker, IUrlMasker
-	{
-		string MaskObject(object value);
-
-		//void MaskObject(object value, StringBuilder builder);
-
-		/// <summary>
-		/// Indicates enabled or not. Just used as global setting. Not affecting ObjectMasker actually.
-		/// </summary>
-		bool Enabled { get; }
-	}
-
-	/// <summary>
-	/// like {"name":"ssn","val":"123456789"}, here KeyKeyName is 'name', ValueKeyName is 'val'
-	/// </summary>
-	public class KeyKeyValueKey
-	{
-		/// <summary>
-		/// the name of key.
-		/// </summary>
-		public string KeyKeyName { get; set; }
-		/// <summary>
-		/// the name of value
-		/// </summary>
-		public string ValueKeyName { get; set; }
-
-		public KeyKeyValueKey()
-		{
-		}
-
-		public static implicit operator KeyKeyValueKey(string input)
-		{
-			if (input == null)
-				throw new ArgumentNullException(nameof(input));
-
-			var tmp = input.Trim().Split(',', ':');
-			if (tmp.Length != 2)
-			{
-#if DEBUG
-				throw new ArgumentException("input must use ',' or ':' to split the key and value");
-#else
-				return null;
-#endif
-			}
-			return new KeyKeyValueKey(tmp[0], tmp[1]);
-		}
-
-		public KeyKeyValueKey(string keyKey, string valKey)
-		{
-			if (string.IsNullOrEmpty(keyKey))
-				throw new ArgumentNullException(nameof(keyKey));
-			if (string.IsNullOrEmpty(valKey))
-				throw new ArgumentNullException(nameof(valKey));
-			KeyKeyName = keyKey;
-			ValueKeyName = valKey;
-		}
-	}
-
-
 	/// <summary>
 	/// <see cref="ObjectMasker"/> is supposed to support to iterate the object and mask properties if the key/value matches the rules. 
 	/// The masking is actually performed by <see cref="IMasker"/>.
@@ -90,6 +21,8 @@ namespace Slin.Masking
 	public class ObjectMasker : IObjectMasker
 	{
 		protected readonly IMasker _masker = null;
+		protected readonly IJsonMasker _jMasker = null;
+		protected readonly IXmlMasker _xMasker = null;
 		protected readonly IObjectMaskingOptions _options;
 
 		protected bool MaskJsonSerializedEnabled => _options.MaskJsonSerializedEnabled
@@ -113,21 +46,68 @@ namespace Slin.Masking
 		/// </summary>
 		public bool Enabled => _options.Enabled;
 
-		private static readonly List<KeyKeyValueKey> DefaultKeyValueNames = new List<KeyKeyValueKey> {
-			new KeyKeyValueKey("Key","Value"),
-			new KeyKeyValueKey("key","value"),
-		};
-
 		public ObjectMasker(IMasker masker, IObjectMaskingOptions options)
 		{
 			_masker = masker;
+			var jMasker = new JsonMasker(masker, options);
+			var xMasker = new XmlMasker(masker, options);
+
+			jMasker.SetXmlMasker(xMasker);
+			xMasker.SetJsonMasker(jMasker);
+
+			_jMasker = jMasker;
+			_xMasker = xMasker;
+
 			_options = options ?? new ObjectMaskingOptions();
 		}
 
-		//public void MaskObject(object value, StringBuilder builder)
-		//{
-		//	throw new NotImplementedException();
-		//}
+		public bool TryParse(string value, out JsonElement? node, bool basicValidation = true)
+		{
+			return _jMasker.TryParse(value, out node, basicValidation);
+		}
+
+		public bool TryParse(string value, out XElement node, bool basicValidation = true)
+		{
+			return _xMasker.TryParse(value, out node, basicValidation);
+		}
+
+		public void MaskObject(object value, StringBuilder builder)
+		{
+
+			if (value == null) return;
+
+			if (value is JsonElement ele)
+			{
+				_jMasker.MaskObject(ele, builder);
+			}
+			else if (value is JsonNode node)
+			{
+				//todo please don't use JsonNode
+				var result = MaskObject(node);
+				builder.Append(result);
+			}
+			else if (value is XElement xEle)
+			{
+				var result = _xMasker.MaskXmlElementString(xEle);
+				builder.Append(result);
+			}
+			else if (value is string str)
+			{
+				if (_jMasker.TryParse(str, out var ele2))
+				{
+					_jMasker.MaskObject(ele2, builder);
+				}
+				else if (_xMasker.TryParse(str, out var parsedNode))
+				{
+					var result = _xMasker.MaskXmlElementString(parsedNode);
+					builder.Append(result);
+				}
+			}
+			else
+			{
+				_jMasker.MaskObject(value, builder);
+			}
+		}
 
 		/// <summary>
 		/// 
@@ -142,6 +122,14 @@ namespace Slin.Masking
 			if (data is JsonNode node)
 			{
 				return MaskJsonObjectString(node);
+			}
+			else if (data is JsonElement jEle)
+			{
+				var sb = new StringBuilder();
+
+				_jMasker.MaskObject(jEle, sb);
+
+				return sb.ToString();
 			}
 			else if (data is XElement element)
 				return MaskXmlElementString(element);
@@ -319,7 +307,7 @@ namespace Slin.Masking
 		{
 			keyName = valueName = null;
 
-			foreach (var item in eligibleKeyValueNames ?? DefaultKeyValueNames)
+			foreach (var item in eligibleKeyValueNames ?? KeyKeyValueKey.DefaultKeyKeyValueKeys)
 			{
 				//here: item.Key is keyName, item.Value is value keyName. By default: it's "Key","Value".
 				//Let's make it simple here, that assuming the value type are strings for matched item for key and value.
@@ -344,7 +332,7 @@ namespace Slin.Masking
 		{
 			keyKeyName = valKeyName = null;
 
-			foreach (var item in eligibleKeyValueNames ?? DefaultKeyValueNames)
+			foreach (var item in eligibleKeyValueNames ?? KeyKeyValueKey.DefaultKeyKeyValueKeys)
 			{
 				if (source.TryGetPropertyValue(item.KeyKeyName, out var keyNode)
 					&& keyNode != null && keyNode is JsonValue a
@@ -615,7 +603,7 @@ namespace Slin.Masking
 		{
 			keyName = valueName = null;
 
-			foreach (var item in eligibleKeyValueNames ?? DefaultKeyValueNames)
+			foreach (var item in eligibleKeyValueNames ?? KeyKeyValueKey.DefaultKeyKeyValueKeys)
 			{
 				//here: item.Key is keyName, item.Value is value keyName. By default: it's "Key","Value".
 				//Let's make it simple here, that assuming the value type are strings for matched item for key and value.
@@ -715,6 +703,7 @@ namespace Slin.Masking
 
 			return false;
 		}
+
 		#endregion
 
 	}

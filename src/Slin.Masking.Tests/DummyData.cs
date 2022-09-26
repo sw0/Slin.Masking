@@ -17,6 +17,10 @@ namespace Slin.Masking.Tests
 	public partial class DummyData
 	{
 		public static readonly JavaScriptEncoder MyEncoder = JavaScriptEncoder.Create(UnicodeRanges.All);
+		public static readonly JsonSerializerOptions MyJsonSerializerOptions = new()
+		{
+			Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+		};
 
 		public const string FirstName = "Shawn";
 		public const string LastName = "Lin";
@@ -26,20 +30,24 @@ namespace Slin.Masking.Tests
 		public const decimal Amount = 9.99m;
 		public static readonly DateTime DOB = new(1988, 1, 1);
 
-		public const string UrlQuery = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界&accesstoken=" + AccessToken;
-		public const string UrlQuery1Encoded = "ssn=123456789&amp;pan=1234567890123456&amp;dob=1988-07-14";
-		public const string UrlQueryWithQuestionMark = "?" + UrlQuery;
-		public const string UrlQuery2Encoded = "?" + UrlQuery1Encoded;
+		public const string query = "ssn=123456789&pan=1234567890123456&dob=1988-07-14&from=中国&to=世界&accesstoken=" + AccessToken;
+		public const string queryWithQMark = "?" + query;
+		public const string queryEncoded = "ssn=123456789&amp;pan=1234567890123456&amp;dob=1988-07-14&amp;from=中国&amp;to=世界&amp;accesstoken=" + AccessToken;
+		public const string queryEncodedWithQMark = "?" + queryEncoded;
 
 		public const string Url1 = "https://jd.com/firstname/shawn/lastname/lin";
-		public const string UrlFull = Url1 + UrlQueryWithQuestionMark;
-		public const string UrlFullEncoded = Url1 + UrlQuery2Encoded;
+		public const string requestUrl = Url1 + queryWithQMark;
+		public const string requestUrlEncoded = Url1 + queryEncodedWithQMark;
 
 		public static readonly byte[] DataInBytes = new byte[] { 147, 60, 217, 97, 159, 120, 123, 223, 72, 80, 239, 21, 138, 213, 44, 157, 246, 183, 25, 122, 72, 178, 15, 99, 189, 73, 64, 164, 228, 72, 190, 168, 10, 217, 251, 168, 235 };
 		public const string AccessToken = "1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 		//basic auth: Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"))
 		public const string AuthorizationBasic = "dXNlcm5hbWU6cGFzc3dvcmQ=";
+
+		public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = DummyData.SSN, requestUrl = requestUrlEncoded, dob = DummyData.DOB }, MyJsonSerializerOptions);
+		public static readonly string BodyOfXml = $"<data><ssn>{SSN}</ssn><Dob>{DobStr}</Dob><requestUrl>{requestUrlEncoded}</requestUrl></data>";
+		public static readonly string BodyOfXml4Embed = BodyOfXml.Replace("&amp;", "&amp;amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
 		public static readonly string Xml1 = $@"<?xml version = ""1.0""?>
 <SOAP-ENV:Envelope xmlns:SOAP-ENV = ""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle = ""http://www.w3.org/2001/12/soap-encoding"">
@@ -55,11 +63,11 @@ namespace Slin.Masking.Tests
 			<m:FirstName>{LastName}</m:FirstName>
 			<m:SSN>{SSN}</m:SSN>
 			<m:DOB dob=""{DobStr}"">{DobStr}</m:DOB>
-			<m:requestUrl>{UrlFullEncoded}</m:requestUrl>
-			<m:query>{UrlQuery1Encoded}</m:query>
+			<m:requestUrl>{requestUrlEncoded}</m:requestUrl>
+			<m:query>{queryEncoded}</m:query>
             <m:Body>{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""BAD</m:Body>
 			<m:kvplist dob=""{DobStr}"">
-               <m:kvprow requestUrl=""{UrlFullEncoded}"">
+               <m:kvprow requestUrl=""{requestUrlEncoded}"">
                    <m:Key>SSN</m:Key>
                    <m:Value>{SSN}</m:Value>
                    <m:Body dob=""{DobStr}"">{{""FirstName"":""{FirstName}"",""ssn"":""{SSN}""}}</m:Body>
@@ -70,11 +78,11 @@ namespace Slin.Masking.Tests
                </m:kvprow>
                <m:kvprow body=""{{&quot;ssn&quot;:&quot;{SSN}&quot;,&quot;dob&quot;:&quot;{DobStr}&quot;}}"">
                    <m:Key><m:DOB>{DobStr}</m:DOB></m:Key>
-                   <m:Value ssn=""{SSN}""><m:requestUrl>{UrlFullEncoded}</m:requestUrl></m:Value>
+                   <m:Value ssn=""{SSN}""><m:requestUrl>{requestUrlEncoded}</m:requestUrl></m:Value>
                </m:kvprow>
                <m:kvprow body=""&lt;data&gt;&lt;ssn&gt;{SSN}&lt;/ssn&gt;&lt;/data&gt;"">
                    <m:Key>DOB</m:Key>
-                   <m:Value ssn=""{SSN}""><m:requestUrl>{UrlFullEncoded}</m:requestUrl></m:Value>
+                   <m:Value ssn=""{SSN}""><m:requestUrl>{requestUrlEncoded}</m:requestUrl></m:Value>
                </m:kvprow>
             </m:kvplist>
          </m:User>
@@ -114,9 +122,9 @@ namespace Slin.Masking.Tests
 			data.Add(Keys.PrimaryAccountnumBER, "1234567890123456");
 			data.Add("ts", "5.99ms");
 
-			data.Add(Keys.query, UrlQueryWithQuestionMark);
-			data.Add(Keys.formdata, UrlQuery);
-			data.Add(Keys.requestUrl, UrlFull);
+			data.Add(Keys.query, query);
+			data.Add(Keys.formdata, query);
+			data.Add(Keys.requestUrl, requestUrl);
 
 
 			var d1 = new { id = 1, amount = 9.99m, ssn = SSN };
@@ -173,7 +181,7 @@ namespace Slin.Masking.Tests
 
 
 
-			data.Add(Keys.reserialize, JsonSerializer.Serialize(arrOfKvpNested, new JsonSerializerOptions { Encoder = MyEncoder }));
+			data.Add(Keys.reserialize, JsonSerializer.Serialize(arrOfKvpNested, MyJsonSerializerOptions));//new JsonSerializerOptions { Encoder = MyEncoder }));
 
 			data.Add(Keys.ResponseBody, Xml1);
 			data.Add(Keys.excludedX, new { key = "ssn", val = SSN });
@@ -225,6 +233,77 @@ namespace Slin.Masking.Tests
 			if (removeLines) result = Regex.Replace(result, "\r\n", "");
 
 			return result;
+		}
+		public static string Unpack(this string json, bool trimQuotes = false)
+		{
+			var result = json.Substring(0, json.Length - 1).Substring(json.IndexOf(':') + 1);
+			if (trimQuotes) result = result.Trim('"');
+			return result;
+		}
+		public static string Quotes(this string str)
+		{
+			return string.Concat("\"", str, '"');
+		}
+		public static string CurlyBraces(this string str)
+		{
+			return string.Concat("{", str, "}");
+		}
+		public static string SquareBrackes(this string str)
+		{
+			return string.Concat("[", str, "]");
+		}
+		public static string WrapXml(this string input)
+		{
+			return string.Concat("<xml version = \"1.0\"?>", input, "</xml>");
+		}
+		public static string WrapSoapEnv(this string input, bool withDeclaration = true)
+		{
+			return string.Concat(withDeclaration ? "<?xml version = \"1.0\"?>" : "",
+				@"<SOAP-ENV:Envelope xmlns:SOAP-ENV=""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle=""http://www.w3.org/2001/12/soap-encoding""><SOAP-ENV:Body xmlns:m=""http://www.xyz.org/quotation""><m:GetResponse>",
+				input,
+				@"</m:GetResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>");
+		}
+		public static string WrapSoapEnv(this StringBuilder input, bool withDeclaration = true)
+		{
+			return string.Concat(withDeclaration ? "<?xml version = \"1.0\"?>" : "",
+				@"<SOAP-ENV:Envelope xmlns:SOAP-ENV=""http://www.w3.org/2001/12/soap-envelope"" SOAP-ENV:encodingStyle=""http://www.w3.org/2001/12/soap-encoding""><SOAP-ENV:Body xmlns:m=""http://www.xyz.org/quotation""><m:GetResponse>",
+				input.ToString(),
+				@"</m:GetResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>");
+		}
+
+		public static StringBuilder AppendSoapNode(this StringBuilder sb, string key, string value, bool autoEnd = true, string ns = "m:")
+		{
+			//return input + string.Concat($"<{ns}{key}>", value, $"</{ns}{key}>");
+
+			return sb.AppendSoapNode(key, value, new Dictionary<string, object>(), autoEnd, ns);
+		}
+
+		public static StringBuilder AppendSoapNode(this StringBuilder sb, string key, string value, Dictionary<string, object> attributes, bool autoEnd = true, string ns = "m:")
+		{
+			//var sb = new StringBuilder(input.Length + 50);
+			//sb.Append(input);
+
+			sb.Append($"<{ns}{key}");
+			if (attributes != null && attributes.Any())
+			{
+				foreach (var item in attributes)
+				{
+					sb.Append(' ').Append(item.Key).Append('=');
+					sb.Append('"').Append(item.Value).Append('"');  //XML always has quotes
+				}
+			}
+			sb.Append('>');
+
+			if (value != null) sb.Append(value);
+			if (autoEnd) sb.CloseSoapNode(key);
+
+			return sb;
+			//return input + string.Concat($"<{ns}{key}>", value, $"</{ns}{key}>");
+		}
+
+		public static StringBuilder CloseSoapNode(this StringBuilder sb, string key, string ns = "m:")
+		{
+			return sb.Append($"</{ns}{key}>");
 		}
 	}
 }

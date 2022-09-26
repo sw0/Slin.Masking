@@ -7,34 +7,12 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Unicode;
 
 namespace Slin.Masking
 {
-	internal class MaskerConstants
-	{
-		//public static readonly JavaScriptEncoder JsonDefaultEncoder = JavaScriptEncoder.Create(
-		//	UnicodeRanges.BasicLatin,
-		//	UnicodeRanges.CjkCompatibility,
-		//	UnicodeRanges.CjkCompatibilityForms,
-		//	UnicodeRanges.CjkCompatibilityIdeographs,
-		//	UnicodeRanges.CjkRadicalsSupplement,
-		//	UnicodeRanges.CjkStrokes,
-		//	UnicodeRanges.CjkUnifiedIdeographs,
-		//	UnicodeRanges.CjkUnifiedIdeographsExtensionA,
-		//	UnicodeRanges.CjkSymbolsandPunctuation,
-		//	UnicodeRanges.HalfwidthandFullwidthForms);
-
-		public static readonly TextEncoderSettings DefaultTextEncoderSettings = new TextEncoderSettings();
-
-		static MaskerConstants()
-		{
-			DefaultTextEncoderSettings.AllowCharacters('\u0436', '\u0430');
-			DefaultTextEncoderSettings.AllowRange(UnicodeRanges.BasicLatin);
-		}
-	}
-
-
+	/// <summary>
+	/// JsonMasker
+	/// </summary>
 	internal class JsonMasker : IJsonMasker
 	{
 		private readonly IObjectMaskingOptions _options;
@@ -63,7 +41,8 @@ namespace Slin.Masking
 
 		public string MaskJsonObjectString(JsonNode node)
 		{
-			throw new NotImplementedException();
+			//todo ...
+			throw new NotImplementedException("should not use, I probably want to remove this method");
 		}
 
 		public void MaskObject(object source, StringBuilder builder)
@@ -74,9 +53,37 @@ namespace Slin.Masking
 			MaskJsonElement(null, element, builder);
 		}
 
+		public bool TryParse(string value, out JsonElement? node, bool basicValidation = true)
+		{
+			node = null;
+
+			//here I think for JSON, it at least has 15 char?...
+			if (value == null) return false;
+
+			if (basicValidation && value.Length < _options.JsonMinLength || value == "null") return false;
+
+			if (basicValidation &&
+				!(value.StartsWithExt('{') && value.EndsWithExt('}')
+				|| (value.StartsWithExt('[') && value.EndsWithExt(']'))))
+				return false;
+
+			var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(value), new JsonReaderOptions
+			{
+				//todo JsonReaderOptions?
+				MaxDepth = _options.JsonMaxDepth
+			});
+
+			if (JsonElement.TryParseValue(ref reader, out var nodex))
+			{
+				node = nodex.Value;
+				return true;
+			}
+			return false;
+		}
+
 		private void MaskJsonElement(string propertyName, JsonElement element, StringBuilder builder)
 		{
-			//todo depth check...
+			//depth check?...
 
 			bool previousAppeared = false;
 			switch (element.ValueKind)
@@ -129,8 +136,7 @@ namespace Slin.Masking
 					{
 						foreach (var child in element.EnumerateArray())
 						{
-							if (child.ValueKind == JsonValueKind.String|| child.ValueKind == JsonValueKind.Number)
-								//|| (_options.MaskJsonNumberEnabled && child.ValueKind == JsonValueKind.Number))
+							if (child.ValueKind == JsonValueKind.String || child.ValueKind == JsonValueKind.Number)
 							{
 								MaskJsonElement(propertyName, child, builder);
 							}
@@ -160,7 +166,6 @@ namespace Slin.Masking
 					builder.Append(']');
 					break;
 				case JsonValueKind.String:
-					//todo 
 					{
 						var value = element.GetString();
 
@@ -190,7 +195,7 @@ namespace Slin.Masking
 						if (!string.IsNullOrEmpty(propertyName) && _options.MaskJsonNumberEnabled && _masker.TryMask(propertyName, element.GetRawText(), out var masked))
 						{
 							if (masked == null) builder.Append("null");
-							else if (masked != null && masked.All(char.IsDigit))
+							else if (masked != null && masked.All(char.IsNumber))
 								builder.Append(masked);
 							else
 								builder.Append(string.Concat('"', masked, '"'));
@@ -226,20 +231,19 @@ namespace Slin.Masking
 
 			try
 			{
-				if (_options.MaskJsonSerializedEnabled && TryParseJson(value, out var parsedNode))
+				if (_options.MaskJsonSerializedEnabled && TryParse(value, out var parsedNode))
 				{
-					//source[valueKeyName] = parsedNode;
-
 					MaskJsonElement(key, parsedNode.Value, builder);
 
 					return true;
 				}
-				//else if (MaskXmlSerializedEnabled && TryParseXEle(value, out var element))
-				//{
-				//	var masked = MaskXmlElementString(element);
-				//	source[valueKeyName] = masked;
-				//	return true;
-				//}
+				else if (_options.MaskXmlSerializedEnabled && _xmlMasker != null && _xmlMasker.TryParse(value, out var element))
+				{
+					var masked = _xmlMasker.MaskXmlElementString(element);
+					//source[valueKeyName] = masked;
+					builder.Append('"').Append(masked).Append('"');
+					return true;
+				}
 			}
 			catch (Exception)
 			{
@@ -248,25 +252,6 @@ namespace Slin.Masking
 			return false;
 		}
 
-		bool TryParseJson(string value, out JsonElement? node)
-		{
-			node = null; value = value?.Trim();
-			//here I think for JSON, it at least has 15 char?...
-			if (value == null || value.Length < _options.JsonMinLength || value == "null") return false;
-
-			if (!(value.StartsWith("[") && value.EndsWith("]"))
-				&& !(value.StartsWith("{") && value.EndsWith("}")))
-				return false;
-
-			var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(value), new JsonReaderOptions { });
-
-			if (JsonElement.TryParseValue(ref reader, out var nodex))
-			{
-				node = nodex.Value;
-				return true;
-			}
-			return false;
-		}
 
 		public bool IsKvpObject(JsonElement ele, out string keyKey, out JsonElement key, out string valKey, out JsonElement value)
 		{

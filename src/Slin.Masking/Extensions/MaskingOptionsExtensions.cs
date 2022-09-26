@@ -6,9 +6,9 @@ using System.Text.Unicode;
 
 namespace Slin.Masking
 {
-	public static class MaskingOptionsExtensions
+	internal static class MaskingOptionsExtensions
 	{
-		public static TextEncoderSettings GetTextEncoderSettings(this IObjectMaskingOptions options)
+		internal static TextEncoderSettings GetTextEncoderSettings(this IObjectMaskingOptions options)
 		{
 			TextEncoderSettings settings = new TextEncoderSettings();
 
