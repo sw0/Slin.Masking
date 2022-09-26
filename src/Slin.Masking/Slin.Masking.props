@@ -13,6 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			0.2.0: performance improve; with breaking changes: Profile.NamedFormmaters (name changed), remove and add new methods in interfance IJsonMasker, ObjectMasker.
 			0.1.32: fix a bug in MaskingProfile if deserializing from JSON string in memory(found by Unit testing).
 			0.1.30: include masking.template.json file.
 			0.1.26: performance improve on MaskFormatter.
@@ -20,6 +21,7 @@
 			- Format: Left char count to keep + MaskChar with optional char count + Right char count to keep.
 			-    Exmaple: L2*4R2, L4*R4, L2, R4, *
 			- Another style of format: '###***###', which works same as 'L3*3R3'. There is slight difference in a few edge case. No worries.
+			- for email, the format is similar but with '@' as ending char.
 			- Special format: null, REDACTED, REPLACEMENT=xxx
 		</PackageReleaseNotes>
 		<copyright>Copyright 2019-2026</copyright>

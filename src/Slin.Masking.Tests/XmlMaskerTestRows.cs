@@ -5,27 +5,28 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
 namespace Slin.Masking.Tests
 {
-	internal class XmlMaskerTestRows : TheoryData<string, bool, string>
+	internal class XmlMaskerTestRows : TheoryData<string, string, bool, string>
 	{
 		public XmlMaskerTestRows()
 		{
 			//case
 			var body = new StringBuilder().AppendSoapNode(DummyData.Keys.ssn, DummyData.SSN);
 			var bodyMasked = new StringBuilder().AppendSoapNode(DummyData.Keys.ssn, DummyData.SSN.Mask("*"));
-			AddRow(body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
+			AddRow("basic-ssn", body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
 
 			//case
 			body = body.AppendSoapNode(DummyData.Keys.dob, DummyData.DobStr);
 			bodyMasked = bodyMasked.AppendSoapNode(DummyData.Keys.dob, DummyData.SSN.Mask("REDACTED"));
-			AddRow(body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
+			AddRow("basic-dob", body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
 
 			//case
 			body = new StringBuilder().AppendSoapNode(DummyData.Keys.Authorization, "Bearer " + DummyData.AccessToken);
 			bodyMasked = new StringBuilder().AppendSoapNode(DummyData.Keys.Authorization, ("Bearer " + DummyData.AccessToken).Mask("L9*4R6"));
-			AddRow(body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
+			AddRow("authentication", body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
 
 
 
@@ -115,26 +116,56 @@ namespace Slin.Masking.Tests
 
 			body.Append(user.Insert(0, "<m:User>").Append("</m:User>"));
 			bodyMasked.Append(userMasked.Insert(0, "<m:User>").Append("</m:User>"));
-			AddRow(body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
+			AddRow("full-soap", body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
 
 
 			//case 
+			{
+				var element = DummyData.GetXElement();
+				var elementMasked = DummyData.GetXElementMasked();
+				var xml = element.ToString();
+				var xmlMasked = elementMasked.ToString(SaveOptions.DisableFormatting);
+				AddRow("full-xElement", xml, true, xmlMasked); //todo <xml... is missed
+			}
+
+			{
+
+				var element = new XElement("root",
+						new XElement("kvprow",// new XAttribute(DummyData.Keys.Body, DummyData.BodyOfJson),
+							new XElement(DummyData.Keys.key, DummyData.Keys.Body),
+							new XElement(DummyData.Keys.val, DummyData.BodyOfJson)
+						)
+					);
+				var elementMasked = new XElement("root",
+						new XElement("kvprow",// new XAttribute(DummyData.Keys.Body, DummyData.Masked.BodyOfJson),
+							new XElement(DummyData.Keys.key, DummyData.Keys.Body),
+							new XElement(DummyData.Keys.val, DummyData.Masked.BodyOfJson)
+						)
+					);
+
+				var xml = element.ToString();
+				var xmlMasked = elementMasked.ToString(SaveOptions.DisableFormatting);
+				AddRow("piece-xml", xml, true, xmlMasked); //todo <xml... is missed
+			}
 		}
 	}
 
-	internal class XmlJsonMaskerTestRows : TheoryData<string, bool, string>
+	internal class XmlJsonMaskerTestRows : TheoryData<string, string, bool, string>
 	{
 		public XmlJsonMaskerTestRows()
 		{
 			var d1 = new { firstName = DummyData.FirstName, ssN = DummyData.SSN, Dob = DummyData.DobStr };
 			var d1Str = JsonSerializer.Serialize(d1);
-			var d1Masked = new { firstName = DummyData.FirstName.Mask("L2"), 
-				ssN = DummyData.SSN.Mask("*"), 
-				Dob = DummyData.DobStr.Mask("REDACTED") };
+			var d1Masked = new
+			{
+				firstName = DummyData.FirstName.Mask("L2"),
+				ssN = DummyData.SSN.Mask("*"),
+				Dob = DummyData.DobStr.Mask("REDACTED")
+			};
 			var d1MaskedStr = JsonSerializer.Serialize(d1Masked);
 			var body = new StringBuilder().AppendSoapNode(DummyData.Keys.ResponseBody, d1Str);
 			var bodyMasked = new StringBuilder().AppendSoapNode(DummyData.Keys.ResponseBody, d1MaskedStr);
-			AddRow(body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
+			AddRow("x-responsebody", body.WrapSoapEnv(), true, bodyMasked.WrapSoapEnv(false)); //todo <xml... is missed
 		}
 	}
 }

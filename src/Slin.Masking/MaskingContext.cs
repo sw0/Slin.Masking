@@ -14,7 +14,7 @@ namespace Slin.Masking
 
 	internal class MaskingContext : IMaskingContext
 	{
-		protected Dictionary<string, ValueFormatterDefinition> NamedFormatters => Options.NamedFormatterDefintions;
+		protected Dictionary<string, ValueFormatterDefinition> NamedFormatters => Options.NamedFormatters;
 
 		protected Dictionary<string, MaskRuleDefinition> Items => Options.Rules;
 
@@ -81,7 +81,7 @@ namespace Slin.Masking
 					{
 						definition.Formatters.RemoveAt(i);
 						
-						throw new Exception($"{nameof(Options.NamedFormatterDefintions)} does not found: {formatter.Name}");
+						throw new Exception($"{nameof(Options.NamedFormatters)} does not found: {formatter.Name}");
 					}
 				}
 			}

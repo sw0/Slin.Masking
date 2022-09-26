@@ -116,10 +116,10 @@ Masking rules settings contains:
 ```json
 {
   "Masking": {
-    "Enabled": true, //default: true
+    "Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
-    "MaskXmlSerializedEnabled": false, //default: false
+    "MaskXmlSerializedEnabled": true, //default: true
     "MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
     "MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
     "MaskJsonNumberEnabled": true, //this works only in JSON
@@ -139,7 +139,7 @@ Masking rules settings contains:
     "JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
     "SerializedKeysCaseSensitive": false,
     //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
-    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
+    "UrlKeys": [ "requestUrl", "query" ],
     "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
     "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
@@ -150,9 +150,9 @@ Masking rules settings contains:
         "Pattern": "pan/(?<pan>\\d{15,16})"
       }
     ],
-    "NamedFormatterDefintions": {
+    "NamedFormatters": {
       //NOTE: definition names here are case-insensitive.
-      //For a given Name(unique and ignore case), the formatter defintion contains: 
+      //For a given Name(unique and ignore case), the formatter contains: 
       //  valid Format, 
       //  optional ValuePattern and IgnoreCase for value pattern. ValuePattern can be regular expression(simple regex usage).
       //  default true of Enabled.
@@ -184,6 +184,7 @@ Masking rules settings contains:
         "IgnoreCase": false,
         "Enabled": true //default true
       },
+      "cvv": { "Format": "*" },
       "Remove": { "RemoveNode": true } //todo not supported yet, do we need it?
     },
     "Rules": {
@@ -205,13 +206,13 @@ Masking rules settings contains:
         "IgnoreKeyCase": true,
         "Formatters": [ { "Name": "pan" } ]
       },
+      "cvv": { "Formatters": [ { "Name": "cvv" } ] },
       "Balance": { "Formatters": [ { "Format": "null" } ] },
       "FirstName": { "Formatters": [ { "Name": "Name" } ] },
       "LastName": { "Formatters": [ { "Name": "Name" } ] },
       "Email": { "Formatters": [ { "Name": "email" } ] },
       "Password": { "Formatters": [ { "Format": "*" } ] },
-      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] },
-      "imaGeData": { "Formatters": [ { "name": "REDACTED" } ] }
+      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] }
     }
   }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlTypes;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -99,7 +100,9 @@ namespace Slin.Masking
 						{
 							var keyName = key.GetString();
 							builder.Append('"').Append(keyKey).Append('"').Append(':')
-								.Append('"').Append(keyName).Append('"').Append(',')
+								.Append('"');
+							AppendStringEscape(builder, keyName, false, false);
+							builder.Append('"').Append(',')
 								.Append('"').Append(valKey).Append('"').Append(':');
 							MaskJsonElement(keyName, value, builder);
 						}
@@ -221,7 +224,9 @@ namespace Slin.Masking
 
 		private void MaskProperty(JsonProperty property, StringBuilder builder)
 		{
-			builder.Append('"').Append(property.Name).Append('"').Append(':');
+			builder.Append('"');
+			AppendStringEscape(builder, property.Name, false, false);
+			builder.Append('"').Append(':');
 			MaskJsonElement(property.Name, property.Value, builder);
 		}
 
@@ -240,7 +245,12 @@ namespace Slin.Masking
 				else if (_options.MaskXmlSerializedEnabled && _xmlMasker != null && _xmlMasker.TryParse(value, out var element))
 				{
 					var masked = _xmlMasker.MaskXmlElementString(element);
-					builder.Append('"').Append(masked).Append('"');
+					//builder.Append('"').Append(masked).Append('"');
+
+					builder.Append('"');
+					AppendStringEscape(builder, masked, false, false);
+					builder.Append('"');
+
 					return true;
 				}
 			}
@@ -278,6 +288,119 @@ namespace Slin.Masking
 				if (flag == 3) return true;
 			}
 			return false;
+		}
+
+
+		/// <summary>
+		/// Checks input string if it needs JSON escaping, and makes necessary conversion
+		/// </summary>
+		/// <param name="destination">Destination Builder</param>
+		/// <param name="text">Input string</param>
+		/// <param name="escapeUnicode">Should non-ASCII characters be encoded</param>
+		/// <param name="escapeForwardSlash"></param>
+		/// <returns>JSON escaped string</returns>
+		internal static void AppendStringEscape(StringBuilder destination, string text, bool escapeUnicode, bool escapeForwardSlash)
+		{
+			if (string.IsNullOrEmpty(text))
+				return;
+
+			StringBuilder sb = null;
+
+			for (int i = 0; i < text.Length; ++i)
+			{
+				char ch = text[i];
+				if (!RequiresJsonEscape(ch, escapeUnicode, escapeForwardSlash))
+				{
+					sb?.Append(ch);
+					continue;
+				}
+				else if (sb is null)
+				{
+					sb = destination;
+					sb.Append(text, 0, i);
+				}
+
+				switch (ch)
+				{
+					case '"':
+						sb.Append("\\\"");
+						break;
+
+					case '\\':
+						sb.Append("\\\\");
+						break;
+
+					case '\b':
+						sb.Append("\\b");
+						break;
+
+					case '/':
+						if (escapeForwardSlash)
+						{
+							sb.Append("\\/");
+						}
+						else
+						{
+							sb.Append(ch);
+						}
+						break;
+
+					case '\r':
+						sb.Append("\\r");
+						break;
+
+					case '\n':
+						sb.Append("\\n");
+						break;
+
+					case '\f':
+						sb.Append("\\f");
+						break;
+
+					case '\t':
+						sb.Append("\\t");
+						break;
+
+					default:
+						if (EscapeChar(ch, escapeUnicode))
+						{
+							sb.AppendFormat(CultureInfo.InvariantCulture, "\\u{0:x4}", (int)ch);
+						}
+						else
+						{
+							sb.Append(ch);
+						}
+						break;
+				}
+			}
+
+			if (sb is null)
+				destination.Append(text);   // Faster to make single Append
+		}
+
+		internal static bool RequiresJsonEscape(char ch, bool escapeUnicode, bool escapeForwardSlash)
+		{
+			if (!EscapeChar(ch, escapeUnicode))
+			{
+				switch (ch)
+				{
+					case '/': return escapeForwardSlash;
+					case '"':
+					case '\\':
+						return true;
+					default:
+						return false;
+				}
+			}
+			return true;
+		}
+
+		private static bool EscapeChar(char ch, bool escapeUnicode)
+		{
+			if (ch < 32)
+				return true;
+			else
+				return escapeUnicode && ch > 127;
 		}
 	}
 }

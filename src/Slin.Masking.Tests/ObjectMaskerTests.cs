@@ -19,6 +19,7 @@ using System.Runtime.Intrinsics.X86;
 using static Slin.Masking.Tests.DummyData;
 using System.Text.Json.Nodes;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
+using System.Xml;
 
 namespace Slin.Masking.Tests
 {
@@ -27,143 +28,34 @@ namespace Slin.Masking.Tests
 		public ObjectMaskerTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
 		{ }
 
-		public static IEnumerable<object[]> DummyDataRows =>
-			new List<object[]>
-			{
-			new object[] { 1, 2, 3 },
-			new object[] { -4, -6, -10 },
-			new object[] { -2, 2, 0 },
-			new object[] { int.MinValue, -1, int.MaxValue },
-			};
-
-		private MaskingProfile GetMaskingProfile()
+		[Fact]
+		public void CopyXElementTest()
 		{
-			//the json here are the default configuration.
-			var json = @"{
-    ""Enabled"": true,
-    ""MaskUrlEnabled"": true, 
-    ""MaskJsonSerializedEnabled"": true,
-    ""MaskXmlSerializedEnabled"": true,
-    ""MaskXmlSerializedOnXmlAttributeEnabled"": false,
-    ""MaskJsonSerializedOnXmlAttributeEnabled"": false,
-    ""MaskJsonNumberEnabled"": true,
-    ""MaskNestedKvpEnabled"": true, 
-    ""KeyKeyValueKeys"": [{""KeyKeyName"": ""Key"",""ValueKeyName"": ""Value""},
-      {""KeyKeyName"": ""key"",""ValueKeyName"": ""value""}],
-    ""ValueMinLength"": 3, 
-    ""XmlMinLength"": 15,
-    ""JsonMinLength"": 10, 
-    ""SerializedKeysCaseSensitive"": false,
-    ""UrlKeys"": [ ""requestUrl"", ""query"", ""kvpFIEld"", ""kvpfield"" ],
-    ""SerializedKeys"": [ ""Body"", ""ResponseBody"", ""reserialize"" ],
-    ""UrlMaskingPatterns"": [
-      {
-        ""Pattern"": ""firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)"",
-        ""IgnoreCase"": true
-      },
-      {
-        ""Pattern"": ""pan/(?<pan>\\d{15,16})""
-      }
-    ],
-    ""NamedFormatterDefintions"": {
-      ""null"": { ""Format"": ""null"" },
-      ""empty"": { ""Format"": ""EMPTY"" },
-      ""redacted"": { ""Format"": ""REDACTED"" },
-      ""credential_long"": {
-        ""Format"": ""L9*4R6"",
-        ""ValuePattern"": "".{24,}""
-      },
-      ""credential_short"": {
-        ""Format"": ""L3*4R3"",
-        ""ValuePattern"": "".{10,24}""
-      },
-      ""password"": { ""Format"": ""*6"" },
-      ""dob"": { ""Format"": ""REDACTED"" },
-      ""name"": { ""Format"": ""L2*"" },
-      ""ssn"": { ""Format"": ""*"" },
-      ""phone"": { ""Format"": ""L3R4"" },
-      ""email"": {
-        ""Format"": ""L3*@"",
-        ""Description"": ""email is special, shawn@a.cn will be masked as 'sha**@a.cn'""
-      },
-      ""pan"": {
-        ""ValuePattern"": ""^\\d{15,16}$"",
-        ""Format"": ""L4*R4"",
-        ""IgnoreCase"": false,
-        ""Enabled"": true
-      },
-      ""Remove"": { ""RemoveNode"": true }
-    },
-    ""Rules"": {
-      ""authorization"": {
-        ""KeyName"": ""^authorization|access_token|accesstoken|code$"",
-        ""IgnoreKeyCase"": true,
-        ""Formatters"": [
-          { ""Name"": ""credential_long"" },
-          { ""Name"": ""credential_short"" }
-        ]
-      },
-      ""SSN"": { ""Formatters"": [ { ""Name"": ""SSN"" } ] },
-      ""DOB"": { ""Formatters"": [ { ""Name"": ""dob"" } ] },
-      ""Pan"": {
-        ""KeyName"": ""^pan|PersonalAccountNumber|PrimaryAccountNumber$"",
-        ""IgnoreKeyCase"": true,
-        ""Formatters"": [ { ""Name"": ""pan"" } ]
-      },
-      ""Balance"": { ""Formatters"": [ { ""Format"": ""null"" } ] },
-      ""FirstName"": { ""Formatters"": [ { ""Name"": ""Name"" } ] },
-      ""LastName"": { ""Formatters"": [ { ""Name"": ""Name"" } ] },
-      ""Email"": { ""Formatters"": [ { ""Name"": ""email"" } ] },
-      ""Password"": { ""Formatters"": [ { ""Format"": ""*"" } ] },
-      ""PhoneNumber"": { ""Formatters"": [ { ""Name"": ""phone"" } ] }
-    }
-}";
+			var json = @"<data><ssn>123</ssn><dob>123456</dob><list><a>123</a><b>123</b></list></data>";
 
-			var profile = JsonSerializer.Deserialize<MaskingProfile>(json);
-			profile!.Normalize();
+			var ele1 = XElement.Parse(json);
 
-			return profile;
+			var ele2 = new XElement(ele1);
+
+			foreach (var e in ele2.Elements())
+			{
+				if (e.HasElements)
+				{
+					foreach (var item in e.Elements())
+					{
+						item.SetValue("good");
+					}
+				}
+				else
+				{
+					e.SetValue("asd");
+				}
+			}
+
+			var x = ele2.ToString() != ele1.ToString();
+
+			Assert.True(x);
 		}
-
-
-		private void ModifyProfile(MaskingProfile profile)
-		{
-			profile!.MaskXmlSerializedEnabled = true;
-			profile!.MaskXmlSerializedOnXmlAttributeEnabled = true;
-			profile.ArrayItemHandleMode = ArrayItemHandleMode.SingleItemAsValue;
-
-			profile.UrlKeys = new List<string> { "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" };
-			profile.KeyKeyValueKeys.Add(new KeyKeyValueKey("key", "val"));
-
-			profile.NamedFormatterDefintions.Add("pAN14", new ValueFormatterDefinition
-			{
-				ValuePattern = "^\\d{14}$",
-				Format = "L6*R4",
-				IgnoreCase = false
-			});
-
-			profile.Rules.Add("amount", new MaskRuleDefinition
-			{
-				KeyName = "^(transaction)?amount$(?#ignorecase)",
-				Formatters = new List<ValueFormatterDefinition> {
-					new ValueFormatterDefinition{ Name="null" }
-				}
-			});
-			profile.Rules["pan"] = new MaskRuleDefinition
-			{
-				Formatters = new List<ValueFormatterDefinition> {
-					new ValueFormatterDefinition{ Name = "pan" },
-					new ValueFormatterDefinition{ Name = "pan14" }
-				}
-			};
-			profile.Rules["dataInBytes"] = new MaskRuleDefinition
-			{
-				Formatters = new List<ValueFormatterDefinition> {
-					new ValueFormatterDefinition{ Name = "REDACTED" }
-				}
-			};
-		}
-
 
 		//[Theory]
 		////[MemberData(nameof(DummyDataRows))]
@@ -239,9 +131,6 @@ namespace Slin.Masking.Tests
 
 		#region -- try using StringBuilder. TODO --
 
-		private IMaskingProfile _profile;
-		private Masker _masker;
-
 		[Theory]
 		[ClassData(typeof(JsonMaskerTestRows))]
 		public void JsonMaskerTest(string keys, string expected, string expectedOnlyValue)
@@ -272,6 +161,7 @@ namespace Slin.Masking.Tests
 
 #if DEBUG
 			var file = @$"c:\work\slin.masking.tests\{nameof(JsonMaskerTest)}_{DateTime.Now:HHmm}.txt";
+			WriteLine($"[{nameof(JsonMaskerTest)}] output: {file}");
 
 			if (!Directory.Exists(Path.GetDirectoryName(file)))
 			{
@@ -291,27 +181,27 @@ namespace Slin.Masking.Tests
 
 		[Theory]
 		[ClassData(typeof(XmlMaskerInvalidTestRows))]
-		public void XmlMaskerInvalidTest(string xml, bool valid, string expected)
+		public void XmlMaskerInvalidTest(string name, string xml, bool valid, string expected)
 		{
-			XmlMaskerTestInternal(nameof(XmlMaskerInvalidTest), xml, valid, expected);
+			XmlMaskerTestInternal(name, nameof(XmlMaskerInvalidTest), xml, valid, expected);
 		}
 
 		[Theory]
 		[ClassData(typeof(XmlMaskerTestRows))]
-		public void XmlMaskerTest(string xml, bool valid, string expected)
+		public void XmlMaskerTest(string name, string xml, bool valid, string expected)
 		{
-			XmlMaskerTestInternal(nameof(XmlMaskerTest), xml, valid, expected);
+			XmlMaskerTestInternal(name, nameof(XmlMaskerTest), xml, valid, expected);
 		}
 
 
 		[Theory]
 		[ClassData(typeof(XmlJsonMaskerTestRows))]
-		public void XmlWithJsonMaskerTest(string xml, bool valid, string expected)
+		public void XmlWithJsonMaskerTest(string name, string xml, bool valid, string expected)
 		{
-			XmlMaskerTestInternal(nameof(XmlWithJsonMaskerTest), xml, valid, expected);
+			XmlMaskerTestInternal(name, nameof(XmlWithJsonMaskerTest), xml, valid, expected);
 		}
 
-		private void XmlMaskerTestInternal(string testName, string xml, bool valid, string expected)
+		private void XmlMaskerTestInternal(string name, string testName, string xml, bool valid, string expected)
 		{
 			var profile = GetMaskingProfile();
 			ModifyProfile(profile);
@@ -346,7 +236,8 @@ namespace Slin.Masking.Tests
 
 				if (!File.Exists(file))
 				{
-					File.WriteAllText(file, $"{testName} test cases:" + Environment.NewLine);
+					WriteLine($"[{nameof(XmlMaskerTestInternal)}] output: {file}");
+					File.WriteAllText(file, $"[{testName} test cases]: {name}{Environment.NewLine}");
 				}
 
 				File.AppendAllText(file, "input:" + Environment.NewLine);
@@ -366,7 +257,7 @@ namespace Slin.Masking.Tests
 				//Compare with two ways: MaskObject va MaskXmlElementString
 				//NOTE here there is a known issue that JsonNode has a bug:
 				var expected2 = expected.Replace("&amp;amp;", "&amp;").Replace("&amp;", "&");
-				var actual3 = actual2.Replace("\\u0026","&").Replace("&amp;amp;", "&amp;").Replace("&amp;", "&")
+				var actual3 = actual2.Replace("\\u0026", "&").Replace("&amp;amp;", "&amp;").Replace("&amp;", "&")
 					.Replace("\\u4E2D\\u56FD", "中国").Replace("\\u4E16\\u754C", "世界");
 				Assert.Equal(expected2, actual3);
 			}

@@ -23,7 +23,7 @@
     "JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
     "SerializedKeysCaseSensitive": false,
     //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
-    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
+    "UrlKeys": [ "requestUrl", "query" ],
     "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
     "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
@@ -34,9 +34,9 @@
         "Pattern": "pan/(?<pan>\\d{15,16})"
       }
     ],
-    "NamedFormatterDefintions": {
+    "NamedFormatters": {
       //NOTE: definition names here are case-insensitive.
-      //For a given Name(unique and ignore case), the formatter defintion contains: 
+      //For a given Name(unique and ignore case), the formatter contains: 
       //  valid Format, 
       //  optional ValuePattern and IgnoreCase for value pattern. ValuePattern can be regular expression(simple regex usage).
       //  default true of Enabled.
@@ -68,6 +68,7 @@
         "IgnoreCase": false,
         "Enabled": true //default true
       },
+      "cvv": { "Format": "*" },
       "Remove": { "RemoveNode": true } //todo not supported yet, do we need it?
     },
     "Rules": {
@@ -89,13 +90,13 @@
         "IgnoreKeyCase": true,
         "Formatters": [ { "Name": "pan" } ]
       },
+      "cvv": { "Formatters": [ { "Name": "cvv" } ] },
       "Balance": { "Formatters": [ { "Format": "null" } ] },
       "FirstName": { "Formatters": [ { "Name": "Name" } ] },
       "LastName": { "Formatters": [ { "Name": "Name" } ] },
       "Email": { "Formatters": [ { "Name": "email" } ] },
       "Password": { "Formatters": [ { "Format": "*" } ] },
-      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] },
-      "dataInBytes": { "Formatters": [ { "name": "REDACTED" } ] } //this works actually
+      "PhoneNumber": { "Formatters": [ { "Name": "phone" } ] }
     }
   }
 }

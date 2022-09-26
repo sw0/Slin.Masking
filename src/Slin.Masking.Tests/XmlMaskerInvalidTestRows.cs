@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Slin.Masking.Tests
 {
-	internal class XmlMaskerInvalidTestRows : TheoryData<string, bool, string>
+	internal class XmlMaskerInvalidTestRows : TheoryData<string, string, bool, string>
 	{
 		public XmlMaskerInvalidTestRows()
 		{
-			AddRow(null, false, null);
-			AddRow("", false, null);
-			AddRow("".WrapXml(), false, null);
+			AddRow("c-null", null, false, null);
+			AddRow("c-empty", "", false, null);
+			AddRow("c-simple", "".WrapXml(), false, null);
 		}
 	}
 }

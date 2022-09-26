@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Text.Unicode;
 using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 
 namespace Slin.Masking.Tests
 {
@@ -45,7 +46,8 @@ namespace Slin.Masking.Tests
 		//basic auth: Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"))
 		public const string AuthorizationBasic = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
-		public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = DummyData.SSN, requestUrl = requestUrlEncoded, dob = DummyData.DOB }, MyJsonSerializerOptions);
+		public static readonly string BodyOfJson = JsonSerializer.Serialize(new { ssn = SSN, requestUrl = requestUrl, dob = DOB }, MyJsonSerializerOptions);
+		public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = SSN, requestUrl = requestUrlEncoded, dob = DOB }, MyJsonSerializerOptions);
 		public static readonly string BodyOfXml = $"<data><ssn>{SSN}</ssn><Dob>{DobStr}</Dob><requestUrl>{requestUrlEncoded}</requestUrl></data>";
 		public static readonly string BodyOfXml4Embed = BodyOfXml.Replace("&amp;", "&amp;amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
@@ -76,7 +78,7 @@ namespace Slin.Masking.Tests
                    <m:Key>DOB</m:Key>
                    <m:Value>{DobStr}</m:Value>
                </m:kvprow>
-               <m:kvprow body=""{{&quot;ssn&quot;:&quot;{SSN}&quot;,&quot;dob&quot;:&quot;{DobStr}&quot;}}"">
+               <m:kvprow Body=""{{&quot;ssn&quot;:&quot;{SSN}&quot;,&quot;dob&quot;:&quot;{DobStr}&quot;}}"">
                    <m:Key><m:DOB>{DobStr}</m:DOB></m:Key>
                    <m:Value ssn=""{SSN}""><m:requestUrl>{requestUrlEncoded}</m:requestUrl></m:Value>
                </m:kvprow>
@@ -205,6 +207,96 @@ namespace Slin.Masking.Tests
 			data.Add(Keys.flatHeaders, flatHeaders);
 
 			return data;
+		}
+
+
+		public static XElement GetXElement()
+		{
+			var element = new XElement("root",
+					new XAttribute(Keys.boolOfTrue, "true"),
+					new XAttribute(Keys.ssn, SSN),
+					new XElement(Keys.NULL, default(string)),
+					new XElement(Keys.amount, Amount),
+					new XElement(Keys.transactionAmount, 9.99m),
+					new XElement(Keys.PrimaryAccountnumBER, new XCData(PAN)),
+					new XElement(Keys.user,
+						new XElement(Keys.FirstName, FirstName),
+						new XElement(Keys.ssn, SSN),
+						new XElement(Keys.dob, DobStr)
+					),
+					new XElement("kvplist", new XAttribute(Keys.requestUrl, requestUrl),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN),
+							new XElement(Keys.Key, new XCData(Keys.ssn)),
+							new XElement(Keys.Value, new XCData(SSN)),
+							new XElement(Keys.boolOfTrue, true)
+						),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN),
+							new XElement(Keys.Key, new XCData(Keys.dob)),
+							new XElement(Keys.Value, DOB)
+						),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN),
+							new XElement(Keys.Key.ToLowerInvariant(), Keys.dob),
+							new XElement(Keys.Value.ToLowerInvariant(), DOB)
+						),
+						new XElement("kvprow", new XAttribute(Keys.Body, BodyOfJson),
+							new XElement(Keys.key, Keys.Body),
+							new XElement(Keys.val, BodyOfJson)
+						),
+						new XElement("kvprow",
+							new XElement(Keys.key, Keys.ResponseBody),
+							new XElement(Keys.val, BodyOfXml)
+						)
+					),
+					new XElement(Keys.Body, new XCData(BodyOfJson)),
+					new XElement(Keys.ResponseBody, new XCData(BodyOfXml))
+				);
+
+			return element;
+		}
+
+		public static XElement GetXElementMasked()
+		{
+
+			var elementMasked = new XElement("root",
+					new XAttribute(Keys.boolOfTrue, "true"),
+					new XAttribute(Keys.ssn, SSN.Mask("*")),
+					new XElement(Keys.NULL, default(string)),
+					new XElement(Keys.amount, Amount),//null is not supported in XML.
+					new XElement(Keys.transactionAmount, 9.99m),
+					new XElement(Keys.PrimaryAccountnumBER, new XCData(PAN.Mask("L4R4"))),
+					new XElement(Keys.user,
+						new XElement(Keys.FirstName, FirstName.Mask("L2")),
+						new XElement(Keys.ssn, SSN.Mask("*")),
+						new XElement(Keys.dob, DobStr.Mask("REDACTED"))
+					),
+					new XElement("kvplist", new XAttribute(Keys.requestUrl, Masked.requestUrl.Unpack(true)),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN.Mask("*")),
+							new XElement(Keys.Key, new XCData(Keys.ssn)),
+							new XElement(Keys.Value, new XCData(SSN.Mask("*"))),
+							new XElement(Keys.boolOfTrue, true)
+						),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN.Mask("*")),
+							new XElement(Keys.Key, new XCData(Keys.dob)),
+							new XElement(Keys.Value, DobStr.Mask("REDACTED"))
+						),
+						new XElement("kvprow", new XAttribute(Keys.ssn, SSN.Mask("*")),
+							new XElement(Keys.Key.ToLowerInvariant(), Keys.dob),
+							new XElement(Keys.Value.ToLowerInvariant(), DobStr.Mask("REDACTED"))
+						),
+						new XElement("kvprow", new XAttribute(Keys.Body, Masked.BodyOfJson),
+							new XElement(Keys.key, Keys.Body),
+							new XElement(Keys.val, Masked.BodyOfJson)
+						),
+						new XElement("kvprow",
+							new XElement(Keys.key, Keys.ResponseBody),
+							new XElement(Keys.val, Masked.BodyOfXml)
+						)
+					),
+					new XElement(Keys.Body, new XCData(Masked.BodyOfJson)),
+					new XElement(Keys.ResponseBody, new XCData(Masked.BodyOfXml))
+				);
+
+			return elementMasked;
 		}
 	}
 

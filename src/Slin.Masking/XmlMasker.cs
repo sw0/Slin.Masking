@@ -101,7 +101,8 @@ namespace Slin.Masking
 					if (valueElement != null
 						&& _masker.TryMask(key, value, out var masked))
 					{
-						valueElement.Value = masked;
+						WrapCDataIf(valueElement, masked ?? value);
+						//valueElement.Value = masked;
 					}
 					else if (valueElement != null)
 					{
@@ -133,7 +134,9 @@ namespace Slin.Masking
 				var value = element.Value;
 				if (_masker.TryMask(name, value, out string masked))
 				{
-					element.Value = masked;
+
+					//for XML, it does not null data
+					WrapCDataIf(element, masked ?? value);
 				}
 				else
 				{
@@ -177,10 +180,23 @@ namespace Slin.Masking
 
 			return false;
 		}
+
+		private void WrapCDataIf(XElement source, string value)
+		{
+			if (source.FirstNode?.NodeType == System.Xml.XmlNodeType.CDATA)
+			{
+				source.ReplaceNodes(new XCData(value));
+			}
+			else
+			{
+				source.SetValue(value);
+			}
+		}
+
 		#endregion
 
 
-		#region -- json mask attempts --
+		#region -- json&xml mask attempts --
 
 		private bool AttemptSerializedMasking(string key, XElement source)
 		{
@@ -193,13 +209,15 @@ namespace Slin.Masking
 					//var masked = MaskObjectInternal(parsedNode);
 					var sb = new StringBuilder(source.Value.Length);
 					_jsonMasker.MaskObject(parsedNode, sb);
-					source.SetValue(sb.ToString());
+					//source.SetValue(sb.ToString());
+					WrapCDataIf(source, sb.ToString());
 					return true;
 				}
 				else if (MaskXmlSerializedEnabled && TryParse(source.Value, out var element))
 				{
 					var masked = MaskXmlElementString(element);
-					source.Value = masked;
+					//source.Value = masked;
+					WrapCDataIf(source, masked);
 					return true;
 				}
 			}
@@ -251,7 +269,8 @@ namespace Slin.Masking
 				&& IsLikeUrlOrQuery(source.Value))
 			{
 				var masked = _masker.MaskUrl(source.Value);
-				source.Value = masked;
+				//source.Value = masked;
+				WrapCDataIf(source, masked);
 			}
 		}
 

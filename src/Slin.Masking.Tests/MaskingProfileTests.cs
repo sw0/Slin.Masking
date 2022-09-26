@@ -20,7 +20,7 @@ namespace Slin.Masking.Tests
 			var profile = CreateProvider().GetService<IOptions<MaskingProfile>>()!.Value;
 
 			Assert.True(profile.Rules.Count > 0);
-			Assert.True(profile.NamedFormatterDefintions.Count > 0);
+			Assert.True(profile.NamedFormatters.Count > 0);
 			Assert.True(profile.Rules.All(x => !string.IsNullOrEmpty(x.Key)));
 			Assert.True(profile.Rules.All(x => x.Value.Formatters != null));
 		}
@@ -30,13 +30,13 @@ namespace Slin.Masking.Tests
 		{
 			var profile = CreateProvider().GetService<IOptions<MaskingProfile>>()!.Value;
 
-			profile.NamedFormatterDefintions.Clear();
+			profile.NamedFormatters.Clear();
 			profile.Normalize();
 
 			try { var masker = new Masker(profile); }
 			catch (Exception ex)
 			{
-				Assert.StartsWith("NamedFormatterDefintions does not found:", ex.Message);
+				Assert.StartsWith("NamedFormatters does not found:", ex.Message);
 			}
 		}
 
@@ -58,7 +58,7 @@ namespace Slin.Masking.Tests
 			try { var masker = new Masker(profile); }
 			catch (Exception ex)
 			{
-				Assert.StartsWith("NamedFormatterDefintions does not found:", ex.Message);
+				Assert.StartsWith("NamedFormatters does not found:", ex.Message);
 				Assert.EndsWith(nameNotExists, ex.Message);
 			}
 		}

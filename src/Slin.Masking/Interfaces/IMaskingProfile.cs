@@ -34,7 +34,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// named formatter definition is optional. It can be used to define formatter definitions, which be refer in <see cref="ValueFormatterDefinition"/> by Formatter.Name.
 		/// </summary>
-		Dictionary<string, ValueFormatterDefinition> NamedFormatterDefintions { get; set; }
+		Dictionary<string, ValueFormatterDefinition> NamedFormatters { get; set; }
 
 		/// <summary>
 		/// Masking rules contains rules, it can be named(key) or by specifying the key name. Key name supports regular expression. Like KeyName="^ssn|socialsecuritynumber$". If keyname is null, the name will be be used as keyname.

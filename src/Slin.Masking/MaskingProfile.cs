@@ -115,19 +115,19 @@ namespace Slin.Masking
 
 		#region -- masking settings: rules related properties --
 
-		private Dictionary<string, ValueFormatterDefinition> _namedFormatterDefintions;
+		private Dictionary<string, ValueFormatterDefinition> _namedFormatters = new Dictionary<string, ValueFormatterDefinition>();
 		/// <summary>
 		/// optional NamedFormatterDefinitions
 		/// </summary>
-		public Dictionary<string, ValueFormatterDefinition> NamedFormatterDefintions
+		public Dictionary<string, ValueFormatterDefinition> NamedFormatters
 		{
-			get { return _namedFormatterDefintions; }
+			get { return _namedFormatters; }
 			set
 			{
 				if (value != null)
-					_namedFormatterDefintions = new Dictionary<string, ValueFormatterDefinition>(value, StringComparer.OrdinalIgnoreCase);
+					_namedFormatters = new Dictionary<string, ValueFormatterDefinition>(value, StringComparer.OrdinalIgnoreCase);
 				else
-					_namedFormatterDefintions = value;
+					_namedFormatters = value ?? new Dictionary<string, ValueFormatterDefinition>();
 			}
 		}
 		//= new Dictionary<string, ValueFormatterDefinition>(StringComparer.OrdinalIgnoreCase);
@@ -153,7 +153,7 @@ namespace Slin.Masking
 		/// <exception cref="Exception"></exception>
 		public void Normalize()
 		{
-			foreach (var item in NamedFormatterDefintions)
+			foreach (var item in NamedFormatters)
 			{
 				//if (string.IsNullOrEmpty(item.Value.Name)) 
 				item.Value.Name = item.Key.ToLower();
