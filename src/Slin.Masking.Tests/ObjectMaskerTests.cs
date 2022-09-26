@@ -244,7 +244,7 @@ namespace Slin.Masking.Tests
 
 		[Theory]
 		[ClassData(typeof(JsonMaskerTestRows))]
-		public void JsonMaskerBuilder1Test(string keys, string expected, string expectedOnlyValue)
+		public void JsonMaskerTest(string keys, string expected, string expectedOnlyValue)
 		{
 			var profile = GetMaskingProfile();
 			ModifyProfile(profile);
@@ -270,6 +270,21 @@ namespace Slin.Masking.Tests
 			var actual = sb.ToString();
 			var actual2 = sb2.ToString();
 
+#if DEBUG
+			var file = @$"c:\work\slin.masking.tests\{nameof(JsonMaskerTest)}_{DateTime.Now:HHmm}.txt";
+
+			if (!Directory.Exists(Path.GetDirectoryName(file)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+			}
+			File.WriteAllText(file, actual);
+
+			if (actual2.Length > 0)
+			{
+				File.AppendAllText(file, "\r\n\r\nexpectedOnlyValue:\r\n" + expectedOnlyValue);
+				File.AppendAllText(file, "\r\n\r\nactual2:\r\n" + actual2);
+			}
+#endif
 			Assert.Equal(expected, actual);
 			Assert.Equal(expectedOnlyValue, actual2);
 		}
@@ -355,321 +370,6 @@ namespace Slin.Masking.Tests
 					.Replace("\\u4E2D\\u56FD", "中国").Replace("\\u4E16\\u754C", "世界");
 				Assert.Equal(expected2, actual3);
 			}
-		}
-
-		[Theory]
-		[ClassData(typeof(JsonMaskerTestRows))]
-		public void JsonMaskerBuilderTest(string keys, string expected, string expectedOnlyValue)
-		{
-			var profile = GetMaskingProfile();
-			_profile = profile;
-			ModifyProfile(profile);
-
-			var masker = _masker = new Masker(profile);
-			var objectMasker = new ObjectMasker(masker, profile);
-
-			var jsonMasker = new JsonMasker(masker, profile);
-
-			var data = CreateLogEntry().Picks(keys.Split(','));
-
-			var sb = new StringBuilder();
-			var sb2 = new StringBuilder();
-
-			var jsonOptions = new JsonSerializerOptions()
-			{
-				Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-			};
-			var element = JsonSerializer.SerializeToElement(data, jsonOptions);
-
-			MaskJsonElement(null, element, sb);
-
-			if (data.Count == 1)
-			{
-				var element2 = JsonSerializer.SerializeToElement(data.First().Value, jsonOptions);
-				MaskJsonElement(null, element2, sb2);
-			}
-
-			var actual = sb.ToString();
-			var actual2 = sb2.ToString();
-#if DEBUG
-			var file = @$"c:\work\slin.masking.tests\{nameof(JsonMaskerBuilderTest)}_{DateTime.Now:HHmm}.txt";
-
-			if (!Directory.Exists(Path.GetDirectoryName(file)))
-			{
-				Directory.CreateDirectory(Path.GetDirectoryName(file)!);
-			}
-			File.WriteAllText(file, actual);
-
-			if (actual2.Length > 0)
-			{
-				File.AppendAllText(file, "\r\n\r\nexpectedOnlyValue:\r\n" + expectedOnlyValue);
-				File.AppendAllText(file, "\r\n\r\nactual2:\r\n" + actual2);
-			}
-#endif
-			WriteLine(keys + "  expected:");
-			WriteLine(actual);
-
-			WriteLine("\r\n\r\n");
-			WriteLine("expectedOnlyValue:");
-			WriteLine(expectedOnlyValue);
-
-			WriteLine("\r\n\r\n");
-			WriteLine("actual2:");
-			WriteLine(actual2);
-
-			Assert.Equal(expected, actual);
-
-			Assert.Equal(expectedOnlyValue, actual2);
-			Assert.NotEqual(actual2, actual);
-
-		}
-
-		private void MaskJsonElement(string? propertyName, JsonElement element, StringBuilder builder)
-		{
-			//todo depth check...
-
-			bool previousAppeared = false;
-			switch (element.ValueKind)
-			{
-				case JsonValueKind.Undefined:
-					builder.Append("null");
-					break;
-				case JsonValueKind.Object:
-					{
-						builder.Append('{');
-						var isKvp = IsKvpObject(element, out string keyKey, out var key, out string valKey, out var value);
-						if (isKvp)
-						{
-							var keyName = key.GetString();
-							builder.Append('"').Append(keyKey).Append('"').Append(':')
-								.Append('"').Append(keyName).Append('"').Append(',')
-								.Append('"').Append(valKey).Append('"').Append(':');
-							MaskJsonElement(keyName, value, builder);
-						}
-						foreach (var child in element.EnumerateObject())
-						{
-							//todo skip properties of key and value
-							if (isKvp && (child.Name == keyKey || child.Name == valKey))
-								continue;
-
-							if (isKvp)
-								builder.Append(',');
-
-							MaskProperty(child, builder);
-							builder.Append(',');
-
-							if (!previousAppeared)
-								previousAppeared = true;
-						}
-
-						if (previousAppeared)
-						{
-							builder.Remove(builder.Length - 1, 1);
-						}
-						builder.Append('}');
-					}
-					break;
-				case JsonValueKind.Array:
-					builder.Append('[');
-
-					var treatSingleArrayItemAsValue = true;
-					if (treatSingleArrayItemAsValue && !string.IsNullOrEmpty(propertyName) && element.EnumerateArray().Count() == 1)
-					{
-						foreach (var child in element.EnumerateArray())
-						{
-							if (child.ValueKind == JsonValueKind.String
-								|| (_profile.MaskJsonNumberEnabled && child.ValueKind == JsonValueKind.Number))
-							{
-								MaskJsonElement(propertyName, child, builder);
-							}
-							else
-							{
-								MaskJsonElement(null, child, builder);
-							}
-						}
-					}
-					else
-					{
-						foreach (var child in element.EnumerateArray())
-						{
-							MaskJsonElement(null, child, builder);
-
-							builder.Append(',');
-
-							if (!previousAppeared)
-								previousAppeared = true;
-						}
-
-						if (previousAppeared)
-						{
-							builder.Remove(builder.Length - 1, 1);
-						}
-					}
-					builder.Append(']');
-					break;
-				case JsonValueKind.String:
-					//todo 
-					{
-						var value = element.GetString();
-
-						if (!string.IsNullOrEmpty(propertyName) && _masker.TryMask(propertyName, value, out var masked))
-						{
-							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
-						}
-						else if (_profile.MaskUrlEnabled && _profile.UrlKeys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
-						{
-							masked = _masker.MaskUrl(value, true);
-
-							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
-						}
-						else if (propertyName != null && value != null && SerializedMaskAttempt(propertyName, value, builder))
-						{
-							//do nothing
-						}
-						else
-						{
-							//todo if Url enabled
-							builder.Append(string.Concat("\"", value, "\"")); //todo quote
-						}
-					}
-					break;
-				case JsonValueKind.Number:
-					{
-						if (!string.IsNullOrEmpty(propertyName) && _profile.MaskJsonNumberEnabled && _masker.TryMask(propertyName, element.GetRawText(), out var masked))
-						{
-							if (masked == null) builder.Append("null");
-							else if (masked != null && masked.All(char.IsDigit))
-								builder.Append(masked);
-							else
-								builder.Append(string.Concat('"', masked, '"'));
-						}
-						else
-						{
-							builder.Append(element.GetRawText());
-						}
-					}
-					break;
-				case JsonValueKind.True:
-					builder.Append(element.GetRawText());
-					break;
-				case JsonValueKind.False:
-					builder.Append(element.GetRawText());
-					break;
-				case JsonValueKind.Null:
-					builder.Append("null");
-					break;
-				default:
-					throw new NotImplementedException("unkonwn valuekind");
-			}
-		}
-
-		private void MaskProperty(JsonProperty property, StringBuilder builder)
-		{
-			builder.Append('"').Append(property.Name).Append('"').Append(':');
-			MaskJsonElement(property.Name, property.Value, builder);
-		}
-		private bool SerializedMaskAttempt(string key, string value, StringBuilder builder)
-		{
-			if (!_profile.MaskJsonSerializedEnabled || !_profile.SerializedKeys.Contains(key, StringComparer.OrdinalIgnoreCase)) return false;
-
-			try
-			{
-				if (_profile.MaskJsonSerializedEnabled && TryParseJson(value, out var parsedNode))
-				{
-					//source[valueKeyName] = parsedNode;
-
-					MaskJsonElement(key, parsedNode!.Value, builder);
-
-					return true;
-				}
-				//else if (MaskXmlSerializedEnabled && TryParseXEle(value, out var element))
-				//{
-				//	var masked = MaskXmlElementString(element);
-				//	source[valueKeyName] = masked;
-				//	return true;
-				//}
-			}
-			catch (Exception)
-			{
-				//todo Parse Json failed
-			}
-			return false;
-		}
-
-		bool TryParseJson(string value, out JsonElement? node)
-		{
-			node = null; value = value?.Trim();
-			//here I think for JSON, it at least has 15 char?...
-			if (value == null || value.Length < _profile.JsonMinLength || value == "null") return false;
-
-			if (!(value.StartsWith("[") && value.EndsWith("]"))
-				&& !(value.StartsWith("{") && value.EndsWith("}")))
-				return false;
-
-			var reader = new Utf8JsonReader(Encoding.UTF8.GetBytes(value), new JsonReaderOptions { });
-
-			if (JsonElement.TryParseValue(ref reader, out var nodex))
-			{
-				node = nodex.Value;
-				return true;
-			}
-			return false;
-		}
-		private bool IsKvpList(JsonElement ele, out string keyKey, out JsonElement key, out string valKey, out JsonElement value)
-		{
-			keyKey = valKey = "";
-			key = value = default(JsonElement);
-			if (ele.ValueKind != JsonValueKind.Array) return false;
-
-			int flag = 0;
-			int count = 0;
-			keyKey = "Key";
-			valKey = "Value";
-			foreach (var child in ele.EnumerateArray())
-			{
-				count++;
-				if (child.TryGetProperty(keyKey, out key))
-				{
-					if (key.ValueKind == JsonValueKind.String)
-					{
-						flag |= 1;
-					}
-				}
-				if (child.TryGetProperty(valKey, out value))
-				{
-					flag |= 2;
-				}
-			}
-
-			return flag == 3 && count == 2;
-		}
-
-		public bool IsKvpObject(JsonElement ele, out string keyKey, out JsonElement key, out string valKey, out JsonElement value)
-		{
-			keyKey = valKey = "";
-			key = value = default(JsonElement);
-			if (ele.ValueKind != JsonValueKind.Object) return false;
-
-			int flag = 0;
-			int count = ele.EnumerateObject().Count();
-			foreach (var kv in _profile.KeyKeyValueKeys)
-			{
-				keyKey = kv.KeyKeyName;
-				valKey = kv.ValueKeyName;
-				if (ele.TryGetProperty(keyKey, out key))
-				{
-					if (key.ValueKind == JsonValueKind.String)
-					{
-						flag |= 1;
-					}
-				}
-				if (ele.TryGetProperty(valKey, out value))
-				{
-					flag |= 2;
-				}
-				if (flag == 3) return true;
-			}
-			return false;
 		}
 		#endregion
 	}

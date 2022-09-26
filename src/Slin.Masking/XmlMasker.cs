@@ -45,6 +45,7 @@ namespace Slin.Masking
 
 		public string MaskXmlElementString(XElement element)
 		{
+			//todo do we need considering clone the object?
 			MaskXElementInternal(element);
 
 			var result = element.ToString(SaveOptions.DisableFormatting);
@@ -74,7 +75,7 @@ namespace Slin.Masking
 			// read the element and do with your node 
 			if (element.HasElements)
 			{
-				if (_options.MaskNestedKvpEnabled && ContainsKeyValuePair(element.Elements(), out var keyKeyName, out var valKeyName))
+				if (_options.MaskNestedKvpEnabled && ContainsKeyValuePair(element.Elements(), out var keyKeyName, out var valKeyName, _options.KeyKeyValueKeys))
 				{
 					var key = default(string);
 					var value = default(string);
@@ -104,14 +105,14 @@ namespace Slin.Masking
 					}
 					else if (valueElement != null)
 					{
-						SerializedMaskAttempt(key, valueElement);
+						AttemptSerializedMasking(key, valueElement);
 
-						UrlJsonMaskAttempt(key, valueElement);
+						AttemptUrlMasking(key, valueElement);
 					}
 
 					foreach (var item in element.Elements())
 					{
-						if (item.Name.LocalName == keyKeyName && !!item.HasElements) continue;
+						if (item.Name.LocalName == keyKeyName && !item.HasElements) continue;
 						if (item.Name.LocalName == valKeyName && !item.HasElements) continue;
 
 						MaskXElementInternal(item);
@@ -136,9 +137,9 @@ namespace Slin.Masking
 				}
 				else
 				{
-					SerializedMaskAttempt(name, element);
+					AttemptSerializedMasking(name, element);
 
-					UrlJsonMaskAttempt(name, element);
+					AttemptUrlMasking(name, element);
 				}
 			}
 		}
@@ -173,7 +174,6 @@ namespace Slin.Masking
 					}
 				}
 			}
-			//}
 
 			return false;
 		}
@@ -182,53 +182,7 @@ namespace Slin.Masking
 
 		#region -- json mask attempts --
 
-		private bool FirstJsonMaskAttempt(string key, string valueKey, JsonValue jval, JsonObject source, out string value, out bool valueIsString)
-		{
-			valueIsString = true;
-			if (!jval.TryGetValue<string>(out value))
-			{
-				valueIsString = false;
-				//if not string, it would be ValueKind.Number 
-				value = jval.GetValue<double>().ToString();
-			}
-			if (_masker.TryMask(key, value, out string masked))
-			{
-				source[valueKey] = masked;
-				return true;
-			}
-			return false;
-		}
-
-		private bool SerializedMaskAttempt(string key, string value, string valueKeyName, JsonObject source)
-		{
-			if (!IsSerializedKey(key)) return false;
-
-			try
-			{
-				if (MaskJsonSerializedEnabled && _jsonMasker != null && _jsonMasker.TryParse(value, out var parsedNode))
-				{
-					//source[valueKeyName] = parsedNode.Value;
-
-					//_jsonMasker.MaskObject(parsedNode);
-					//todo ...important
-
-					return true;
-				}
-				else if (MaskXmlSerializedEnabled && TryParse(value, out var element))
-				{
-					var masked = MaskXmlElementString(element);
-					source[valueKeyName] = masked;
-					return true;
-				}
-			}
-			catch (Exception)
-			{
-				//todo Parse Json failed
-			}
-			return false;
-		}
-
-		private bool SerializedMaskAttempt(string key, XElement source)
+		private bool AttemptSerializedMasking(string key, XElement source)
 		{
 			if (!IsSerializedKey(key))
 				return false;
@@ -255,6 +209,7 @@ namespace Slin.Masking
 			}
 			return false;
 		}
+
 		private bool SerializedMaskAttempt(XAttribute source)
 		{
 			if (!IsSerializedKey(source.Name.LocalName))
@@ -288,18 +243,7 @@ namespace Slin.Masking
 			return false;
 		}
 
-		private void UrlJsonMaskAttempt(string key, string value, string valueKeyName, JsonObject source)
-		{
-			if (IsMaskUrlEnabled //&& valueIsString
-				&& _options.UrlKeys.Contains(key, _options.SerializedKeysCaseSensitive
-				? StringComparer.Ordinal : StringComparer.OrdinalIgnoreCase)
-				&& IsLikeUrlOrQuery(value))
-			{
-				var masked = _masker.MaskUrl(value);
-				source[valueKeyName] = masked;
-			}
-		}
-		private void UrlJsonMaskAttempt(string key, XElement source)
+		private void AttemptUrlMasking(string key, XElement source)
 		{
 			if (IsMaskUrlEnabled && !string.IsNullOrEmpty(source.Value)
 				&& _options.UrlKeys.Contains(key, _options.SerializedKeysCaseSensitive
@@ -310,6 +254,7 @@ namespace Slin.Masking
 				source.Value = masked;
 			}
 		}
+
 		private bool UrlJsonMaskAttempt(XAttribute source)
 		{
 			if (IsMaskUrlEnabled && !string.IsNullOrEmpty(source.Value)
@@ -326,57 +271,9 @@ namespace Slin.Masking
 			return false;
 		}
 
-		/// <summary>
-		/// try parse XElement
-		/// </summary>
-		/// <param name="value"></param>
-		/// <param name="doc"></param>
-		/// <returns></returns>
-		public bool TryParseXEle(string value, out XElement doc, int minLength = 30)
-		{
-			doc = null; value = value?.Trim();
-			//todo performance improve...
-
-			//here I think for xml, it at least has 30 char?...
-			if (value == null || value.Length < minLength) return false;
-			if (!value.StartsWith("<") || !value.EndsWith(">"))
-				return false;
-			try
-			{
-				doc = XElement.Parse(value, LoadOptions.None);
-
-				return true;
-			}
-			catch (Exception)
-			{
-				doc = null;
-				return false;
-			}
-		}
 		#endregion
 
 		#region -- helper methods--
-
-		bool TryParseJson(string value, out JsonNode node)
-		{
-			node = null; value = value?.Trim();
-			//here I think for JSON, it at least has 15 char?...
-			if (value == null || value.Length < _options.JsonMinLength || value == "null") return false;
-
-			if (!(value.StartsWith("[") && value.EndsWith("]"))
-				&& !(value.StartsWith("{") && value.EndsWith("}")))
-				return false;
-			try
-			{
-				node = JsonNode.Parse(value);
-
-				return true;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
 
 		/// <summary>
 		/// try parse XElement
@@ -405,6 +302,7 @@ namespace Slin.Masking
 				return false;
 			}
 		}
+
 		private bool IsLikeUrlOrQuery(string value)
 		{
 			if (value == null) return false;

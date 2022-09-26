@@ -105,7 +105,7 @@ namespace Slin.Masking
 						}
 						foreach (var child in element.EnumerateObject())
 						{
-							//todo skip properties of key and value
+							//skip properties of key and value
 							if (isKvp && (child.Name == keyKey || child.Name == valKey))
 								continue;
 
@@ -185,7 +185,6 @@ namespace Slin.Masking
 						}
 						else
 						{
-							//todo if Url enabled
 							builder.Append(string.Concat("\"", value, "\"")); //todo quote
 						}
 					}
@@ -195,8 +194,8 @@ namespace Slin.Masking
 						if (!string.IsNullOrEmpty(propertyName) && _options.MaskJsonNumberEnabled && _masker.TryMask(propertyName, element.GetRawText(), out var masked))
 						{
 							if (masked == null) builder.Append("null");
-							else if (masked != null && masked.All(char.IsNumber))
-								builder.Append(masked);
+							else if (masked != null && double.TryParse(masked, out var _))
+								builder.Append(masked);  //number
 							else
 								builder.Append(string.Concat('"', masked, '"'));
 						}
@@ -225,6 +224,7 @@ namespace Slin.Masking
 			builder.Append('"').Append(property.Name).Append('"').Append(':');
 			MaskJsonElement(property.Name, property.Value, builder);
 		}
+
 		private bool SerializedMaskAttempt(string key, string value, StringBuilder builder)
 		{
 			if (!_options.MaskJsonSerializedEnabled || !_options.SerializedKeys.Contains(key, StringComparer.OrdinalIgnoreCase)) return false;
@@ -240,7 +240,6 @@ namespace Slin.Masking
 				else if (_options.MaskXmlSerializedEnabled && _xmlMasker != null && _xmlMasker.TryParse(value, out var element))
 				{
 					var masked = _xmlMasker.MaskXmlElementString(element);
-					//source[valueKeyName] = masked;
 					builder.Append('"').Append(masked).Append('"');
 					return true;
 				}
@@ -256,11 +255,11 @@ namespace Slin.Masking
 		public bool IsKvpObject(JsonElement ele, out string keyKey, out JsonElement key, out string valKey, out JsonElement value)
 		{
 			keyKey = valKey = "";
-			key = value = default(JsonElement);
+			key = value = default;
 			if (ele.ValueKind != JsonValueKind.Object) return false;
 
 			int flag = 0;
-			int count = ele.EnumerateObject().Count();
+			//int count = ele.EnumerateObject().Count();
 			foreach (var kv in _options.KeyKeyValueKeys)
 			{
 				keyKey = kv.KeyKeyName;

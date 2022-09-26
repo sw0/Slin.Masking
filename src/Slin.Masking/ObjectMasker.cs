@@ -212,7 +212,7 @@ namespace Slin.Masking
 						var value = default(string);
 						var valueIsString = true;
 
-						if (!FirstJsonMaskAttempt(key, valKeyName, jval, obj, out value, out valueIsString)
+						if (!jval.TryGetValue<bool>(out _) && !FirstJsonMaskAttempt(key, valKeyName, jval, obj, out value, out valueIsString)
 							&& value != null && value.Length > _options.ValueMinLength)
 						{
 							SerializedMaskAttempt(key, value, valKeyName, obj);
@@ -241,7 +241,7 @@ namespace Slin.Masking
 						var value = default(string);
 						var valueIsString = true;
 
-						if (FirstJsonMaskAttempt(item.Key, item.Key, jval, obj, out value, out valueIsString))
+						if (jval.TryGetValue<bool>(out _) || FirstJsonMaskAttempt(item.Key, item.Key, jval, obj, out value, out valueIsString))
 							continue;
 
 						if (value == null || value.Length <= _options.ValueMinLength)
