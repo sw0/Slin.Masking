@@ -28,34 +28,6 @@ namespace Slin.Masking.Tests
 		public ObjectMaskerTests(ITestOutputHelper testOutputHelper) : base(testOutputHelper)
 		{ }
 
-		[Fact]
-		public void CopyXElementTest()
-		{
-			var json = @"<data><ssn>123</ssn><dob>123456</dob><list><a>123</a><b>123</b></list></data>";
-
-			var ele1 = XElement.Parse(json);
-
-			var ele2 = new XElement(ele1);
-
-			foreach (var e in ele2.Elements())
-			{
-				if (e.HasElements)
-				{
-					foreach (var item in e.Elements())
-					{
-						item.SetValue("good");
-					}
-				}
-				else
-				{
-					e.SetValue("asd");
-				}
-			}
-
-			var x = ele2.ToString() != ele1.ToString();
-
-			Assert.True(x);
-		}
 
 		//[Theory]
 		////[MemberData(nameof(DummyDataRows))]
@@ -129,14 +101,15 @@ namespace Slin.Masking.Tests
 			Assert.NotEqual(output1, output2);
 		}
 
-		#region -- try using StringBuilder. TODO --
+		#region -- try using StringBuilder. --
 
 		[Theory]
 		[ClassData(typeof(JsonMaskerTestRows))]
-		public void JsonMaskerTest(string keys, string expected, string expectedOnlyValue)
+		public void JsonMaskerTest(string keys, bool parseNode, string expected, string expectedOnlyValue)
 		{
 			var profile = GetMaskingProfile();
 			ModifyProfile(profile);
+			profile.MaskJsonSerializedParsedAsNode = parseNode;
 
 			var masker = new Masker(profile);
 			var jsonMasker = new JsonMasker(masker, profile);
@@ -261,6 +234,63 @@ namespace Slin.Masking.Tests
 					.Replace("\\u4E2D\\u56FD", "中国").Replace("\\u4E16\\u754C", "世界");
 				Assert.Equal(expected2, actual3);
 			}
+		}
+
+
+		[Theory]
+		[InlineData("cj-serialized-keep-string", false, ModeIfArray.Default)]
+		[InlineData("cj-serialized-as-node", true, ModeIfArray.Default)]
+		[InlineData("cj-serialized-keep-string", false, ModeIfArray.HandleSingle)]
+		[InlineData("cj-serialized-as-node", true, ModeIfArray.HandleSingle)]
+		[InlineData("cj-serialized-keep-string", false, ModeIfArray.HandleAll)]
+		[InlineData("cj-serialized-as-node", true, ModeIfArray.HandleAll)]
+		public void ComplexJsonTest(string name, bool maskJsonSerialiezedResultAsNode, ModeIfArray mode)
+		{
+			var (json, jsonMasked) = DummyData.GetJsonString(maskJsonSerialiezedResultAsNode, mode);
+
+			var profile = GetMaskingProfile();
+			ModifyProfile(profile);
+			profile.GlobalModeForArray = mode;
+			profile.MaskJsonSerializedParsedAsNode = maskJsonSerialiezedResultAsNode;
+
+			var masker = new Masker(profile);
+			var xmlMasker = new XmlMasker(masker, profile);
+			var jsonMasker = new JsonMasker(masker, profile);
+			xmlMasker.SetJsonMasker(jsonMasker);
+			jsonMasker.SetXmlMasker(xmlMasker);
+
+			var objMasker = new ObjectMasker(masker, profile);
+
+			var builder = new StringBuilder();
+			objMasker.MaskObject(json, builder);
+
+			var actual = builder.ToString();
+
+			var testName = "ComplexJsonTest";
+			var file = @$"c:\work\slin.masking.tests\{testName}_{DateTime.Now:HHmm}.txt";
+
+			if (!Directory.Exists(Path.GetDirectoryName(file)))
+			{
+				Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+			}
+
+			if (!File.Exists(file))
+			{
+				WriteLine($"[{nameof(ComplexJsonTest)}] output: {file}");
+				File.WriteAllText(file, $"[{testName} test cases]: {name}{Environment.NewLine}");
+			}
+
+			File.AppendAllText(file, "input:" + Environment.NewLine);
+			File.AppendAllText(file, json + Environment.NewLine + Environment.NewLine);
+
+			File.AppendAllText(file, "actual:" + Environment.NewLine);
+			File.AppendAllText(file, actual + Environment.NewLine + Environment.NewLine);
+
+			File.AppendAllText(file, "expected:" + Environment.NewLine);
+			File.AppendAllText(file, jsonMasked + Environment.NewLine + Environment.NewLine);
+
+			Assert.Equal(jsonMasked, actual);
+
 		}
 		#endregion
 	}

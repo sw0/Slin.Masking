@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -40,7 +41,7 @@ namespace Slin.Masking
 
 		public MaskingContext(IMaskingOptions options, IMaskFormatter maskFormatter = null)
 		{
-			if(options == null)	throw new ArgumentNullException("options");
+			if (options == null) throw new ArgumentNullException("options");
 
 			Options = options;
 
@@ -80,7 +81,7 @@ namespace Slin.Masking
 					else
 					{
 						definition.Formatters.RemoveAt(i);
-						
+
 						throw new Exception($"{nameof(Options.NamedFormatters)} does not found: {formatter.Name}");
 					}
 				}
@@ -185,6 +186,34 @@ namespace Slin.Masking
 			throw new Exception($"Regex for pattern '{pattern}' was expected");
 		}
 
+		public bool IsKeyDefined(string nameOfSensitiveData, bool add2PoolIfMatched = false)
+		{
+			Contract.Assert(nameOfSensitiveData != null);
+			if (string.IsNullOrEmpty(nameOfSensitiveData))
+				throw new ArgumentNullException(nameof(nameOfSensitiveData));
+
+			if (_pooled.TryGetValue(nameOfSensitiveData, out var masker))
+			{
+				if (masker == null) return false;
+
+				return true;
+			}
+			else
+			{
+				foreach (var item in _pooledPatternedKeyMaskers)
+				{
+					if (GetRequiredRegex(item.KeyName).IsMatch(nameOfSensitiveData))
+					{
+						if (add2PoolIfMatched && (item.KeyNameLenLimitToCache <= 0
+							|| nameOfSensitiveData.Length < item.KeyNameLenLimitToCache))
+							_pooled.TryAdd(nameOfSensitiveData, item);
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+
 
 		public IKeyedMasker GetKeyedMasker(string key, string value)
 		{
@@ -205,7 +234,7 @@ namespace Slin.Masking
 					if (GetRequiredRegex(item.KeyName).IsMatch(key))
 					{
 						//TODO maybe we'd better to add limits here
-						if (item.KeyNameLenLimitToCache <= 0 
+						if (item.KeyNameLenLimitToCache <= 0
 							|| key.Length < item.KeyNameLenLimitToCache)
 							_pooled.TryAdd(key, item);
 

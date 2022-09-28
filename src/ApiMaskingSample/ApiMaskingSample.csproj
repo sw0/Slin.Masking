@@ -21,11 +21,11 @@
 		<PackageReference Include="NLog.Web.AspNetCore" Version="5.1.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
 		<PackageReference Include="System.ObjectModel" Version="4.3.0" />
-		<!--<PackageReference Include="Slin.Masking.NLog" Version="0.1.32" />-->
+		<PackageReference Include="Slin.Masking.NLog" Version="0.2.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Slin.Masking.NLog\Slin.Masking.NLog.csproj" />
+	  <!--<ProjectReference Include="..\Slin.Masking.NLog\Slin.Masking.NLog.csproj" />-->
 	</ItemGroup>
 
 </Project>

@@ -4,7 +4,10 @@ using System.ComponentModel;
 
 namespace Slin.Masking
 {
-	public class MaskingProfile : IMaskingProfile
+	/// <summary>
+	/// MaskingProfile contains ObjectMaskingOptions and masking rules
+	/// </summary>
+	public class MaskingProfile : IMaskingProfile//maby we can inherit it from ObjectMaskingOptions
 	{
 
 		#region -- object masking settings --
@@ -32,6 +35,10 @@ namespace Slin.Masking
 		/// default: true. When true, SerializedKeys
 		/// </summary>
 		public bool MaskJsonSerializedEnabled { get; set; } = true;
+		/// <summary>
+		/// default: true. Indicates to make deserialized string as JSON and keep it as JSON or unchanged as string.
+		/// </summary>
+		public bool MaskJsonSerializedParsedAsNode { get; set; } = true;
 
 		/// <summary>
 		/// NOT SUPPORTED YET!!!
@@ -90,7 +97,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// default: Default
 		/// </summary>
-		public ArrayItemHandleMode ArrayItemHandleMode { get; set; }
+		public ModeIfArray GlobalModeForArray { get; set; }
 		#endregion
 
 		#region -- masker settings --

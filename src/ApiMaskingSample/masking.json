@@ -1,13 +1,23 @@
 ﻿{
   "Masking": {
     "Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
+
+    //JSON Related
     "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
+    "MaskJsonNumberEnabled": true, //this works only in JSON
+    "JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make XML or URL not been escaped.
+    "JsonAllowedUnicodeRanges": [], //i.e. [ "CjkCompatibility", "CjkCompatibilityForms", "CjkCompatibilityIdeographs", "CjkRadicalsSupplement", "CjkStrokes", "CjkUnifiedIdeographs", "CjkUnifiedIdeographsExtensionA", "CjkSymbolsandPunctuation", "HalfwidthandFullwidthForms" ],
+    "MaskJsonSerializedParsedAsNode": true, //default: true
+    "GlobalModeForArray": 1, //0:none,1:single,2:all
+
+    //XML related
     "MaskXmlSerializedEnabled": true, //default: true
     "MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
     "MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
-    "MaskJsonNumberEnabled": true, //this works only in JSON
     "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
+
+    //Common part
     "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
       {
         "KeyKeyName": "Key",
@@ -24,7 +34,7 @@
     "SerializedKeysCaseSensitive": false,
     //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
     "UrlKeys": [ "requestUrl", "query" ],
-    "SerializedKeys": [ "Body", "ResponseBody", "reserialize" ],
+    "SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
     "UrlMaskingPatterns": [ //IgnoreCase: default true
       {
         "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
@@ -34,6 +44,8 @@
         "Pattern": "pan/(?<pan>\\d{15,16})"
       }
     ],
+
+    //MASKING SETTINGS
     "NamedFormatters": {
       //NOTE: definition names here are case-insensitive.
       //For a given Name(unique and ignore case), the formatter contains: 
@@ -41,6 +53,7 @@
       //  optional ValuePattern and IgnoreCase for value pattern. ValuePattern can be regular expression(simple regex usage).
       //  default true of Enabled.
       //  Enabled: default true. BUT no need to set it to False here.
+      "default": { "Format": "*" },
       "null": { "Format": "null" },
       "empty": { "Format": "EMPTY" },
       "redacted": { "Format": "REDACTED" },

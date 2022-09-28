@@ -26,6 +26,7 @@ namespace Slin.Masking.Tests
 		public const string FirstName = "Shawn";
 		public const string LastName = "Lin";
 		public const string SSN = "123456789";
+		public const string ssn = "101456321";
 		public const string PAN = "1234567890123456";
 		public const string DobStr = "1988-01-01";
 		public const decimal Amount = 9.99m;
@@ -210,7 +211,7 @@ namespace Slin.Masking.Tests
 		}
 
 
-		public static XElement GetXElement()
+		public static (XElement, XElement) GetXElement()
 		{
 			var element = new XElement("root",
 					new XAttribute(Keys.boolOfTrue, "true"),
@@ -251,12 +252,6 @@ namespace Slin.Masking.Tests
 					new XElement(Keys.ResponseBody, new XCData(BodyOfXml))
 				);
 
-			return element;
-		}
-
-		public static XElement GetXElementMasked()
-		{
-
 			var elementMasked = new XElement("root",
 					new XAttribute(Keys.boolOfTrue, "true"),
 					new XAttribute(Keys.ssn, SSN.Mask("*")),
@@ -296,7 +291,144 @@ namespace Slin.Masking.Tests
 					new XElement(Keys.ResponseBody, new XCData(Masked.BodyOfXml))
 				);
 
-			return elementMasked;
+			return (element, elementMasked);
+		}
+
+		public static (string, string) GetJsonString(bool maskJsonSerialiezedResultAsNode, ModeIfArray mode)
+		{
+			var xe1 = new XElement("data", new XAttribute(Keys.ssn, SSN),
+				new XElement(Keys.FirstName, FirstName),
+				new XElement(Keys.PrimaryAccountnumBER, new XCData(PAN)));
+
+			var xe1Masked = new XElement("data", new XAttribute(Keys.ssn, SSN.Mask("*")),
+				new XElement(Keys.FirstName, FirstName.Mask("L2")),
+				new XElement(Keys.PrimaryAccountnumBER, new XCData(PAN.Mask("L4R4"))));
+
+			var xml1 = xe1.ToString(SaveOptions.DisableFormatting);
+			var xml1Masked = xe1Masked.ToString(SaveOptions.DisableFormatting);
+			//---------------
+
+			var so = new { ssn = SSN, Amount = Amount, SsnList = new[] { SSN, ssn } };
+			var soMasked = new
+			{
+				ssn = SSN.Mask("*"),
+				Amount = default(string),
+				SsnList = new[] {
+					mode!= ModeIfArray.HandleAll?SSN: SSN.Mask("*"),
+					mode!= ModeIfArray.HandleAll?ssn: ssn.Mask("*")
+				}
+			};
+
+			var json1 = JsonSerializer.Serialize(so, MyJsonSerializerOptions);
+			var json1Masked = JsonSerializer.Serialize(soMasked, MyJsonSerializerOptions);
+			//---------------
+
+			var xe2 = new XElement("root",
+				new XElement(Keys.FirstName, FirstName),
+				new XElement(Keys.Body, json1),
+				new XElement(Keys.ResponseBody, xml1));
+
+			var xe2Masked = new XElement("root",
+				new XElement(Keys.FirstName, FirstName.Mask("L2")),
+				new XElement(Keys.Body, json1Masked),
+				new XElement(Keys.ResponseBody, xml1Masked));
+
+			var xml2 = xe2.ToString(SaveOptions.DisableFormatting);
+			var xml2Masked = xe2Masked.ToString(SaveOptions.DisableFormatting);
+			//---------------
+
+
+			var so2 = new { dob = DobStr, SsnList = new[] { SSN }, body = json1, responseBody = xml1 };
+			var so2Masked = new
+			{
+				dob = DobStr.Mask("REDACTED"),
+				SsnList = new[] { mode != ModeIfArray.Default ? SSN.Mask("*") : SSN },
+				body = json1Masked,
+				responseBody = xml1Masked
+			};
+
+			var json2 = JsonSerializer.Serialize(so2, MyJsonSerializerOptions);
+			var json2Masked = JsonSerializer.Serialize(so2Masked, MyJsonSerializerOptions);
+			//---------------
+
+
+			var jo = new
+			{
+				ssn = SSN,
+				dob = DobStr,
+				body = new
+				{
+					sSn = SSN,
+					BODY = json2,
+					RESPONSEBODY = xml2
+				},
+				responseBody = new
+				{
+					Dob = DOB,
+					body = json2,
+					responseBody = xml2
+				}
+			};
+			var json = JsonSerializer.Serialize(jo, MyJsonSerializerOptions);
+
+			if (maskJsonSerialiezedResultAsNode)
+			{
+				var joMasked = new
+				{
+					ssn = SSN.Mask("*"),
+					dob = DobStr.Mask("REDACTED"),
+					body = new
+					{
+						sSn = SSN.Mask("*"),
+						BODY = new
+						{
+							dob = DobStr.Mask("REDACTED"),
+							SsnList = new[] { mode == ModeIfArray.Default ? SSN : SSN.Mask("*") },
+							body = soMasked,
+							responseBody = xml1Masked
+						},
+						RESPONSEBODY = xml2Masked
+					},
+					responseBody = new
+					{
+						Dob = DOB.ToString().Mask("REDACTED"),
+						body = new
+						{
+							dob = DobStr.Mask("REDACTED"),
+							SsnList = new[] { mode == ModeIfArray.Default ? SSN : SSN.Mask("*") },
+							body = soMasked,
+							responseBody = xml1Masked
+						},
+						responseBody = xml2Masked
+					}
+				};
+				var jsonMasked = JsonSerializer.Serialize(joMasked, MyJsonSerializerOptions);
+
+				return (json, jsonMasked);
+			}
+			else
+			{
+				var joMasked = new
+				{
+					ssn = SSN.Mask("*"),
+					dob = DobStr.Mask("REDACTED"),
+					body = new
+					{
+						sSn = SSN.Mask("*"),
+						BODY = json2Masked,
+						RESPONSEBODY = xml2Masked
+					},
+					responseBody = new
+					{
+						Dob = DOB.ToString().Mask("REDACTED"),
+						body = json2Masked,
+						responseBody = xml2Masked
+					}
+				};
+				var jsonMasked = JsonSerializer.Serialize(joMasked, MyJsonSerializerOptions);
+
+				return (json, jsonMasked);
+			}
 		}
 	}
 

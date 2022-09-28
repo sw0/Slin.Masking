@@ -121,8 +121,9 @@ namespace Slin.Masking.NLog
 				}
 				else
 				{
-					var masked = _objectMasker.MaskObject(value);
-					builder.Append(string.Concat("\"", masked, "\""));
+					_objectMasker.MaskObject(value, builder);
+					//var masked = _objectMasker.MaskObject(value);
+					//builder.Append(string.Concat("\"", masked, "\""));
 				}
 			}
 			else if (Mode == "reserialize")
@@ -134,8 +135,9 @@ namespace Slin.Masking.NLog
 				if (value == null)
 					return;
 
-				var masked = _objectMasker.MaskObject(value);
-				builder.Append(masked);
+				_objectMasker.MaskObject(value, builder);
+				//var masked = _objectMasker.MaskObject(value);
+				//builder.Append(masked);
 			}
 			else
 			{
@@ -157,8 +159,9 @@ namespace Slin.Masking.NLog
 				}
 				if (data != null)
 				{
-					var masked = _objectMasker.MaskObject(data);
-					builder.Append(masked);
+					_objectMasker.MaskObject(data, builder);
+					//var masked = _objectMasker.MaskObject(data);
+					//builder.Append(masked);
 				}
 			}
 		}

@@ -7,6 +7,14 @@
 	public interface IMasker: IUrlMasker
 	{
 		/// <summary>
+		/// check if the property name is defined as sensitive key in rules, it maybe found by regular expression.
+		/// </summary>
+		/// <param name="key"></param>
+		/// <param name="addToCache">if true, try to added to cache pool</param>
+		/// <returns></returns>
+		bool IsKeyDefined(string key, bool addToCache = false);
+
+		/// <summary>
 		/// mask the value if the key is configured in masking rules.
 		/// </summary>
 		/// <param name="key">key</param>

@@ -19,6 +19,11 @@
 			_context = new MaskingContext(options, maskFormatter);
 		}
 
+		public bool IsKeyDefined(string key, bool addToCache = false)
+		{
+			return _context.IsKeyDefined(key, addToCache);
+		}
+
 		public bool TryMask(string key, string value, out string masked)
 		{
 			var masker = _context.GetKeyedMasker(key, value);

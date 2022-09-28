@@ -32,6 +32,10 @@ namespace Slin.Masking
 		/// default: true. It works with <see cref="SerializedKeys"/>, <see cref="JsonMinLength"/>.
 		/// </summary>
 		public bool MaskJsonSerializedEnabled { get; set; } = true;
+		/// <summary>
+		/// default: true. Indicates to make deserialized string as JSON and keep it as JSON or unchanged as string.
+		/// </summary>
+		public bool MaskJsonSerializedParsedAsNode { get; set; } = true;
 
 		/// <summary>
 		/// default: false. It works with <see cref="SerializedKeys"/>, <see cref="XmlMinLength"/>.
@@ -100,7 +104,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// default: Default
 		/// </summary>
-		public ArrayItemHandleMode ArrayItemHandleMode { get; set; }
+		public ModeIfArray GlobalModeForArray { get; set; }
 
 		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; }
 

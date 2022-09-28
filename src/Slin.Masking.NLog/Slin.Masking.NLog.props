@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.1.32</AssemblyVersion>
-		<FileVersion>0.1.32</FileVersion>
-		<Version>0.1.32</Version>
+		<AssemblyVersion>0.2.0</AssemblyVersion>
+		<FileVersion>0.2.0</FileVersion>
+		<Version>0.2.0</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -20,6 +20,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			v0.2.0: refer to latest slin.masking, improve performance and bug fixing.
 			v0.1.32: refer to latest slin.masking; For EventPropertiesMaskerLayoutRenderer, make Item case-insensitive, make Mode as default parameter and introduce new property named ExcludeProperties, it can be set like 'propkey1,propkey2'.
 		</PackageReleaseNotes>
 		<copyright>Copyright 2019-2026</copyright>

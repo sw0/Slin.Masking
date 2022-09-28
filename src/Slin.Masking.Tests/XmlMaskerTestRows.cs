@@ -121,8 +121,7 @@ namespace Slin.Masking.Tests
 
 			//case 
 			{
-				var element = DummyData.GetXElement();
-				var elementMasked = DummyData.GetXElementMasked();
+				var (element, elementMasked) = DummyData.GetXElement();
 				var xml = element.ToString();
 				var xmlMasked = elementMasked.ToString(SaveOptions.DisableFormatting);
 				AddRow("full-xElement", xml, true, xmlMasked); //todo <xml... is missed

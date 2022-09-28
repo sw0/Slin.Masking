@@ -1,6 +1,7 @@
 ﻿{
   "masking": {
-    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield" ],
+    "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" ],
+    "SerializedKeys": [ "Body", "RequestBody", "ResponseBody", "reserialize" ],
     "NamedFormatters": {
       "PAN14": {
         "ValuePattern": "^\\d{14}$",

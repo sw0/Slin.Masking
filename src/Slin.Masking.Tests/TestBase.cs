@@ -159,7 +159,7 @@ namespace Slin.Masking.Tests
 			profile!.MaskXmlSerializedEnabled = true;
 			profile!.MaskXmlSerializedOnXmlAttributeEnabled = true;
 			profile!.MaskJsonSerializedOnXmlAttributeEnabled = true;
-			profile.ArrayItemHandleMode = ArrayItemHandleMode.SingleItemAsValue;
+			profile.GlobalModeForArray = ModeIfArray.HandleSingle;
 
 			profile.UrlKeys = new List<string> { "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" };
 			profile.KeyKeyValueKeys.Add(new KeyKeyValueKey("key", "val"));
@@ -189,6 +189,12 @@ namespace Slin.Masking.Tests
 			{
 				Formatters = new List<ValueFormatterDefinition> {
 					new ValueFormatterDefinition{ Name = "REDACTED" }
+				}
+			};
+			profile.Rules["ssnList"] = new MaskRuleDefinition
+			{
+				Formatters = new List<ValueFormatterDefinition> {
+					new ValueFormatterDefinition{ Format = "*" }
 				}
 			};
 		}

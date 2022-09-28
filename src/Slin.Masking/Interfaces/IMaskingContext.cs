@@ -13,6 +13,8 @@ namespace Slin.Masking
 
 		bool IsLikePattern(string fieldName);
 
+		bool IsKeyDefined(string nameOfSensitiveData, bool add2PoolIfMatched = false);
+
 		IKeyedMasker GetKeyedMasker(string key, string value);
 
 		IMaskFormatter MaskFormatter { get; }

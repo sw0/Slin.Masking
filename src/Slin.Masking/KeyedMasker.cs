@@ -12,7 +12,15 @@ namespace Slin.Masking
 		public const string PatternCaseSensitiveSuffix = "(?#casesensitive)";
 	}
 
-	internal interface IKeyedMasker
+	//public interface IKeyedRule
+	//{
+	//	string KeyName { get; }
+
+	//	ModeIfArray ModeIfArray { get; }
+
+	//}
+
+	internal interface IKeyedMasker //: IKeyedRule
 	{
 		string KeyName { get; }
 
@@ -34,6 +42,11 @@ namespace Slin.Masking
 		public List<IValueFormatter> Formatters { get; set; }
 
 		/// <summary>
+		/// if currently only supports JSON array
+		/// </summary>
+		public ModeIfArray ModeIfArray { get; set; }
+
+		/// <summary>
 		/// default: 30
 		/// </summary>
 		public int KeyNameLenLimitToCache { get; set; } = 30;
@@ -46,6 +59,7 @@ namespace Slin.Masking
 				.Select(o => new ValueFormatter(context, o));
 
 			KeyName = source.KeyName;
+			//ModeIfArray = source.ModeIfArray;
 
 			if (source.IngoreKeyCase && !KeyName.EndsWith(MaskingConstants.PatternCaseInsensitiveSuffix))
 			{

@@ -2,10 +2,10 @@
 	<PropertyGroup>
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
-		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.1.32</AssemblyVersion>
-		<FileVersion>0.1.32</FileVersion>
-		<Version>0.1.32</Version>
+		<Copyright>(C) 2022 linsw@live.cn</Copyright>
+		<AssemblyVersion>0.2.0</AssemblyVersion>
+		<FileVersion>0.2.0</FileVersion>
+		<Version>0.2.0</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -13,7 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
-			0.2.0: performance improve; with breaking changes: Profile.NamedFormmaters (name changed), remove and add new methods in interfance IJsonMasker, ObjectMasker.
+			0.2.0: [HasBreakingChange] performance improved; bug fixing; breaking changes: Profile.NamedFormmaters (name changed), remove and add new methods in interfance IJsonMasker, ObjectMasker.
 			0.1.32: fix a bug in MaskingProfile if deserializing from JSON string in memory(found by Unit testing).
 			0.1.30: include masking.template.json file.
 			0.1.26: performance improve on MaskFormatter.
@@ -24,7 +24,7 @@
 			- for email, the format is similar but with '@' as ending char.
 			- Special format: null, REDACTED, REPLACEMENT=xxx
 		</PackageReleaseNotes>
-		<copyright>Copyright 2019-2026</copyright>
+		<copyright>Copyright 2022</copyright>
 		<PackageTags>MaskEngine, Masking, Mask, JsonMasker</PackageTags>
 	</PropertyGroup>
 </Project>

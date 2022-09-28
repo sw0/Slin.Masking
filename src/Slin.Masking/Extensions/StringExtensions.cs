@@ -7,7 +7,7 @@ namespace Slin.Masking
 {
 	public static class StringExtensions
 	{
-		public static string Mask(this string value, string maskFormat)
+		public static string Mask(this string value, string maskFormat = "*")
 		{
 			if (maskFormat.StartsWith("{0"))
 			{

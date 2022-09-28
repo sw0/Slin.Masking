@@ -132,9 +132,11 @@ namespace Slin.Masking
 				case JsonValueKind.Array:
 					builder.Append('[');
 
-					if (_options.ArrayItemHandleMode == ArrayItemHandleMode.SingleItemAsValue
-						&& !string.IsNullOrEmpty(propertyName) && element.EnumerateArray().Count() == 1
-						|| _options.ArrayItemHandleMode == ArrayItemHandleMode.AnyItemsAsValues
+					if (!string.IsNullOrEmpty(propertyName)
+						//&& _masker.IsKeyDefined(propertyName, true)
+						&& _options.GlobalModeForArray == ModeIfArray.HandleSingle
+						&& element.EnumerateArray().Count() == 1
+						|| _options.GlobalModeForArray == ModeIfArray.HandleAll
 						&& !string.IsNullOrEmpty(propertyName))
 					{
 						foreach (var child in element.EnumerateArray())
@@ -147,6 +149,13 @@ namespace Slin.Masking
 							{
 								MaskJsonElement(null, child, builder);
 							}
+							builder.Append(',');
+							if (!previousAppeared)
+								previousAppeared = true;
+						}
+						if (previousAppeared)
+						{
+							builder.Remove(builder.Length - 1, 1);
 						}
 					}
 					else
@@ -238,7 +247,18 @@ namespace Slin.Masking
 			{
 				if (_options.MaskJsonSerializedEnabled && TryParse(value, out var parsedNode))
 				{
-					MaskJsonElement(key, parsedNode.Value, builder);
+					if (_options.MaskJsonSerializedParsedAsNode)
+					{
+						MaskJsonElement(key, parsedNode.Value, builder);
+					}
+					else
+					{
+						var sb = new StringBuilder();
+						MaskJsonElement(key, parsedNode.Value, sb);
+						builder.Append("\"");
+						AppendStringEscape(builder, sb.ToString(), false, false);
+						builder.Append("\"");
+					}
 
 					return true;
 				}

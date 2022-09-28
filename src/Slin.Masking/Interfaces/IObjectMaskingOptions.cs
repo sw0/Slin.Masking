@@ -7,6 +7,12 @@ namespace Slin.Masking
 		bool Enabled { get; }
 		bool MaskJsonNumberEnabled { get; }
 		bool MaskJsonSerializedEnabled { get; }
+		/// <summary>
+		/// default: true. Indicates to make deserialized string as JSON and keep it as JSON or unchanged as string.
+		/// if true, the serialized string will be parsed as Json node if it's a valid JSON, which will be more friendly in reading.
+		/// </summary>
+		bool MaskJsonSerializedParsedAsNode { get; }
+
 		bool MaskUrlEnabled { get; }
 		bool MaskXmlSerializedEnabled { get; }
 		bool MaskXmlSerializedOnXmlAttributeEnabled { get; }
@@ -26,32 +32,18 @@ namespace Slin.Masking
 		int JsonMinLength { get; }
 		int JsonMaxDepth { get; }
 
-
-
-
+		/// <summary>
+		/// default: <![CDATA[<>&+]]>
+		/// </summary>
 		string JsonAllowedCharacters { get; }
-
+		/// <summary>
+		/// specify additional allowed unicode ranges, which is defined in <see cref="System.Text.Unicode.UnicodeRanges"/>. UnicodeRanges.BasicLatin would always be allowed.
+		/// </summary>
 		string[] JsonAllowedUnicodeRanges { get; }
 
-		ArrayItemHandleMode ArrayItemHandleMode { get; }
-	}
-
-	/// <summary>
-	/// this only will handel string and number (if MaskJsonNumberEnabled is true)
-	/// </summary>
-	public enum ArrayItemHandleMode
-	{
 		/// <summary>
-		/// default way, ignore property name. It will not mask {"ssn":["123456789"]}
+		/// current only support Json array.
 		/// </summary>
-		Default = 0,
-		/// <summary>
-		/// {"ssn":["123456789"]}, will be masked only when array item count is 1
-		/// </summary>
-		SingleItemAsValue = 1,
-		/// <summary>
-		/// {"ssn":["123456789","101123456"]}, all items will be masked
-		/// </summary>
-		AnyItemsAsValues = 2,
+		ModeIfArray GlobalModeForArray { get; }
 	}
 }
