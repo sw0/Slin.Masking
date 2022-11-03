@@ -102,6 +102,61 @@ namespace Slin.Masking.Tests
 		}
 
 		#region -- try using StringBuilder. --
+		[Theory]
+		[InlineData("hello world!","hello world!")]
+		[InlineData("\"hello world!\"", "\"hello world!\"")]
+		public void JustStringTest(string input, string expected)
+		{
+			var profile = GetMaskingProfile();
+			ModifyProfile(profile);
+
+			var masker = new Masker(profile);
+			var jsonMasker = new JsonMasker(masker, profile);
+			var xmlMasker = new XmlMasker(masker, profile);
+			jsonMasker.SetXmlMasker(xmlMasker);
+			xmlMasker.SetJsonMasker(jsonMasker);
+
+			var objMasker = new ObjectMasker(masker, profile);
+
+			{
+				var result = objMasker.MaskObject(input);
+
+				Assert.True(result == expected);
+			}
+			{
+				var sb = new StringBuilder();
+				objMasker.MaskObject(input, sb);
+
+				var result = sb.ToString();
+
+				Assert.True(result == expected);
+			}
+		}
+
+		[Theory]
+		[InlineData(true, "true")]
+		[InlineData(false, "false")]
+		[InlineData(6, "6")]
+		[InlineData(6.95, "6.95")]
+		[InlineData(DayOfWeek.Monday, "1")]
+		public void SimpleNonStringTest(object input, string expected)
+		{
+			var profile = GetMaskingProfile();
+			ModifyProfile(profile);
+
+			var masker = new Masker(profile);
+			var jsonMasker = new JsonMasker(masker, profile);
+			var xmlMasker = new XmlMasker(masker, profile);
+			jsonMasker.SetXmlMasker(xmlMasker);
+			xmlMasker.SetJsonMasker(jsonMasker);
+
+			var objMasker = new ObjectMasker(masker, profile);
+
+			var sb = new StringBuilder();
+			objMasker.MaskObject(input, sb);
+
+			Assert.Equal(expected, sb.ToString());
+		}
 
 		[Theory]
 		[ClassData(typeof(JsonMaskerTestRows))]

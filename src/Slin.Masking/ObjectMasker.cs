@@ -76,7 +76,8 @@ namespace Slin.Masking
 
 		/// <summary>
 		/// MaskObject and append the masked reuslt to builder.
-		/// NOTE: if value is XElement or JsonNode, the original instance will be masked if masking happened.
+		/// NOTE: if value is XElement or JsonNode, the original instance will be masked if masking happened. 
+		/// If it's a string but not a valid JSON,XML, do nothing and direct return original value.
 		/// </summary>
 		/// <param name="value"></param>
 		/// <param name="builder"></param>
@@ -103,16 +104,26 @@ namespace Slin.Masking
 			{
 				if (_jMasker.TryParse(str, out var ele2))
 				{
+					//this is what we expected path [1.1]
 					_jMasker.MaskObject(ele2, builder);
 				}
 				else if (_xMasker.TryParse(str, out var parsedNode))
 				{
+					//this is what we expected path [1.2]
 					var result = _xMasker.MaskXmlElementString(parsedNode);
 					builder.Append(result);
+				}
+				else
+				{
+					//actually, I think this is not expected.
+					//this is special processing, different with other simple types, like boolean, Enum, etc
+					//todo return str or use _jMasker.MaskObject(value, builder) ?
+					builder.Append(str); //keep it unchanged
 				}
 			}
 			else
 			{
+				//ACTUALLY, this this is the case that we expected. [1.0]
 				_jMasker.MaskObject(value, builder);
 			}
 		}
@@ -121,7 +132,7 @@ namespace Slin.Masking
 		/// MaskObject and append the masked reuslt to builder.
 		/// NOTE: if value is XElement or JsonNode, the original instance will be masked if masking happened.
 		/// </summary>
-		/// <param name="value"></param>
+		/// <param name="value">expecting a object or string of Json,Xml</param>
 		/// <returns></returns>
 		public string MaskObject(object value)
 		{

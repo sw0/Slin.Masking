@@ -183,13 +183,13 @@ namespace Slin.Masking
 
 						if (!string.IsNullOrEmpty(propertyName) && _masker.TryMask(propertyName, value, out var masked))
 						{
-							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
+							builder.Append(string.Concat('"', masked, '"')); 
 						}
 						else if (_options.MaskUrlEnabled && _options.UrlKeys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
 						{
 							masked = _masker.MaskUrl(value, true);
 
-							builder.Append(string.Concat("\"", masked, "\"")); //todo quote
+							builder.Append(string.Concat('"', masked, '"'));
 						}
 						else if (propertyName != null && value != null && SerializedMaskAttempt(propertyName, value, builder))
 						{
@@ -197,7 +197,7 @@ namespace Slin.Masking
 						}
 						else
 						{
-							builder.Append(string.Concat("\"", value, "\"")); //todo quote
+							builder.Append(string.Concat('"', value, '"')); //todo quote, escape value?
 						}
 					}
 					break;
@@ -255,9 +255,9 @@ namespace Slin.Masking
 					{
 						var sb = new StringBuilder();
 						MaskJsonElement(key, parsedNode.Value, sb);
-						builder.Append("\"");
+						builder.Append('"');
 						AppendStringEscape(builder, sb.ToString(), false, false);
-						builder.Append("\"");
+						builder.Append('"');
 					}
 
 					return true;
@@ -265,7 +265,6 @@ namespace Slin.Masking
 				else if (_options.MaskXmlSerializedEnabled && _xmlMasker != null && _xmlMasker.TryParse(value, out var element))
 				{
 					var masked = _xmlMasker.MaskXmlElementString(element);
-					//builder.Append('"').Append(masked).Append('"');
 
 					builder.Append('"');
 					AppendStringEscape(builder, masked, false, false);
