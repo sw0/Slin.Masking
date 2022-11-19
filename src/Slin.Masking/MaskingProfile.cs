@@ -29,7 +29,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// SerializedKeys with string value value will be tried deserialized and get masked if <see cref="MaskJsonSerializedEnabled"/> or <see cref="MaskXmlSerializedEnabled"/>(Not implemented yet) is true.
 		/// </summary>
-		public List<string> SerializedKeys { get; set; }
+		public List<string> SerializedKeys { get; set; } = new List<string>();
 
 		/// <summary>
 		/// default: true. When true, SerializedKeys
@@ -64,7 +64,7 @@ namespace Slin.Masking
 
 		/// <inheritdoc/>
 		public bool MaskNestedKvpEnabled { get; set; } = false;
-		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
+		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; } = new List<KeyKeyValueKey>(KeyKeyValueKey.DefaultKeyKeyValueKeys);
 		/// <summary>
 		/// Default: 3. 
 		/// If value.Length < N, it mask engine will bypass it.
@@ -160,6 +160,9 @@ namespace Slin.Masking
 		/// <exception cref="Exception"></exception>
 		public void Normalize()
 		{
+			if (SerializedKeys == null) SerializedKeys = new List<string>();
+			if (KeyKeyValueKeys == null) KeyKeyValueKeys = new List<KeyKeyValueKey>(KeyKeyValueKey.DefaultKeyKeyValueKeys);
+
 			foreach (var item in NamedFormatters)
 			{
 				//if (string.IsNullOrEmpty(item.Value.Name)) 

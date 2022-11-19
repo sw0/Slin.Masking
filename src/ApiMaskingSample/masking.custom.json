@@ -2,6 +2,15 @@
   "masking": {
     "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" ],
     "SerializedKeys": [ "Body", "RequestBody", "ResponseBody", "reserialize" ],
+    "UrlMaskingPatterns": [ //IgnoreCase: default true
+      {
+        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
+        "IgnoreCase": true
+      },
+      {
+        "Pattern": "pan/(?<pan>\\d{15,16})"
+      }
+    ],
     "NamedFormatters": {
       "PAN14": {
         "ValuePattern": "^\\d{14}$",

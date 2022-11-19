@@ -6,6 +6,11 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+	  <None Remove="masking.template_consice.json" />
+	  <None Remove="masking.template_full.json" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 	</ItemGroup>
 
@@ -13,6 +18,16 @@
 		<Content Include="masking.template.json">
 			<pack>true</pack>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Include="masking.template_consice.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+		</Content>
+		<Content Include="masking.template_full.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		  <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+		  <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
 		</Content>
 		<Content Include="README.md">
 			<pack>true</pack>

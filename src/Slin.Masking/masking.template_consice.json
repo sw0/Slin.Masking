@@ -1,0 +1,43 @@
+{
+	//DESCRIPTION:
+	//  this is the simplest way of setting masking rules, you need to set format, no named formatters set here in this template.
+	//  default options will be applied. For more details, please check masking.template_full.json.
+
+	"Masking": {
+		"UrlKeys": [ "requestUrl", "query" ], //for advance usage with regular expression, please check option 'UrlMaskingPatterns'
+		"SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
+		"Rules": {
+			//NOTE: rule key by default is case-insensitive, so does name of formatter. 
+			//It's controlled by property:IgnoreKeyCase, default is true
+			"authorization": {
+				"KeyName": "^authorization|access_token|accesstoken|code$",
+				"IgnoreKeyCase": true,
+				"Formatters": [
+					{
+						"Format": "L9*4R6",
+						"ValuePattern": ".{24,}"
+					},
+					{
+						"Format": "L3*4R3",
+						"ValuePattern": ".{10,24}"
+					}
+				]
+			},
+			"Password": { "Formatters": [ { "Format": "*" } ] },
+			"DOB": { "Formatters": [ { "Format": "REDACTED" } ] },
+			"SSN": { "Formatters": [ { "Format": "*" } ] },
+			"cvv": { "Formatters": [ { "Format": "*" } ] },
+			"Pan": {
+				"KeyName": "^pan|PersonalAccountNumber|PrimaryAccountNumber$",
+				//IgnoreKeyCase is working with KeyName
+				"IgnoreKeyCase": true,
+				"Formatters": [ { "Format": "L4R4" } ]
+			},
+			"Balance": { "Formatters": [ { "Format": "null" } ] },
+			"FirstName": { "Formatters": [ { "Format": "L2*" } ] },
+			"LastName": { "Formatters": [ { "Format": "L2*" } ] },
+			"Email": { "Formatters": [ { "Format": "L2@" } ] },
+			"PhoneNumber": { "Formatters": [ { "Format": "L3R4" } ] }
+		}
+	}
+}

@@ -23,6 +23,14 @@
 			<Pack>true</Pack>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</Content>
+
+		<Content Include="..\Slin.Masking\masking.template_consice.json" Link="masking.template_consice.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+
+		<Content Include="..\Slin.Masking\masking.template_full.json" Link="masking.template_full.json">
+		  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
 		<Content Include="..\Slin.Masking\README.md" Link="README.md">
 			<Pack>true</Pack>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

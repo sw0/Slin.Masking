@@ -26,7 +26,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// SerializedKeys with string value value will be tried deserialized and get masked if <see cref="MaskJsonSerializedEnabled"/> or <see cref="MaskXmlSerializedEnabled"/> is true.
 		/// </summary>
-		public List<string> SerializedKeys { get; set; }
+		public List<string> SerializedKeys { get; set; } = new List<string>();
 
 		/// <summary>
 		/// default: true. It works with <see cref="SerializedKeys"/>, <see cref="JsonMinLength"/>.
@@ -67,7 +67,7 @@ namespace Slin.Masking
 		/// <summary>
 		/// if <see cref="MaskNestedKvpEnabled"/> is enabled, and <see cref="KeyKeyValueKeys"/> is null, it will use Key,Value and key,value.
 		/// </summary>
-		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; }
+		public List<KeyKeyValueKey> KeyKeyValueKeys { get; set; } = new List<KeyKeyValueKey>(KeyKeyValueKey.DefaultKeyKeyValueKeys);
 
 		/// <summary>
 		/// Default: 3. 
@@ -106,7 +106,7 @@ namespace Slin.Masking
 		/// </summary>
 		public ModeIfArray GlobalModeForArray { get; set; }
 
-		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; }
+		public List<UrlMaskingPattern> UrlMaskingPatterns { get; set; } = new List<UrlMaskingPattern>();
 
 	}
 }

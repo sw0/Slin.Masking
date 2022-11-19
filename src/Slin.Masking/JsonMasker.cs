@@ -183,7 +183,7 @@ namespace Slin.Masking
 
 						if (!string.IsNullOrEmpty(propertyName) && _masker.TryMask(propertyName, value, out var masked))
 						{
-							builder.Append(string.Concat('"', masked, '"')); 
+							builder.Append(string.Concat('"', masked, '"'));
 						}
 						else if (_options.MaskUrlEnabled && _options.UrlKeys.Contains(propertyName, StringComparer.OrdinalIgnoreCase))
 						{
@@ -241,7 +241,8 @@ namespace Slin.Masking
 
 		private bool SerializedMaskAttempt(string key, string value, StringBuilder builder)
 		{
-			if (!_options.MaskJsonSerializedEnabled || !_options.SerializedKeys.Contains(key, StringComparer.OrdinalIgnoreCase)) return false;
+			if (!_options.MaskJsonSerializedEnabled || _options.SerializedKeys == null 
+				|| !_options.SerializedKeys.Contains(key, StringComparer.OrdinalIgnoreCase)) return false;
 
 			try
 			{
@@ -289,7 +290,7 @@ namespace Slin.Masking
 
 			int flag = 0;
 			//int count = ele.EnumerateObject().Count();
-			foreach (var kv in _options.KeyKeyValueKeys)
+			foreach (var kv in _options.KeyKeyValueKeys ?? KeyKeyValueKey.DefaultKeyKeyValueKeys)
 			{
 				keyKey = kv.KeyKeyName;
 				valKey = kv.ValueKeyName;

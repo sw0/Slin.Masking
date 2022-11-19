@@ -29,33 +29,70 @@ namespace Slin.Masking.Tests
 		{ }
 
 
-		//[Theory]
-		////[MemberData(nameof(DummyDataRows))]
-		//[ClassData(typeof(DummyDataTestRows))]
-		//public void MaskDummyDataUserTest(string[] keys, string expected)
-		//{
-		//	var profile = GetMaskingProfile();
+		[Fact]
+		public void CodingProfileObjectMaskerTest()
+		{
+			var data = CreateLogEntry().Picks(Keys.data, Keys.requestUrl, Keys.reserialize);
 
-		//	ModifyProfile(profile);
+			var profile = new MaskingProfile();
+			{
+				//no rules set, no masking would take place
 
-		//	var masker = new Masker(profile);
-		//	var objectMasker = new ObjectMasker(masker, profile);
+				var masker = new Masker(profile);
+				var objectMasker = new ObjectMasker(masker, profile);
 
-		//	var dummyData = CreateLogEntry();
+				var actual = objectMasker.MaskObject(data);
 
-		//	var data = dummyData.Picks(keys);
+				Assert.True(actual != null);
+				Assert.True(actual?.Contains('*') == false);
+			}
 
-		//	var actual = objectMasker.MaskObject(data);
+			{
+				//rules set, masking would take place, but:
+				//  serialized field would not be masked, as it's not set in option "SerializedKeys".
+				//  requestUrl would not be masked, as it is not configured in option "UrlKeys".
+				profile.Rules = new Dictionary<string, MaskRuleDefinition> {
+					{"ssn", new MaskRuleDefinition("ssn","*")},
+					{"pan", new MaskRuleDefinition(){ Formatters=new List<ValueFormatterDefinition>{ new ValueFormatterDefinition("L4R4")} } }
+				};
 
-		//	Assert.True(actual != null);
+				var masker = new Masker(profile);
+				var objectMasker = new ObjectMasker(masker, profile);
 
-		//	File.AppendAllText("c:\\work\\a.log", String.Join(',', keys) + ":\r\n");
-		//	File.AppendAllText("c:\\work\\a.log", actual);
+				var actual = objectMasker.MaskObject(data);
 
-		//	Assert.Equal(expected, actual);
+				Assert.True(actual != null);
+				Assert.True(actual?.Contains('*'));
+			}
 
-		//	WriteLine($"test on data with keys '{string.Join(',', keys)}' good");
-		//}
+			{
+				//rules set, UrlKeys set, masking would take place. But:
+				//  serialized field would not be masked, as it's not set in option "SerializedKeys".
+				profile.MaskUrlEnabled = true;
+				profile.UrlKeys.Add(Keys.requestUrl.ToLower());
+
+				var masker = new Masker(profile);
+				var objectMasker = new ObjectMasker(masker, profile);
+
+				var actual = objectMasker.MaskObject(data);
+
+				Assert.True(actual != null);
+				Assert.True(actual?.Contains('*'));
+			}
+
+			{
+				//rules set, UrlKeys set, serialized field specified, masking would take place.
+				profile.SerializedKeys.Add(Keys.reserialize);
+
+				var masker = new Masker(profile);
+				var objectMasker = new ObjectMasker(masker, profile);
+
+				var actual = objectMasker.MaskObject(data);
+
+				Assert.True(actual != null);
+				Assert.True(actual?.Contains('*'));
+			}
+		}
 
 		[Fact]
 		public void MaskDummyDataTest()
@@ -103,7 +140,7 @@ namespace Slin.Masking.Tests
 
 		#region -- try using StringBuilder. --
 		[Theory]
-		[InlineData("hello world!","hello world!")]
+		[InlineData("hello world!", "hello world!")]
 		[InlineData("\"hello world!\"", "\"hello world!\"")]
 		public void JustStringTest(string input, string expected)
 		{

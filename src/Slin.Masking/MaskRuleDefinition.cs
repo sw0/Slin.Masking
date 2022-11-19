@@ -29,5 +29,16 @@ namespace Slin.Masking
 
 		//public ModeIfArray ModeIfArray { get; set; } = ModeIfArray.Default;
 
+		public MaskRuleDefinition() { }
+
+		//todo make it public?
+		internal MaskRuleDefinition(string keyName, string maskFormat)
+		{
+			KeyName = keyName;
+			Formatters = new List<ValueFormatterDefinition>()
+			{
+				new ValueFormatterDefinition(maskFormat)
+			};
+		}
 	}
 }

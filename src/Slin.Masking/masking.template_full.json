@@ -1,0 +1,119 @@
+{
+	//Tempalte Description:
+	//  This is full template, with options, named formatters and rules defined.
+	//  Options would provide advanced settings and features.
+
+	"Masking": {
+		"Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
+
+		//JSON Related
+		"MaskUrlEnabled": true, //default: false, work with UrlKeys
+		"MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
+		"MaskJsonNumberEnabled": true, //this works only in JSON
+		"JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make XML or URL not been escaped.
+		"JsonAllowedUnicodeRanges": [], //i.e. [ "CjkCompatibility", "CjkCompatibilityForms", "CjkCompatibilityIdeographs", "CjkRadicalsSupplement", "CjkStrokes", "CjkUnifiedIdeographs", "CjkUnifiedIdeographsExtensionA", "CjkSymbolsandPunctuation", "HalfwidthandFullwidthForms" ],
+		"MaskJsonSerializedParsedAsNode": true, //default: true
+		"GlobalModeForArray": 1, //0:none,1:single,2:all
+
+		//XML related
+		"MaskXmlSerializedEnabled": true, //default: true
+		"MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
+		"MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
+		"MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
+
+		//Common part
+		"KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
+			{
+				"KeyKeyName": "Key",
+				"ValueKeyName": "Value"
+			},
+			{
+				"KeyKeyName": "key",
+				"ValueKeyName": "value"
+			}
+		],
+		"ValueMinLength": 3, //if key matched, but value's length <=3, it will skip masking.
+		"XmlMinLength": 15, //system setting, usually no need to set. it bypasses deserializing if length < N
+		"JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
+		"SerializedKeysCaseSensitive": false,
+		//UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
+		"UrlKeys": [ "requestUrl", "query" ],
+		"SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
+		"UrlMaskingPatterns": [ //IgnoreCase: default true
+			{
+				"Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
+				"IgnoreCase": true
+			},
+			{
+				"Pattern": "pan/(?<pan>\\d{15,16})"
+			}
+		],
+
+		//MASKING SETTINGS
+		"NamedFormatters": {
+			//NOTE: definition names here are case-insensitive.
+			//For a given Name(unique and ignore case), the formatter contains: 
+			//  valid Format, 
+			//  optional ValuePattern and IgnoreCase for value pattern. ValuePattern can be regular expression(simple regex usage).
+			//  default true of Enabled.
+			//  Enabled: default true. BUT no need to set it to False here.
+			"default": { "Format": "*" },
+			"null": { "Format": "null" },
+			"empty": { "Format": "EMPTY" },
+			"redacted": { "Format": "REDACTED" },
+			"credential_long": {
+				"Format": "L9*4R6",
+				"ValuePattern": ".{24,}"
+			},
+			"credential_short": {
+				"Format": "L3*4R3",
+				"ValuePattern": ".{10,24}"
+			},
+			"password": { "Format": "*6" },
+			"dob": { "Format": "REDACTED" },
+			"name": { "Format": "L2*" },
+			"ssn": { "Format": "*" },
+			"phone": { "Format": "L3R4" },
+			"email": {
+				"Format": "L3*@",
+				"Description": "email is special, shawn@a.cn will be masked as 'sha**@a.cn'"
+			},
+			"pan": {
+				"ValuePattern": "^\\d{15,16}$",
+				"Format": "L4*R4",
+				//IgnoreCase is working with ValuePattern.
+				"IgnoreCase": false,
+				"Enabled": true //default true
+			},
+			"cvv": { "Format": "*" },
+			"Remove": { "RemoveNode": true } //todo not supported yet, do we need it?
+		},
+		"Rules": {
+			//NOTE: rule key by default is case-insensitive, so does name of formatter. 
+			//It's controlled by property:IgnoreKeyCase, default is true
+			"authorization": {
+				"KeyName": "^authorization|access_token|accesstoken|code$",
+				"IgnoreKeyCase": true,
+				"Formatters": [
+					{ "Name": "credential_long" },
+					{ "Name": "credential_short" }
+				]
+			},
+			"SSN": { "Formatters": [ { "Name": "SSN" } ] },
+			"DOB": { "Formatters": [ { "Name": "dob" } ] },
+			"Pan": {
+				"KeyName": "^pan|PersonalAccountNumber|PrimaryAccountNumber$",
+				//IgnoreKeyCase is working with KeyName
+				"IgnoreKeyCase": true,
+				"Formatters": [ { "Name": "pan" } ]
+			},
+			"cvv": { "Formatters": [ { "Name": "cvv" } ] },
+			"Balance": { "Formatters": [ { "Format": "null" } ] },
+			"FirstName": { "Formatters": [ { "Name": "Name" } ] },
+			"LastName": { "Formatters": [ { "Name": "Name" } ] },
+			"Email": { "Formatters": [ { "Name": "email" } ] },
+			"Password": { "Formatters": [ { "Format": "*" } ] },
+			"PhoneNumber": { "Formatters": [ { "Name": "phone" } ] }
+		}
+	}
+}

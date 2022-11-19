@@ -9,10 +9,16 @@
 		public string Name { get; set; }
 
 		public string Format { get; set; }
-
+		/// <summary>
+		/// value pattern is a string, can be regular expression. Default is empty string.
+		/// This is adavnce feature, and be used to check the value matched or not, masking would be skipped if value is not matched. It has a bit performance influence.
+		/// </summary>
+		/// <example>
+		/// \d{16} can be used to check it's an 16 digits or not, for card number validation.
+		/// </example>
 		public string ValuePattern { get; set; } = "";
 		/// <summary>
-		/// indicates whether valuepattern ignores case or not, so does if it's regular expression. 
+		/// indicates whether <see cref="ValuePattern"/> ignores case or not, so does if it's regular expression. 
 		/// default: false
 		/// </summary>
 		public bool IgnoreCase { get; set; } = false;
@@ -23,12 +29,12 @@
 
 		public ValueFormatterDefinition() { }
 
-		public ValueFormatterDefinition(string format, bool ignoreCase = false)
+		public ValueFormatterDefinition(string format)
 		{
 			Format = format;
-			IgnoreCase = ignoreCase;
 			Enabled = true;
 		}
+
 		public ValueFormatterDefinition(string format, string valuePattern, bool ignoreCase = false)
 		{
 			Format = format;
