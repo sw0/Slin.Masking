@@ -1,5 +1,7 @@
 ﻿{
   "masking": {
+    "MaskJsonNumberEnabled": true,
+    "MaskXmlSerializedEnabled": true,
     "UrlKeys": [ "requestUrl", "query", "kvpFIEld", "kvpfield", "formdata" ],
     "SerializedKeys": [ "Body", "RequestBody", "ResponseBody", "reserialize" ],
     "UrlMaskingPatterns": [ //IgnoreCase: default true
@@ -32,8 +34,7 @@
         ]
       },
       "dataInBytes": { "Formatters": [ { "name": "REDACTED" } ] }, //this works actually
-      "temperatureC": { "Formatters": [ { "Format": "null" } ] },
-      "temperaturef": { "Formatters": [ { "name": "null" } ] }
+      "matricula": { "Formatters": [ { "Format": "*" } ] }
     }
   }
 }

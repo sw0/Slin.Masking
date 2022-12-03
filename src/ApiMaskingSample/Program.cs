@@ -1,120 +1,90 @@
-
+using ApiMaskingSample.Swagger;
 using Microsoft.AspNetCore.HttpLogging;
 using NLog;
 using NLog.Web;
 using Slin.Masking;
 using Slin.Masking.NLog;
-using ApiMaskingSample;
 
 var logger = LogManager
-	.Setup(setupBuilder: (setupBuilder) => setupBuilder.UseMasking("masking.json"))
-	.GetCurrentClassLogger();
-
-LogManager.ConfigurationChanged += (object? sender, NLog.Config.LoggingConfigurationChangedEventArgs e) =>
-{
-	NLog.LogManager.Configuration.Reload();
-	NLog.LogManager.ReconfigExistingLoggers();
-};
+    .Setup(setupBuilder: (setupBuilder) => setupBuilder.UseMasking("masking.json"))//Masking: here is the magic, which inject the masking for NLog
+    .GetCurrentClassLogger();
 
 logger.Debug($"init main. Slin.Masking version: {typeof(Masker).Assembly.GetName().Version}, Slin.Masking.NLog version: {typeof(NLogExtensions).Assembly.GetName().Version}");
 
 try
 {
-	var builder = WebApplication.CreateBuilder(args);
+    var builder = WebApplication.CreateBuilder(args);
 
-	// Add services to the container.
-	builder.Configuration.AddJsonFile("masking.json")
-	.AddJsonFile("masking.custom.json", true);
-	
-	builder.Services.AddControllers();
-	// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-	builder.Services.AddEndpointsApiExplorer();
-	builder.Services.AddSwaggerGen();
-	//builder.Services.AddSingleton<IJsonMasker>(new LogMasker());
+    builder.Services.AddControllers();
+    // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen(options=>options.OperationFilter<RequestIdOperationFilter>());
 
-	builder.Services.AddHttpLogging(logging =>
-	{
-		logging.LoggingFields = HttpLoggingFields.RequestBody |
-		 HttpLoggingFields.RequestPath | HttpLoggingFields.RequestMethod |
-		 HttpLoggingFields.ResponseBody;
-		logging.RequestHeaders.Add("X-Response-Id");
-		logging.ResponseHeaders.Add("X-Response-Id");
-		logging.MediaTypeOptions.AddText("application/json");
-		logging.MediaTypeOptions.AddText("text/plain");
-		logging.RequestBodyLogLimit = 40960;
-		logging.ResponseBodyLogLimit = 40960;
-	});
-	builder.Services.AddSingleton<IMaskingProfile>(sp =>
-	{
-		var cfg = sp.GetRequiredService<IConfiguration>();
-		var profile = cfg.GetSection("masking").Get<MaskingProfile>();
-		return profile;
-	});
-	builder.Services.AddSingleton<IObjectMaskingOptions>(sp =>
-	{
-		return sp.GetRequiredService<IMaskingProfile>();
-	});
-	builder.Services.AddSingleton<IMaskingOptions>(sp =>
-	{
-		return sp.GetRequiredService<IMaskingProfile>();
-	});
-	builder.Services.AddSingleton<IMasker, Masker>();
-	builder.Services.AddSingleton<IObjectMasker, ObjectMasker>();
+    //traffic logging: injection
+    builder.Services.AddHttpLogging(logging =>
+    {
+        logging.LoggingFields = HttpLoggingFields.RequestBody |
+         HttpLoggingFields.RequestPath | HttpLoggingFields.RequestMethod |
+         HttpLoggingFields.ResponseBody;
+        logging.RequestHeaders.Add("X-Response-Id");
+        logging.ResponseHeaders.Add("X-Response-Id");
+        logging.MediaTypeOptions.AddText("application/json");
+        logging.MediaTypeOptions.AddText("text/plain");
+        logging.RequestBodyLogLimit = 40960;
+        logging.ResponseBodyLogLimit = 40960;
+    });
 
-	builder.Host
-	//.UseMaskableNLog(null);
-	.UseNLog();
+    //Masking: enable or disable masking is supported by "disabled" property in layout render "event-properties-masker"
+    builder.Host.UseNLog(); 
 
-	//var x = builder.Configuration.GetValue<DayOfWeek>("testEnum");  //tested, either int or string works
-	//var x2 = builder.Configuration.GetValue<DayOfWeek>("testEnumInt");
+    var app = builder.Build();
 
-	var app = builder.Build();
+    // Configure the HTTP request pipeline.
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
-	// Configure the HTTP request pipeline.
-	if (app.Environment.IsDevelopment())
-	{
-		app.UseSwagger();
-		app.UseSwaggerUI();
-	}
+    app.UseHttpsRedirection();
 
+    //just to ensure that X-Request-Id id set in this demo project. You can remove this from your project.
+    app.Use(async (context, next) =>
+    {
+        string key = "X-Request-ID";
+        string value = "";
+        if (context.Request.Headers.ContainsKey(key))
+        {
+            value = context.Request.Headers[key].ToString().Trim();
 
-	app.UseHttpsRedirection();
+            if (string.IsNullOrEmpty(value))
+            {
+                value = Guid.NewGuid().ToString();
+            }
+        }
+        else
+        {
+            context.Request.Headers.Add(key, value);
+        };
 
-	app.Use(async (context, next) =>
-	{
-		string key = "X-Request-ID";
-		string value = "";
-		if (context.Request.Headers.ContainsKey(key))
-		{
-			value = context.Request.Headers[key].ToString().Trim();
+        //MappedDiagnosticsLogicalContext.Set("correlcationId", value);
+        await next(context);
+    });
 
-			if (string.IsNullOrEmpty(value))
-			{
-				value = Guid.NewGuid().ToString();
-			}
-		};
+    app.UseHttpLogging();
 
-		MappedDiagnosticsLogicalContext.Set("correlcationId", value);
-		await next(context);
-	});
+    app.MapControllers();
 
-
-	app.UseHttpLogging();
-
-	app.UseAuthorization();
-
-	app.MapControllers();
-
-	app.Run();
+    app.Run();
 }
 catch (Exception exception)
 {
-	// NLog: catch setup errors
-	logger.Error(exception, "Stopped program because of exception");
-	throw;
+    // NLog: catch setup errors
+    logger.Error(exception, "Stopped program because of exception");
+    throw;
 }
 finally
 {
-	// Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
-	NLog.LogManager.Shutdown();
+    // Ensure to flush and stop internal timers/threads before application-exit (Avoid segmentation fault on Linux)
+    NLog.LogManager.Shutdown();
 }

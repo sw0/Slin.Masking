@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
+﻿using System.Globalization;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Unicode;
-using System.Threading.Tasks;
-using System.Web;
+using Slin.Masking;
 
 namespace Slin.Masking.Tests
 {
@@ -61,8 +55,10 @@ namespace Slin.Masking.Tests
 			public const string flatHeaders = nameof(flatHeaders);
 			public const string Authorization = nameof(Authorization);
 
+			//mix arbitrary data
+            public const string MixedDataArbitrary = nameof(MixedDataArbitrary);
 
-			public const string objectfield = nameof(objectfield);
+            public const string objectfield = nameof(objectfield);
 			public const string reserialize = nameof(reserialize);
 			public const string Body = nameof(Body);
 			public const string ResponseBody = nameof(ResponseBody);
@@ -130,7 +126,9 @@ namespace Slin.Masking.Tests
 			public static readonly string ResponseBody = @"{""ResponseBody"":""<SOAP-ENV:Envelope xmlns:SOAP-ENV=\""http://www.w3.org/2001/12/soap-envelope\"" SOAP-ENV:encodingStyle=\""http://www.w3.org/2001/12/soap-encoding\""><SOAP-ENV:Body xmlns:m=\""http://www.xyz.org/quotation\""><m:GetResponse><m:Body>{\""FirstName\"":\""Sh***\"",\""ssn\"":\""*********\""}</m:Body><m:SSN>*********</m:SSN><m:authorization>Bearer 12****uvwxyz</m:authorization><m:accessToken>Bearer 12****uvwxyz</m:accessToken><m:User><m:FirstName dOB=\""REDACTED\"">Sh***</m:FirstName><m:FirstName>Li*</m:FirstName><m:SSN>*********</m:SSN><m:DOB dob=\""REDACTED\"">REDACTED</m:DOB><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl><m:query>ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:query><m:Body>{\""FirstName\"":\""Shawn\"",\""ssn\"":\""123456789\""BAD</m:Body><m:kvplist dob=\""REDACTED\""><m:kvprow requestUrl=\""https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz\""><m:Key>SSN</m:Key><m:Value>*********</m:Value><m:Body dob=\""REDACTED\"">{\""FirstName\"":\""Sh***\"",\""ssn\"":\""*********\""}</m:Body></m:kvprow><m:kvprow dob=\""REDACTED\""><m:Key>DOB</m:Key><m:Value>REDACTED</m:Value></m:kvprow><m:kvprow Body=\""{&quot;ssn&quot;:&quot;*********&quot;,&quot;dob&quot;:&quot;REDACTED&quot;}\""><m:Key><m:DOB>REDACTED</m:DOB></m:Key><m:Value ssn=\""*********\""><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl></m:Value></m:kvprow><m:kvprow body=\""&lt;data&gt;&lt;ssn&gt;*********&lt;/ssn&gt;&lt;/data&gt;\""><m:Key>DOB</m:Key><m:Value ssn=\""*********\""><m:requestUrl>https://jd.com/firstname/sh***/lastname/li*?ssn=*********&amp;pan=1234********3456&amp;dob=REDACTED&amp;from=中国&amp;to=世界&amp;accesstoken=123456789****uvwxyz</m:requestUrl></m:Value></m:kvprow></m:kvplist></m:User></m:GetResponse></SOAP-ENV:Body></SOAP-ENV:Envelope>""}";
 
 
-			public static readonly string BodyOfJson = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrl.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
+			public static readonly string MixedDataArbitrary = JsonSerializer.Serialize(DummyData.CreateLogEntry().Picks(Keys.MixedDataArbitrary), MyJsonSerializerOptions);
+
+            public static readonly string BodyOfJson = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrl.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
 			public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrlEncoded.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
 			public static readonly string BodyOfXml = $"<data><ssn>{DummyData.SSN.Mask("*")}</ssn><Dob>{DummyData.DobStr.Mask("REDACTED")}</Dob><requestUrl>{requestUrlEncoded.Unpack(true)}</requestUrl></data>";
 			public static readonly string BodyOfXml4Embed = BodyOfXml.Replace("&amp;", "&amp;amp;").Replace("<", "&lt;").Replace(">", "&gt;");
@@ -139,7 +137,13 @@ namespace Slin.Masking.Tests
 
 		public static string Quotes(string str)
 		{
-			return string.Concat("\"", str, '"');
+			//return string.Concat("\"", str, '"');
+			var sb = new StringBuilder();
+			sb.Append('"');
+			AppendStringEscape(sb, str, false, false);
+			sb.Append('"');
+			var strValueMasked = sb.ToString();
+			return strValueMasked;
 		}
 		public static string CurlyBraces(string str)
 		{
@@ -149,7 +153,121 @@ namespace Slin.Masking.Tests
 		{
 			return string.Concat("[", str, "]");
 		}
-	}
+
+
+
+        /// <summary>
+        /// Checks input string if it needs JSON escaping, and makes necessary conversion
+        /// </summary>
+        /// <param name="destination">Destination Builder</param>
+        /// <param name="text">Input string</param>
+        /// <param name="escapeUnicode">Should non-ASCII characters be encoded</param>
+        /// <param name="escapeForwardSlash"></param>
+        /// <returns>JSON escaped string</returns>
+        internal static void AppendStringEscape(StringBuilder destination, string text, bool escapeUnicode, bool escapeForwardSlash)
+        {
+            if (string.IsNullOrEmpty(text))
+                return;
+
+            StringBuilder sb = null;
+
+            for (int i = 0; i < text.Length; ++i)
+            {
+                char ch = text[i];
+                if (!RequiresJsonEscape(ch, escapeUnicode, escapeForwardSlash))
+                {
+                    sb?.Append(ch);
+                    continue;
+                }
+                else if (sb is null)
+                {
+                    sb = destination;
+                    sb.Append(text, 0, i);
+                }
+
+                switch (ch)
+                {
+                    case '"':
+                        sb.Append("\\\"");
+                        break;
+
+                    case '\\':
+                        sb.Append("\\\\");
+                        break;
+
+                    case '\b':
+                        sb.Append("\\b");
+                        break;
+
+                    case '/':
+                        if (escapeForwardSlash)
+                        {
+                            sb.Append("\\/");
+                        }
+                        else
+                        {
+                            sb.Append(ch);
+                        }
+                        break;
+
+                    case '\r':
+                        sb.Append("\\r");
+                        break;
+
+                    case '\n':
+                        sb.Append("\\n");
+                        break;
+
+                    case '\f':
+                        sb.Append("\\f");
+                        break;
+
+                    case '\t':
+                        sb.Append("\\t");
+                        break;
+
+                    default:
+                        if (EscapeChar(ch, escapeUnicode))
+                        {
+                            sb.AppendFormat(CultureInfo.InvariantCulture, "\\u{0:x4}", (int)ch);
+                        }
+                        else
+                        {
+                            sb.Append(ch);
+                        }
+                        break;
+                }
+            }
+
+            if (sb is null)
+                destination.Append(text);   // Faster to make single Append
+        }
+
+        internal static bool RequiresJsonEscape(char ch, bool escapeUnicode, bool escapeForwardSlash)
+        {
+            if (!EscapeChar(ch, escapeUnicode))
+            {
+                switch (ch)
+                {
+                    case '/': return escapeForwardSlash;
+                    case '"':
+                    case '\\':
+                        return true;
+                    default:
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool EscapeChar(char ch, bool escapeUnicode)
+        {
+            if (ch < 32)
+                return true;
+            else
+                return escapeUnicode && ch > 127;
+        }
+    }
 
 
 	/// <summary>

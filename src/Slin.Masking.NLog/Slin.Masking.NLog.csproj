@@ -12,13 +12,12 @@
 		<PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
 		<PackageReference Include="NLog" Version="5.0.2" />
-		<PackageReference Include="Slin.Masking" Version="0.2.0" />
+		<PackageReference Include="Slin.Masking" Version="0.2.5" />
+		<!--<ProjectReference Include="..\Slin.Masking\Slin.Masking.csproj" />-->
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<!--<ProjectReference Include="..\Slin.Masking\Slin.Masking.csproj" />-->
-
 		<Content Include="..\Slin.Masking\masking.template.json" Link="masking.template.json">
 			<Pack>true</Pack>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

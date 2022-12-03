@@ -31,7 +31,6 @@ namespace Slin.Masking.Tests
 			var profile = CreateProvider().GetService<IOptions<MaskingProfile>>()!.Value;
 
 			profile.NamedFormatters.Clear();
-			profile.Normalize();
 
 			try { var masker = new Masker(profile); }
 			catch (Exception ex)
@@ -53,7 +52,6 @@ namespace Slin.Masking.Tests
 				 new ValueFormatterDefinition{Name=nameNotExists}
 			 }
 			});
-			profile.Normalize();
 
 			try { var masker = new Masker(profile); }
 			catch (Exception ex)

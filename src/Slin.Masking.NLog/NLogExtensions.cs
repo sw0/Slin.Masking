@@ -2,8 +2,6 @@
 using NLog;
 using NLog.Config;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Slin.Masking.NLog
 {
@@ -27,14 +25,10 @@ namespace Slin.Masking.NLog
 				var cfg = configBuilder.Build();
 
 				var profile = cfg.GetSection("masking").Get<MaskingProfile>();
-				profile.Normalize();
-
-				var masker = new Masker(profile);
 
 				setupBuilder.SetupExtensions(s =>
 				   s.RegisterSingletonService<IMaskingProfile>(profile)
-				   //.RegisterSingletonService<IMasker>(masker)
-				   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(masker, profile))
+				   .RegisterSingletonService<IObjectMasker>(new ObjectMasker(profile))
 				   .RegisterLayoutRenderer<EventPropertiesMaskerLayoutRenderer>("event-properties-masker")
 				);
 			}
@@ -53,8 +47,6 @@ namespace Slin.Masking.NLog
 		{
 			try
 			{
-				profile.Normalize();
-
 				var masker = new Masker(profile);
 
 				setupBuilder.SetupExtensions(s => s

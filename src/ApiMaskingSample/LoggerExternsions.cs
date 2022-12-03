@@ -38,5 +38,10 @@ namespace Microsoft.Extensions.Logging
         {
             logger.Log(LogLevel.Debug, eventId, logData, exception, _formatter);
         }
+
+        public static void LogTrace<TState>(this ILogger logger, TState logData, Exception exception = null, EventId eventId = default(EventId)) where TState : IEnumerable<KeyValuePair<string, object>>
+        {
+            logger.Log(LogLevel.Trace, eventId, logData, exception, _formatter);
+        }
     }
 }

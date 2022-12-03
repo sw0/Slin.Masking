@@ -1,6 +1,10 @@
 Release Notes
 
 ## Release Notes
+### v0.3.0
+- bug fixing: escape the string when the value is string while doing JSON serialization in `JsonMasker`.
+- Breaking changes: remove property from `IObjectMaskingOptions` and `IMaskingProfile`.
+
 ### v0.2.1, 0.2.2
 Ensure some properties of MaskingProfile to avoid null instance exception if user forgot to initialize them.
 

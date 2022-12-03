@@ -6,9 +6,9 @@
 
 		//void MaskObject(object value, StringBuilder builder);
 
-		/// <summary>
-		/// Indicates enabled or not. Just used as global setting. Not affecting ObjectMasker actually.
-		/// </summary>
-		bool Enabled { get; }
+		///// <summary>
+		///// Indicates enabled or not. Just used as global setting. Not affecting ObjectMasker actually.
+		///// </summary>
+		//bool Enabled { get; }
 	}
 }

@@ -197,9 +197,12 @@ namespace Slin.Masking
 						}
 						else
 						{
-							builder.Append(string.Concat('"', value, '"')); //todo quote, escape value?
-						}
-					}
+							//builder.Append(string.Concat('"', value, '"')); //todo quote, escape value?
+							builder.Append('"');
+							AppendStringEscape(builder, value, false, false);
+                            builder.Append('"');
+                        }
+                    }
 					break;
 				case JsonValueKind.Number:
 					{

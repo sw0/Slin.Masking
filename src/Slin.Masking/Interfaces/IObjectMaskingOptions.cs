@@ -4,8 +4,13 @@ namespace Slin.Masking
 {
 	public interface IObjectMaskingOptions
 	{
-		bool Enabled { get; }
+		/// <summary>
+		/// sometimes, we need to mask number in json, for example, balance of an banking account is sensitive.
+		/// </summary>
 		bool MaskJsonNumberEnabled { get; }
+		/// <summary>
+		/// if enabled, it will try to parse value as JSON for keys found in <see cref="SerializedKeys"/>. If parsed successfully, it will do the masking recursively for the parsed object. Working with <see cref="SerializedKeys"/>, <see cref="JsonMinLength"/>
+		/// </summary>
 		bool MaskJsonSerializedEnabled { get; }
 		/// <summary>
 		/// default: true. Indicates to make deserialized string as JSON and keep it as JSON or unchanged as string.
@@ -13,15 +18,24 @@ namespace Slin.Masking
 		/// </summary>
 		bool MaskJsonSerializedParsedAsNode { get; }
 
-		bool MaskUrlEnabled { get; }
-		bool MaskXmlSerializedEnabled { get; }
+        /// <summary>
+        /// default false. It works with <see cref="UrlKeys"/> and rules defined in <see cref="UrlMaskingPattern"/>.
+        /// </summary>
+        bool MaskUrlEnabled { get; }
+        /// <summary>
+        /// default: false. It works with <see cref="SerializedKeys"/>, <see cref="XmlMinLength"/>.
+        /// </summary>
+        bool MaskXmlSerializedEnabled { get; }
 		bool MaskXmlSerializedOnXmlAttributeEnabled { get; }
 		bool MaskJsonSerializedOnXmlAttributeEnabled { get; }
 		bool MaskNestedKvpEnabled { get; }
 		List<KeyKeyValueKey> KeyKeyValueKeys { get; }
 		List<string> SerializedKeys { get; }
 		bool SerializedKeysCaseSensitive { get; }
-		List<string> UrlKeys { get; }
+        /// <summary>
+        /// specify which keys will treated as URL or Query(kvp). Will be used when <see cref="MaskUrlEnabled"/> is true.
+        /// </summary>
+        List<string> UrlKeys { get; }
 
 		List<UrlMaskingPattern> UrlMaskingPatterns { get; }
 		/// <summary>

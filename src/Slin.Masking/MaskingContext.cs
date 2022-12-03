@@ -43,6 +43,8 @@ namespace Slin.Masking
 		{
 			if (options == null) throw new ArgumentNullException("options");
 
+			options.Normalize();
+
 			Options = options;
 
 			//todo print configurations

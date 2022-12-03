@@ -41,10 +41,10 @@ namespace Slin.Masking
 		/// </summary>
 		protected bool MaskNestedKvpEnabled => _options.MaskNestedKvpEnabled;
 
-		/// <summary>
-		/// Enabled is exposed to caller. It has no internal logic check on it inside <see cref="ObjectMasker"/>.
-		/// </summary>
-		public bool Enabled => _options.Enabled;
+		///// <summary>
+		///// Enabled is exposed to caller. It has no internal logic check on it inside <see cref="ObjectMasker"/>.
+		///// </summary>
+		//public bool Enabled => _options.Enabled;
 
 		public ObjectMaskerV1(IMasker masker, IObjectMaskingOptions options)
 		{

@@ -6,46 +6,49 @@ using System.Text.Json.Serialization;
 
 namespace ApiMaskingSample
 {
-	public class JsonConverter2 : NLog.IJsonConverter
-	{
-		public bool SerializeObject(object value, StringBuilder builder)
-		{
-			if (value == null) return true;
+	///// <summary>
+	///// not in use for now....
+	///// </summary>
+	//public class JsonConverter2 : NLog.IJsonConverter
+	//{
+	//	public bool SerializeObject(object value, StringBuilder builder)
+	//	{
+	//		if (value == null) return true;
 
-			var json = System.Text.Json.JsonSerializer.SerializeToNode(value);
+	//		var json = System.Text.Json.JsonSerializer.SerializeToNode(value);
 
-			MaskNode(json!);
+	//		MaskNode(json!);
 
-			var jsonString = json!.ToJsonString();
-			builder.Append(jsonString);
-			return true;
-		}
+	//		var jsonString = json!.ToJsonString();
+	//		builder.Append(jsonString);
+	//		return true;
+	//	}
 
-		void MaskNode(JsonNode node)
-		{
-			if (node == null) return;
+	//	void MaskNode(JsonNode node)
+	//	{
+	//		if (node == null) return;
 
-			if (node is JsonArray array)
-			{
-				foreach (var item in array)
-				{
-					if (item == null) continue;
-					MaskNode(item);
-				}
-			}
-			else if (node is JsonObject obj)
-			{
-				foreach (var item in obj)
-				{
-					if (item.Value == null) continue;
-					MaskNode(item.Value);
-				}
-			}
-			else
-			{
+	//		if (node is JsonArray array)
+	//		{
+	//			foreach (var item in array)
+	//			{
+	//				if (item == null) continue;
+	//				MaskNode(item);
+	//			}
+	//		}
+	//		else if (node is JsonObject obj)
+	//		{
+	//			foreach (var item in obj)
+	//			{
+	//				if (item.Value == null) continue;
+	//				MaskNode(item.Value);
+	//			}
+	//		}
+	//		else
+	//		{
 
-			}
-		}
-	}
+	//		}
+	//	}
+	//}
 
 }

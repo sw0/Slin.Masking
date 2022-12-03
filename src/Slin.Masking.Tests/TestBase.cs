@@ -24,8 +24,7 @@ namespace Slin.Masking.Tests
 			var configuration = configBuilder.Build();
 
 			services.AddSingleton<IConfiguration>(configuration);
-			services.Configure<MaskingProfile>(configuration.GetSection("Masking"))
-				.PostConfigure<MaskingProfile>((options) => options.Normalize());
+			services.Configure<MaskingProfile>(configuration.GetSection("Masking"));
 
 			services.AddSingleton<IMaskingProfile>(provider =>
 			{

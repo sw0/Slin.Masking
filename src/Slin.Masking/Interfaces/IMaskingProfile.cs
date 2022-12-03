@@ -2,6 +2,7 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Slin.Masking.Tests")]
+[assembly: InternalsVisibleTo("ApiMaskingSample")]
 
 namespace Slin.Masking
 {
