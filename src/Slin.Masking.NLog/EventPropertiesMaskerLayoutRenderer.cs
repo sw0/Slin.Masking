@@ -1,15 +1,10 @@
-﻿using NLog.Config;
+﻿using NLog;
+using NLog.Config;
 using NLog.LayoutRenderers;
-using NLog;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
-using System.Text.Encodings.Web;
 using System;
-using NLog.Layouts;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace Slin.Masking.NLog
 {
@@ -106,7 +101,7 @@ namespace Slin.Masking.NLog
 			}
 			else if (Mode == "url")
 			{
-				if (string.IsNullOrEmpty(Item)) return;//todo warning
+				if (string.IsNullOrEmpty(Item)) return;
 
 				var value = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
 
@@ -121,13 +116,11 @@ namespace Slin.Masking.NLog
 				else
 				{
 					_objectMasker.MaskObject(value, builder);
-					//var masked = _objectMasker.MaskObject(value);
-					//builder.Append(string.Concat("\"", masked, "\""));
 				}
 			}
 			else if (Mode == "reserialize")
 			{
-				if (string.IsNullOrEmpty(Item)) return;//todo warning
+				if (string.IsNullOrEmpty(Item)) return;
 
 				var value = logEvent.Properties.FirstOrDefault(kvp => Item.Equals(kvp.Key?.ToString(), StringComparison.OrdinalIgnoreCase)).Value;
 
@@ -135,8 +128,6 @@ namespace Slin.Masking.NLog
 					return;
 
 				_objectMasker.MaskObject(value, builder);
-				//var masked = _objectMasker.MaskObject(value);
-				//builder.Append(masked);
 			}
 			else
 			{
@@ -159,8 +150,6 @@ namespace Slin.Masking.NLog
 				if (data != null)
 				{
 					_objectMasker.MaskObject(data, builder);
-					//var masked = _objectMasker.MaskObject(data);
-					//builder.Append(masked);
 				}
 			}
 		}

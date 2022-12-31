@@ -20,11 +20,12 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			v0.2.5.1: fix typo
 			v0.2.1~0.2.5: refer to latest slin.masking, a bug fixing.
 			v0.2.0: refer to latest slin.masking, improve performance and bug fixing.
 			v0.1.32: refer to latest slin.masking; For EventPropertiesMaskerLayoutRenderer, make Item case-insensitive, make Mode as default parameter and introduce new property named ExcludeProperties, it can be set like 'propkey1,propkey2'.
 		</PackageReleaseNotes>
 		<copyright>Copyright 2019-2026</copyright>
-		<PackageTags>MaskEngine, Masking, Mask, JsonMasker</PackageTags>
+		<PackageTags>MaskEngine, Masking, Mask, JsonMasker, XmlMasker, UrlMasker, KeyedMasker</PackageTags>
 	</PropertyGroup>
 </Project>

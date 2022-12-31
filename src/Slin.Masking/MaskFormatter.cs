@@ -83,7 +83,7 @@ namespace Slin.Masking
 				{
 					return HandleOtherFormats(format, arg);
 				}
-				Contract.Assert(parameters.IsValid, "paramters should be valid");
+				Contract.Assert(parameters.IsValid, "parameters should be valid");
 
 				var chars = new char[parameters.ActualLength];//(new string(parameters.Char, length)).AsSpan();
 				for (var i = 0; i < parameters.ActualLength; i++) chars[i] = parameters.Char;

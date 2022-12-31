@@ -2,6 +2,9 @@
 {
 	internal interface IValueFormatter
 	{
+		/// <summary>
+		/// indicates the which NamedFormatter would be used.
+		/// </summary>
 		string Name { get; set; }
 
 		string Format { get; set; }
@@ -10,9 +13,11 @@
 		/// </summary>
 		string ValuePattern { get; set; }
 
+		/// <summary>
+		/// indicates if ignore case when compare <see cref="ValuePattern"/> with the value.
+		/// </summary>
 		bool IgnoreCase { get; set; }
 
-		//string CacheKey { get; }
 
 		bool TryFormat(string value, out string result);
 

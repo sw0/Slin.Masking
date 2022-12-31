@@ -1,17 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
-using System.Text.Encodings.Web;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Unicode;
 using System.Xml.Linq;
-using System.Diagnostics.Contracts;
-using System.Text;
-using System.Reflection;
 
 namespace Slin.Masking
 {
@@ -161,7 +153,7 @@ namespace Slin.Masking
 
         #region -- URL --
 
-        public string MaskUrl(string url, bool maskParamters = true, params UrlMaskingPattern[] overwrittenPatterns) => _masker.MaskUrl(url, maskParamters, overwrittenPatterns);
+        public string MaskUrl(string url, bool maskParameters = true, params UrlMaskingPattern[] overwrittenPatterns) => _masker.MaskUrl(url, maskParameters, overwrittenPatterns);
 
         #endregion
 

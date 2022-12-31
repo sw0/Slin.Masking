@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
 using System.Globalization;
 using System.Linq;
-using System.Reflection;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 
 namespace Slin.Masking
 {
@@ -28,23 +24,16 @@ namespace Slin.Masking
 			_masker = masker;
 			_options = options;
 
-
 			var jsonOptions = new JsonSerializerOptions()
 			{
-				//todo from configuration
-				Encoder = JavaScriptEncoder.Create(options.GetTextEncoderSettings()),
+				//read encoder settings from configuration
+				Encoder = JavaScriptEncoder.Create(_options.GetTextEncoderSettings()),
 				MaxDepth = _options.JsonMaxDepth
 			};
 			_jsonOptions = jsonOptions;
 		}
 
 		public void SetXmlMasker(IXmlMasker xmlMasker) => _xmlMasker = xmlMasker;
-
-		public string MaskJsonObjectString(JsonNode node)
-		{
-			//todo ...
-			throw new NotImplementedException("should not use, I probably want to remove this method");
-		}
 
 		public void MaskObject(object source, StringBuilder builder)
 		{
@@ -84,7 +73,7 @@ namespace Slin.Masking
 
 		private void MaskJsonElement(string propertyName, JsonElement element, StringBuilder builder)
 		{
-			//depth check?...
+			//todo depth check?...
 
 			bool previousAppeared = false;
 			switch (element.ValueKind)

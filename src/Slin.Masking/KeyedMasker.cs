@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 
 namespace Slin.Masking
 {
@@ -12,15 +10,7 @@ namespace Slin.Masking
 		public const string PatternCaseSensitiveSuffix = "(?#casesensitive)";
 	}
 
-	//public interface IKeyedRule
-	//{
-	//	string KeyName { get; }
-
-	//	ModeIfArray ModeIfArray { get; }
-
-	//}
-
-	internal interface IKeyedMasker //: IKeyedRule
+	internal interface IKeyedMasker
 	{
 		string KeyName { get; }
 
@@ -71,7 +61,6 @@ namespace Slin.Masking
 			KeyNameLenLimitToCache = Math.Min(_context.Options.KeyNameLenLimitToCache, source.KeyNameLenLimitToCache);
 		}
 
-		//todo this should not be
 		public bool KeyNamePatterned => !string.IsNullOrEmpty(KeyName) && _context.IsLikePattern(KeyName);
 
 		public string Mask(string value)

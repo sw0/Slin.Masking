@@ -13,6 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			0.2.5.1: fix typo
 			0.2.5: bug fixing in JsonMasker; breaking changes: remove Enabled from IMaskingProfile, IObjectMaskingOptions
 			0.2.2: enhancement to allow MaskProfile.KeyKeyValueKeys,SerializedKeys nullable
 			0.2.1: not processing invalid JSON,XML in ObjectMasker. Actually it's a invalid case.
@@ -28,6 +29,6 @@
 			- Special format: null, REDACTED, REPLACEMENT=xxx
 		</PackageReleaseNotes>
 		<copyright>Copyright 2022</copyright>
-		<PackageTags>MaskEngine, Masking, Mask, JsonMasker</PackageTags>
+		<PackageTags>MaskEngine, Masking, Mask, JsonMasker, XmlMasker, UrlMasker, KeyedMasker</PackageTags>
 	</PropertyGroup>
 </Project>

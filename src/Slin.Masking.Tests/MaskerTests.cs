@@ -1,15 +1,4 @@
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
-using Slin.Masking;
-using Xunit.Sdk;
-using System.Xml.Linq;
-using System.Xml.Serialization;
-using Newtonsoft.Json;
-using System;
-using System.Text.Json;
-using System.Text.Encodings.Web;
-using System.Text.Unicode;
-using System.Text;
 using Xunit.Abstractions;
 
 namespace Slin.Masking.Tests
@@ -32,7 +21,6 @@ namespace Slin.Masking.Tests
 		[InlineData("Primaryaccountnumber", "12345678912345", "123456****2345")]
 		[InlineData("personalaccountnumber", "12345678912345", "123456****2345")]
 		[InlineData("DOB", "2022-08-29T23:56:32.1895861", "REDACTED")]
-		[InlineData("temperatureF", "4", null)]
 		public void MaskerTest(string key, string value, string expected)
 		{
 			var provider = CreateProvider();
