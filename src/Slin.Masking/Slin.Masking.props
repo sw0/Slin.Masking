@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2022 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.2.5</AssemblyVersion>
-		<FileVersion>0.2.5</FileVersion>
-		<Version>0.2.5</Version>
+		<AssemblyVersion>0.2.6</AssemblyVersion>
+		<FileVersion>0.2.6</FileVersion>
+		<Version>0.2.6</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -13,7 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
-			0.2.5.1: fix typo
+			0.2.6: fix typo and improve performance with hashset introduced to store unmatched keys.
 			0.2.5: bug fixing in JsonMasker; breaking changes: remove Enabled from IMaskingProfile, IObjectMaskingOptions
 			0.2.2: enhancement to allow MaskProfile.KeyKeyValueKeys,SerializedKeys nullable
 			0.2.1: not processing invalid JSON,XML in ObjectMasker. Actually it's a invalid case.
@@ -29,6 +29,6 @@
 			- Special format: null, REDACTED, REPLACEMENT=xxx
 		</PackageReleaseNotes>
 		<copyright>Copyright 2022</copyright>
-		<PackageTags>MaskEngine, Masking, Mask, JsonMasker, XmlMasker, UrlMasker, KeyedMasker</PackageTags>
+		<PackageTags>MaskEngine, Masking, JsonMasker, XmlMasker, UrlMasker, Mask, KeyedMasker</PackageTags>
 	</PropertyGroup>
 </Project>

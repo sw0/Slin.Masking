@@ -139,6 +139,11 @@ namespace Slin.Masking
         public bool KeyedMaskerPoolIgnoreCase { get; set; } = true;
 
         /// <summary>
+        /// default true. hashset will be enabled to keep the unmatched keys to skip.
+        /// </summary>
+        public bool EnableUnmatchedKeysCache { get; set; } = true;
+
+        /// <summary>
         /// <inheritdoc/>
         /// </summary>
         public int KeyNameLenLimitToCache { get; set; }

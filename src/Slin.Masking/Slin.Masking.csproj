@@ -6,11 +6,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="masking.template_consice.json" />
-	  <None Remove="masking.template_full.json" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="System.Text.Json" Version="6.0.5" />
 	</ItemGroup>
 
