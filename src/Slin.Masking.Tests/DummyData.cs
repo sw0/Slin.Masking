@@ -47,7 +47,11 @@ namespace Slin.Masking.Tests
         //basic auth: Convert.ToBase64String(Encoding.UTF8.GetBytes("username:password"))
         public const string AuthorizationBasic = "dXNlcm5hbWU6cGFzc3dvcmQ=";
 
+        //bad json: quote is not accepted by C# in deserialization
+        public const string BadJson = "{\"firstname\":'shawn','lastName':'Lin','ssn':'101123456'}";
+
         public static readonly string BodyOfJson = JsonSerializer.Serialize(new { ssn = SSN, requestUrl = requestUrl, dob = DOB }, MyJsonSerializerOptions);
+
         public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = SSN, requestUrl = requestUrlEncoded, dob = DOB }, MyJsonSerializerOptions);
         public static readonly string BodyOfXml = $"<data><ssn>{SSN}</ssn><Dob>{DobStr}</Dob><requestUrl>{requestUrlEncoded}</requestUrl></data>";
         public static readonly string BodyOfXml4Embed = BodyOfXml.Replace("&amp;", "&amp;amp;").Replace("<", "&lt;").Replace(">", "&gt;");
@@ -111,7 +115,7 @@ namespace Slin.Masking.Tests
             var original = new Dictionary<string, object>();
             var masked = new Dictionary<string, object>();
 
-            object nullObj = null;
+            object? nullObj = null;
             var kvp = new KeyValuePair<string, object>(Keys.ssn, SSN);
             var kvplist = new[]{
                     new KeyValuePair<string,object>(Keys.ssn, SSN),
@@ -205,6 +209,8 @@ namespace Slin.Masking.Tests
 
 
             original.Add(Keys.reserialize, JsonSerializer.Serialize(arrOfKvpNested, MyJsonSerializerOptions));//new JsonSerializerOptions { Encoder = MyEncoder }));
+
+            original.Add(Keys.BadJsonBody, BadJson);
 
             original.Add(Keys.ResponseBody, Xml1);
             original.Add(Keys.excludedX, new { key = "ssn", val = SSN });

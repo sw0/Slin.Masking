@@ -3,6 +3,9 @@ using static Slin.Masking.Tests.DummyData;
 
 namespace Slin.Masking.Tests
 {
+    /// <summary>
+    /// keys, parseNode, expected masked, solo expected masked
+    /// </summary>
     public class JsonMaskerTestRows : TheoryData<string, bool, string, string>
     {
         public JsonMaskerTestRows()
@@ -46,6 +49,9 @@ namespace Slin.Masking.Tests
 
             //invalid mix data
             Add(Keys.MixedDataArbitrary, true, Masked.MixedDataArbitrary, Unpack(Masked.MixedDataArbitrary));
+
+            //bad json
+            Add(Keys.BadJsonBody, true, Masked.BadJsonBody, Quotes(DummyData.BadJson));
 
             //reserialize JSON
             Add(Keys.reserialize, true, Masked.reserialize, Quotes(Masked.reserializeNoMask));

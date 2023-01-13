@@ -8,7 +8,7 @@
 		//JSON Related
 		"MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
 		"MaskJsonNumberEnabled": false, //default: false. this works only in JSON
-		"JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make these characters would not been escaped.
+		"JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make these characters not been escaped.
 		"JsonAllowedUnicodeRanges": [], //i.e. [ "CjkCompatibility", "CjkCompatibilityForms", "CjkCompatibilityIdeographs", "CjkRadicalsSupplement", "CjkStrokes", "CjkUnifiedIdeographs", "CjkUnifiedIdeographsExtensionA", "CjkSymbolsandPunctuation", "HalfwidthandFullwidthForms" ],
 		"MaskJsonSerializedParsedAsNode": true, //default: true
 		"JsonMinLength": 15, //default 15. usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
@@ -39,6 +39,7 @@
 		"SerializedKeysCaseSensitive": true, //default true.
 		"KeyedMaskerPoolIgnoreCase": true, //default true. [CAUTION]false is not tested yet.
 		"EnableUnmatchedKeysCache": true, //default true, unmatched keys would be cached to reduce times of regular expression evaluation and improve performance
+		"KeyNameLenLimitToCache": 36,//default 36; 0 indicates skipping key length check before add it to cache.
 		"ValueMinLength": 3, //default 3. if key matched, but value's length <=3, it will skip masking.
 
 		"MaskNestedKvpEnabled": false, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
@@ -52,7 +53,6 @@
 				"ValueKeyName": "value"
 			}
 		],
-
 
 		//MASKING SETTINGS
 		"NamedFormatters": {

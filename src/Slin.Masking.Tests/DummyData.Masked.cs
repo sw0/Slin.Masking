@@ -60,7 +60,8 @@ namespace Slin.Masking.Tests
 
             public const string objectfield = nameof(objectfield);
 			public const string reserialize = nameof(reserialize);
-			public const string Body = nameof(Body);
+			public const string BadJsonBody = nameof(BadJsonBody);
+            public const string Body = nameof(Body);
 			public const string ResponseBody = nameof(ResponseBody);
 
 			public const string excludedX = nameof(excludedX);
@@ -128,6 +129,8 @@ namespace Slin.Masking.Tests
 
 			public static readonly string MixedDataArbitrary = JsonSerializer.Serialize(DummyData.CreateLogEntry().Picks(Keys.MixedDataArbitrary), MyJsonSerializerOptions);
 
+			public static readonly string BadJsonBody = JsonSerializer.Serialize(new Dictionary<string, object> { { Keys.BadJsonBody, DummyData.BadJson } }, MyJsonSerializerOptions);
+
             public static readonly string BodyOfJson = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrl.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
 			public static readonly string BodyOfJson4Xml = JsonSerializer.Serialize(new { ssn = DummyData.SSN.Mask("*"), requestUrl = requestUrlEncoded.Unpack(true), dob = "REDACTED" }, MyJsonSerializerOptions);
 			public static readonly string BodyOfXml = $"<data><ssn>{DummyData.SSN.Mask("*")}</ssn><Dob>{DummyData.DobStr.Mask("REDACTED")}</Dob><requestUrl>{requestUrlEncoded.Unpack(true)}</requestUrl></data>";
@@ -169,7 +172,7 @@ namespace Slin.Masking.Tests
             if (string.IsNullOrEmpty(text))
                 return;
 
-            StringBuilder sb = null;
+            StringBuilder? sb = null;
 
             for (int i = 0; i < text.Length; ++i)
             {

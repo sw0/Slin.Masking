@@ -1,23 +1,42 @@
 ﻿{
   "Masking": {
-    "Enabled": true, //default: true, NOTE: it does not affect ObjectMasker, it affect global masking for layour render "event-properties-masker"
-
     //JSON Related
-    "MaskUrlEnabled": true, //default: false, work with UrlKeys
     "MaskJsonSerializedEnabled": true, //default: true, work with SerializedKeys
     "MaskJsonNumberEnabled": true, //this works only in JSON
-    "JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make XML or URL not been escaped.
+    "JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make these characters not been escaped.
     "JsonAllowedUnicodeRanges": [], //i.e. [ "CjkCompatibility", "CjkCompatibilityForms", "CjkCompatibilityIdeographs", "CjkRadicalsSupplement", "CjkStrokes", "CjkUnifiedIdeographs", "CjkUnifiedIdeographsExtensionA", "CjkSymbolsandPunctuation", "HalfwidthandFullwidthForms" ],
     "MaskJsonSerializedParsedAsNode": true, //default: true
-    "GlobalModeForArray": 1, //0:none,1:single,2:all
+    "JsonMinLength": 15, //default 15. usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
+    "GlobalModeForArray": 1, //0:default,1:single,2:all
 
     //XML related
     "MaskXmlSerializedEnabled": true, //default: true
     "MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
     "MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
-    "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
+    "XmlMinLength": 30, //system setting, usually no need to set. it bypasses deserializing if length < N
 
-    //Common part
+    //URL related
+    "MaskUrlEnabled": true, //default: false, work with UrlKeys and optional 'UrlMaskingPatterns'
+    //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
+    "UrlKeys": [ "requestUrl", "query" ],
+    "UrlMaskingPatterns": [ //IgnoreCase: default true
+      {
+        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
+        "IgnoreCase": true
+      },
+      {
+        "Pattern": "pan/(?<pan>\\d{15,16})"
+      }
+    ],
+
+    //Common setting for both Json and XML masking
+    "SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
+    "SerializedKeysCaseSensitive": false, //default true.
+    "KeyedMaskerPoolIgnoreCase": true, //default true. [CAUTION]false is not tested yet.
+    "EnableUnmatchedKeysCache": true, //default true, unmatched keys would be cached to reduce times of regular expression evaluation and improve performance
+    "KeyNameLenLimitToCache": 36, //default 36; 0 indicates skipping key length check before add it to cache.
+    "ValueMinLength": 3, //default 3. if key matched, but value's length <=3, it will skip masking.
+    "MaskNestedKvpEnabled": true, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
     "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
       {
         "KeyKeyName": "Key",
@@ -26,22 +45,6 @@
       {
         "KeyKeyName": "key",
         "ValueKeyName": "value"
-      }
-    ],
-    "ValueMinLength": 3, //if key matched, but value's length <=3, it will skip masking.
-    "XmlMinLength": 15, //system setting, usually no need to set. it bypasses deserializing if length < N
-    "JsonMinLength": 10, //system setting, usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
-    "SerializedKeysCaseSensitive": false,
-    //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
-    "UrlKeys": [ "requestUrl", "query" ],
-    "SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
-    "UrlMaskingPatterns": [ //IgnoreCase: default true
-      {
-        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
-        "IgnoreCase": true
-      },
-      {
-        "Pattern": "pan/(?<pan>\\d{15,16})"
       }
     ],
 

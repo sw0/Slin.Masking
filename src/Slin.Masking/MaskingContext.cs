@@ -245,14 +245,15 @@ namespace Slin.Masking
                     {
                         //TODO maybe we'd better to add limits here
                         if (item.KeyNameLenLimitToCache <= 0
-                            || key.Length < item.KeyNameLenLimitToCache)
+                            || key.Length <= item.KeyNameLenLimitToCache)
                             _pooled.TryAdd(key, item);
 
                         return item;
                     }
                 }
 
-                if (Options.EnableUnmatchedKeysCache)
+                if (Options.EnableUnmatchedKeysCache
+                    && (Options.KeyNameLenLimitToCache <= 0 || key.Length <= Options.KeyNameLenLimitToCache))
                 {
                     _unmatchedKeys.Add(key);
                 }

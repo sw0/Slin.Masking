@@ -26,20 +26,41 @@ namespace ApiMaskingSample.Controllers
         [HttpGet("masking", Name = "TestMasking")]
         public IActionResult MaskComplexDataEntries()
         {
-            var entry = DummyData.CreateLogEntry();
-            entry.Add(new KeyValuePair<string, object>("eventName", nameof(MaskComplexDataEntries)));
+            var exception = default(Exception);
+            var entry = LogEntry.New()
+                .AddKvp("eventName", nameof(MaskComplexDataEntries));
+            try
+            {
+                entry.AddKvpIfNotEmpty("fieldx", "field value")
+                    .AddKvpIfNotEmpty("ssn", "101123456")
+                    .SetMessage("test log");
 
-            //application logging. example
-            _logger.LogInformation(entry);
+                //do something
+                entry.AddComment("step 1 note");
+                //do something
+                entry.AddComment("step 2 note");
+            }
+            catch (Exception ex)
+            {
+                exception = ex;
+            }
+            finally
+            {
+                //application logging. example
+                if (exception != null) _logger.LogError(exception, entry);
+                else _logger.LogInformation(entry);
+            }
 
-            return Ok();
+            return Ok(new { message = "this is just basic log sample" });
         }
 
         [HttpGet("", Name = "GetOrders")]
         public IEnumerable<CustomerOrder> Get()
         {
-            var entry = DummyData.CreateLogEntry().Picks(DummyData.Keys.data, DummyData.Keys.dataInBytes, DummyData.Keys.formdata);
-            entry.Add(new KeyValuePair<string, object>("eventName", nameof(Get)));
+            var entry = LogEntry.New().AddKvp("eventName", nameof(Get));
+
+            entry.AddKvp(DummyData.Keys.data, DummyData.DataInBytes)
+                .AddKvp(DummyData.Keys.formdata, DummyData.Keys.formdata);
 
             //application logging. example
             _logger.LogInformation(entry);

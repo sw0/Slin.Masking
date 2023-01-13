@@ -146,7 +146,7 @@ namespace Slin.Masking
         /// <summary>
         /// <inheritdoc/>
         /// </summary>
-        public int KeyNameLenLimitToCache { get; set; }
+        public int KeyNameLenLimitToCache { get; set; } = 36;
 
         #endregion
 
