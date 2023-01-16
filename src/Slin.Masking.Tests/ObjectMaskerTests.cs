@@ -1,4 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
+using Slin.Masking.Tests.Models;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using Xunit.Abstractions;
 using static Slin.Masking.Tests.DummyData;
@@ -320,13 +325,7 @@ namespace Slin.Masking.Tests
             profile.GlobalModeForArray = mode;
             profile.MaskJsonSerializedParsedAsNode = maskJsonSerialiezedResultAsNode;
 
-            var masker = new Masker(profile);
-            var xmlMasker = new XmlMasker(masker, profile);
-            var jsonMasker = new JsonMasker(masker, profile);
-            xmlMasker.SetJsonMasker(jsonMasker);
-            jsonMasker.SetXmlMasker(xmlMasker);
-
-            var objMasker = new ObjectMasker(masker, profile);
+            var objMasker = new ObjectMasker(profile);
 
             var builder = new StringBuilder();
             objMasker.MaskObject(json, builder);
@@ -358,6 +357,99 @@ namespace Slin.Masking.Tests
 
             Assert.Equal(jsonMasked, actual);
 
+        }
+        #endregion
+
+        #region -- additional check points --
+
+        /// <summary>
+        /// [Case][Performance][ExceptionExpected]
+        /// Mask self-referenced object. Exception is expected.
+        /// 
+        /// TODO maybe we should not throw exception in Masker for self-referred object
+        /// </summary>
+        [Fact]
+        public void MaskSeflReferencedObject()
+        {
+            var profile = GetMaskingProfile();
+            ModifyProfile(profile);
+
+            var masker = new ObjectMasker(profile);
+
+            var model = new SelfRefModel { Id = 1, FirstName = "Steve", LastName = "Jobs" };
+            var node2 = new SelfRefModel { Id = 1, FirstName = "Michael", LastName = "Jackson" };
+            var node3 = new SelfRefModel { Id = 1, FirstName = "Jonathon", LastName = "Simth" };
+
+            model.Friend = node2;
+            node2.Friend = node3;
+            node3.Friend = model;
+
+            Exception ex = Assert.Throws<System.Text.Json.JsonException>(() =>
+            {
+                var result = masker.MaskObject(model);
+            });
+
+            Assert.Contains("A possible object cycle was detected.", ex.Message);
+        }
+
+        /// <summary>
+        /// [Case][Performance][Acceptable]
+        /// Using ConcurrentDictionary to store log entry looks acceptable.
+        /// </summary>
+        [Fact]
+        public void ConcurrentDictionaryPerformanceTest()
+        {
+            //let's assume per second one server receives 300 requests.
+            //here we use 300*100, and each log entry take 15 items.
+            //the time cost is less than 1 second (here we got multplized 100)
+            for (int loop = 0; loop < 10; loop++)
+            {
+                var sw = Stopwatch.StartNew();
+                int concurrentDictionaryCount = 30000;
+                int concurrentDictionarySize = 15;
+
+                var keys = Enumerable.Range(0, concurrentDictionaryCount);
+                var items = keys.Select(x => new ConcurrentDictionary<string, object>()).ToList();
+
+                Parallel.ForEach(keys, (i) =>
+                {
+                    for (var j = 0; j < concurrentDictionarySize; j++)
+                    {
+                        items[i].TryAdd($"key-{j:d2}", new string('*', 50));
+                    }
+                });
+
+                sw.Stop();
+
+                Assert.All(items, x => Assert.Equal(concurrentDictionarySize, x.Count));
+
+                WriteLine($"[loop:{loop}]took ok {sw.Elapsed.TotalMilliseconds}ms: Parallel run {concurrentDictionaryCount} concurreny dictionary with {concurrentDictionarySize} items");
+
+                Assert.True(sw.ElapsedMilliseconds < 1000);
+            }
+        }
+
+        /// <summary>
+        /// [Case][Performance][ExceptionExpected]
+        /// 
+        /// HashSet is not thread saft, so we need to use other type for store unmatched keys.
+        /// 
+        /// In v0.2.8. We introduce HashSet to store unmatched keys. This should be fixed!
+        /// </summary>
+        [Fact]
+        public void HashSetIsNotThreadSaft()
+        {
+            var excpetion = Assert.Throws<AggregateException>(() =>
+              {
+                  for (int i = 0; i < 20; i++)
+                  {
+                      var hashset = new HashSet<int>();
+                      Parallel.ForEach(Enumerable.Range(0, 3000), (i) =>
+                      {
+                          hashset.Add(i);
+                      });
+                  }
+              });
         }
         #endregion
     }
