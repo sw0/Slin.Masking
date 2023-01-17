@@ -369,7 +369,7 @@ namespace Slin.Masking.Tests
         /// TODO maybe we should not throw exception in Masker for self-referred object
         /// </summary>
         [Fact]
-        public void MaskSeflReferencedObject()
+        public void Case_MaskSeflReferencedObject()
         {
             var profile = GetMaskingProfile();
             ModifyProfile(profile);
@@ -397,7 +397,7 @@ namespace Slin.Masking.Tests
         /// Using ConcurrentDictionary to store log entry looks acceptable.
         /// </summary>
         [Fact]
-        public void ConcurrentDictionaryPerformanceTest()
+        public void Case_ConcurrentDictionaryPerformanceTest()
         {
             //let's assume per second one server receives 300 requests.
             //here we use 300*100, and each log entry take 15 items.
@@ -435,9 +435,10 @@ namespace Slin.Masking.Tests
         /// HashSet is not thread saft, so we need to use other type for store unmatched keys.
         /// 
         /// In v0.2.8. We introduce HashSet to store unmatched keys. This should be fixed!
+        /// after v0.2.8, internal ConcurrentHashSet got introduced.
         /// </summary>
         [Fact]
-        public void HashSetIsNotThreadSaft()
+        public void Case_HashSetIsNotThreadSaft()
         {
             var excpetion = Assert.Throws<AggregateException>(() =>
               {

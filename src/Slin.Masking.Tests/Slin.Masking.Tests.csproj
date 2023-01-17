@@ -42,4 +42,13 @@
     <ProjectReference Include="..\Slin.Masking\Slin.Masking.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Data\demo-complex-masking.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Data\sample-request.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Slin.Masking.Utilities;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
@@ -27,7 +28,7 @@ namespace Slin.Masking
         /// When <see cref="IMaskingOptions.EnableUnmatchedKeysCache"/> is true. 
         /// Unmatched keys cached to improve performance in case we got a lot regular expression patterns. 
         /// </summary>
-        public readonly HashSet<string> _unmatchedKeys = null;
+        public readonly ConcurrentHashSet<string> _unmatchedKeys = null;
 
         /// <summary>
         /// maybe it's not good to use public here, but it's intenal use. so just keep it here
@@ -53,12 +54,12 @@ namespace Slin.Masking
             if (Options.KeyedMaskerPoolIgnoreCase)
             {
                 _pooled = new ConcurrentDictionary<string, KeyedMasker>(StringComparer.OrdinalIgnoreCase);
-                _unmatchedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                _unmatchedKeys = new ConcurrentHashSet<string>(StringComparer.OrdinalIgnoreCase);
             }
             else
             {
                 _pooled = new ConcurrentDictionary<string, KeyedMasker>();
-                _unmatchedKeys = new HashSet<string>();
+                _unmatchedKeys = new ConcurrentHashSet<string>();
             }
 
             MaskFormatter = maskFormatter ?? new MaskFormatter();

@@ -1,0 +1,225 @@
+{
+    //JSON Related
+    "MaskJsonSerializedEnabled": true,
+    "MaskJsonNumberEnabled": false, //default: false. this works only in JSON
+    "JsonAllowedCharacters": "<>&+",
+    "JsonAllowedUnicodeRanges": [], 
+    "MaskJsonSerializedParsedAsNode": true, //default: true
+    "JsonMinLength": 15, //default 15.
+    "GlobalModeForArray": 1, //0:default,1:single,2:all
+
+    //XML related
+    "MaskXmlSerializedEnabled": false, //default: false
+    "MaskXmlSerializedOnXmlAttributeEnabled": false, //default false
+    "MaskJsonSerializedOnXmlAttributeEnabled": false, //default false
+    "XmlMinLength": 30, //default 30. usually no need to set. it bypasses deserializing if length < N
+
+    //URL related
+    "MaskUrlEnabled": true, //default: false, work with UrlKeys and optional 'UrlMaskingPatterns'
+    //UrlKeys: if MaskUrlEnabled is enabled and key is matched here, it will mask URL/kvp base on UrlMaskingPatterns
+    "UrlKeys": [ "requestUrl", "query" ],
+    "UrlMaskingPatterns": [ //IgnoreCase: default true
+      {
+        "Pattern": "firstname/(?<firstName>[^/]+)|lastName/(?<lastname>[^/\\?]+)",
+        "IgnoreCase": true
+      },
+      {
+        "Pattern": "pan/(?<pan>\\d{15,16})"
+      }
+    ],
+
+    //Common setting for both Json and XML masking
+    "SerializedKeys": [ "Body", "RequestBody", "ResponseBody" ],
+    "SerializedKeysCaseSensitive": true, //default true.
+    "ValueMinLength": 3, //default 3. if key matched, but value's length <=3, it will skip masking.
+
+    "MaskNestedKvpEnabled": false, //default: false, this will support mask data like {"Key":"ssn", "Value":"123456789"}
+    "KeyKeyValueKeys": [ //if null and MaskNestedKvpEnabled is true, it will use "key""value" and "Key","Value".
+      {
+        "KeyKeyName": "Key",
+        "ValueKeyName": "Value"
+      },
+      {
+        "KeyKeyName": "key",
+        "ValueKeyName": "value"
+      }
+    ],
+
+
+    //MASKING SETTINGS
+    "NamedFormatters": {
+      "CardNumber": {
+        "ValuePattern": "^\\d{15,16}$",
+        "Format": "L6*R4",
+        //IgnoreCase is working with ValuePattern.
+        "IgnoreCase": false,
+        "Enabled": true //default true
+      },
+      "BankAccountNumber": { "Format": "R4" },
+      "RoutingNumber": { "Format": "R3" },
+      "default": { "Format": "*" },
+      "Name": { "Format": "L2*R2" },
+      "Email": { "Format": "L5*@" },
+      "Address": { "Format": "L2*R2" },
+      "SSN": { "Format": "R4" },
+      "PhoneNumber": { "Format": "L2*R2" },
+      "DateString": { "Format": "*" },
+      "Password": { "Format": "*" },
+      "ImageData": { "Format": "L2*3R2" },
+      "SubscriptionKey": {
+        "Format": "L6*R6"
+      },
+      "dateyyyyMMdd": {
+        "Format": "*",
+        "ValuePattern": "\\d{4}\\d{1,2}\\d{1,2}"
+      },
+      "dateyyyy-MM-dd": {
+        "Format": "REPLACEMENT=****-**-**",
+        "ValuePattern": "\\d{4}-\\d{1,2}-\\d{1,2}"
+      },
+      "dateyyyy/MM/dd": {
+        "Format": "REPLACEMENT=****/**/**",
+        "ValuePattern": "\\d{4}/\\d{1,2}/\\d{1,2}"
+      }
+    },
+    "Rules": {
+      "CardNumber": {
+        "KeyName": "^\\w*AccountNumber|\\w*Pan|\\w*CardNumber$",
+        "IgnoreKeyCase": true,
+        "Formatters": [
+          { "Name": "CardNumber" }
+        ]
+      },
+      "Name": {
+        "KeyName": "^((?:First|Middle|Last)Name)|Recipient|ContactValue|ProductDescription$",
+        "IgnoreKeyCase": true,
+        "Formatters": [
+          { "Name": "Name" }
+        ]
+      },
+      "DOB": {
+        "KeyName": "^DOB|DateOfBirth|YearOfBirth|BirthDate|Date|Date_Of_Birth|DateOfBirthFormatted|RecipientDateOfBirth|CustomerDateOfBirth|ExpDate|BarcodeExpirationDate$",
+        "IgnoreKeyCase": true,
+        "Formatters": [
+          { "Name": "dateyyyy-MM-dd" },
+          { "Name": "dateyyyy/MM/dd" },
+          { "Format": "*" }
+        ]
+      },
+
+      "Number": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "IdentificationId": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "Card": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "IdNumber": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "SubCompanyId": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "AuthCardId": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CashPickUpIdNumber": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CertCardId": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "IdNum": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CardProxy": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CardCustomerRefNo": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CardAccountRefNo": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "ChequeNo": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "RapidCardId": { "Formatters": [ { "Name": "CardNumber" } ] },
+      "CardId": { "Formatters": [ { "Name": "CardNumber" } ] },
+
+
+      "Account": { "Formatters": [ { "Name": "BankAccountNumber" } ] },
+      "BankAccountNumber": { "Formatters": [ { "Name": "BankAccountNumber" } ] },
+
+      "Routing": {
+        "KeyName": "^(?:Intermediary|Beneficiary)?RoutingNumber$",
+        "IgnoreKeyCase": true,
+        "Formatters": [ { "Name": "RoutingNumber" } ]
+      },
+
+      "Day": { "Formatters": [ { "Name": "default" } ] },
+      "EmpId": { "Formatters": [ { "Name": "default" } ] },
+      "CardExpiryDate": { "Formatters": [ { "Name": "default" } ] },
+      "ExpirationDate": { "Formatters": [ { "Name": "default" } ] },
+      "Exp_Date": { "Formatters": [ { "Name": "default" } ] },
+      "Cvv": { "Formatters": [ { "Name": "default" } ] },
+      "Month": { "Formatters": [ { "Name": "default" } ] },
+      "Year": { "Formatters": [ { "Name": "default" } ] },
+      "Secret": { "Formatters": [ { "Name": "default" } ] },
+      "StreetNumber": { "Formatters": [ { "Name": "default" } ] },
+      "MoneyPakPinNumber": { "Formatters": [ { "Name": "default" } ] },
+      "ExpiryYear": { "Formatters": [ { "Name": "default" } ] },
+      "ExpiryMonth": { "Formatters": [ { "Name": "default" } ] },
+      "MoneyPakNumber": { "Formatters": [ { "Name": "default" } ] },
+      "RequestToken": { "Formatters": [ { "Name": "default" } ] },
+      "DeviceToken": { "Formatters": [ { "Name": "default" } ] },
+      "SessionToken": { "Formatters": [ { "Name": "default" } ] },
+      "VerificationCode": { "Formatters": [ { "Name": "default" } ] },
+      "CardPlasticCVV": { "Formatters": [ { "Name": "default" } ] },
+      "CVC2": { "Formatters": [ { "Name": "default" } ] },
+      "Pin": { "Formatters": [ { "Name": "default" } ] },
+      "NumericPin": { "Formatters": [ { "Name": "default" } ] },
+      "AtmPin": { "Formatters": [ { "Name": "default" } ] },
+      "VendorData": { "Formatters": [ { "Name": "default" } ] },
+      "SimpleSecurityAssertion": { "Formatters": [ { "Name": "default" } ] },
+
+      "EmailAddress": { "Formatters": [ { "Name": "Email" } ] },
+      "Email": { "Formatters": [ { "Name": "Email" } ] },
+
+      "AddressLine1": { "Formatters": [ { "Name": "Address" } ] },
+      "Street": { "Formatters": [ { "Name": "Address" } ] },
+      "Address1": { "Formatters": [ { "Name": "Address" } ] },
+      "Address": { "Formatters": [ { "Name": "Address" } ] },
+      "streetAddress1": { "Formatters": [ { "Name": "Address" } ] },
+      "StreetAddress": { "Formatters": [ { "Name": "Address" } ] },
+      "StreetName": { "Formatters": [ { "Name": "Address" } ] },
+      "AccountHolderAddressLine1": { "Formatters": [ { "Name": "Address" } ] },
+      "AccountHolderAddressLine2": { "Formatters": [ { "Name": "Address" } ] },
+      "BeneficiaryAddressLine1": { "Formatters": [ { "Name": "Address" } ] },
+      "BeneficiaryAddressLine2": { "Formatters": [ { "Name": "Address" } ] },
+      "AddressLine2": { "Formatters": [ { "Name": "Address" } ] },
+      "BillingAddress": { "Formatters": [ { "Name": "Address" } ] },
+
+      "SSN": { "Formatters": [ { "Name": "SSN" } ] },
+      "SocialSecurityNumber": { "Formatters": [ { "Name": "SSN" } ] },
+      "Identity": { "Formatters": [ { "Name": "SSN" } ] },
+      "TaxId": { "Formatters": [ { "Name": "SSN" } ] },
+      "CustomerSSN": { "Formatters": [ { "Name": "SSN" } ] },
+      "RecipientSsn": { "Formatters": [ { "Name": "SSN" } ] },
+      "RecipientSocialSecurityNumber": { "Formatters": [ { "Name": "SSN" } ] },
+
+      "PhoneNumber": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "Phone": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "CellPhone": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "MobilePhone": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "WorkPhoneNo": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "WorkFaxNo": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+      "MobilePhoneNumber": { "Formatters": [ { "Name": "PhoneNumber" } ] },
+
+      "IdExpDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "CardExpiration": { "Formatters": [ { "Name": "DateString" } ] },
+      "CardExpirationDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "CashPickUpIdExpiryDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "ExpTime": { "Formatters": [ { "Name": "DateString" } ] },
+      "ExpirationYear": { "Formatters": [ { "Name": "DateString" } ] },
+      "ExpirationMonth": { "Formatters": [ { "Name": "DateString" } ] },
+      "ClaimCodeExpirationDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "ClaimExpirationDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "RecipientIdentificationExpirationDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "ExpiryDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "CardPlasticEndDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "StartDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "EndDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "OpenDate": { "Formatters": [ { "Name": "DateString" } ] },
+      "Expiration": { "Formatters": [ { "Name": "DateString" } ] },
+
+      "CurrentPassword": { "Formatters": [ { "Name": "Password" } ] },
+      "ConfirmPassword": { "Formatters": [ { "Name": "Password" } ] },
+      "CertPassCode": { "Formatters": [ { "Name": "Password" } ] },
+      "CertCardPasscode": { "Formatters": [ { "Name": "Password" } ] },
+      "AuthPassCode": { "Formatters": [ { "Name": "Password" } ] },
+
+      "ImageData": { "Formatters": [ { "Name": "ImageData" } ] },
+      "MoneyPakBackImage": { "Formatters": [ { "Name": "ImageData" } ] },
+      "ReceiptImage": { "Formatters": [ { "Name": "ImageData" } ] },
+      "SphFileContent": { "Formatters": [ { "Name": "ImageData" } ] },
+
+      "Ocp-Apim-Subscription-Key": { "Formatters": [ { "Name": "SubscriptionKey" } ] }
+    }
+  }

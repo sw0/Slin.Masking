@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2022 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.2.8</AssemblyVersion>
-		<FileVersion>0.2.8</FileVersion>
-		<Version>0.2.8</Version>
+		<AssemblyVersion>0.2.9</AssemblyVersion>
+		<FileVersion>0.2.9</FileVersion>
+		<Version>0.2.9</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -13,6 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			0.2.9: Fix a critical bug in previous version, as HashSet is not thread safe.
 			0.2.8: a bit enhancement
 			0.2.6: fix typo and improve performance with hashset introduced to store unmatched keys.
 			0.2.5: bug fixing in JsonMasker; breaking changes: remove Enabled from IMaskingProfile, IObjectMaskingOptions

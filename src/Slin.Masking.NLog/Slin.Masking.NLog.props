@@ -3,9 +3,9 @@
 		<Authors>Shawn Lin</Authors>
 		<Company>Shawn Lin</Company>
 		<Copyright>(C) 2020 linsw@live.cn</Copyright>
-		<AssemblyVersion>0.2.8</AssemblyVersion>
-		<FileVersion>0.2.8</FileVersion>
-		<Version>0.2.8</Version>
+		<AssemblyVersion>0.2.9</AssemblyVersion>
+		<FileVersion>0.2.9</FileVersion>
+		<Version>0.2.9</Version>
 		<PackageProjectUrl>https://github.com/sw0/Slin.Masking</PackageProjectUrl>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<Description>
@@ -20,6 +20,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			v0.2.9: refer to latest slin.masking, which fix a critical bug in v0.2.8.
 			v0.2.8: refer to latest slin.masking, which got a bit enhancement.
 			v0.2.6: refer to latest slin.masking, which improved performance with hashset introduced to store unmatched keys.
 			v0.2.1~0.2.5: refer to latest slin.masking, a bug fixing.
