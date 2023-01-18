@@ -114,20 +114,27 @@ namespace Slin.Masking.Tests
         /// NOTE: ConcurrentHashSet is applied, if not use ConcurrentHashSet, 
         /// otherwise, would hit exception (ocasionally) for this case, as HashSet is not thread-safe.
         /// 
-        /// mask request body 5000 times parallelly, took 968ms. 
-        /// Origiinal size: 16171, masked result size: 1682
+        /// we can find enable unmtached keys have performance improved here!!!
         /// 
-        /// mask request body 10000 times parallelly, took 2142ms. 
-        /// Origiinal size: 16524, masked result size: 1947
-
+        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache off, took 2301ms. Origiinal size: 16524, masked result size: 1947
+        /// 
+        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache on, took 1641ms. Origiinal size: 16524, masked result size: 1947
+        /// 
         /// </summary>
-        [Fact]
-        public void Case_RealworldObjectMaskingTest()
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void Case_RealworldObjectMaskingTest(bool enableUnmatchedKeyCache)
         {
             var jsonConfg = File.ReadAllText("Data/demo-complex-masking.json");
             var requestBody = File.ReadAllText("Data/sample-request.json");
 
-            var profile = JsonSerializer.Deserialize<MaskingProfile>(jsonConfg, new JsonSerializerOptions { ReadCommentHandling = JsonCommentHandling.Skip, PropertyNameCaseInsensitive = true });
+            var profile = JsonSerializer.Deserialize<MaskingProfile>(jsonConfg, 
+                new JsonSerializerOptions { 
+                    ReadCommentHandling = JsonCommentHandling.Skip, 
+                    PropertyNameCaseInsensitive = true 
+                });
+            profile!.EnableUnmatchedKeysCache = enableUnmatchedKeyCache;
             profile!.Normalize();
 
             var masker = new ObjectMasker(profile);
@@ -146,7 +153,7 @@ namespace Slin.Masking.Tests
 
             Assert.Contains("dob=**", result);
 
-            WriteLine($"mask request body {count} times parallelly, took {stopwatch.ElapsedMilliseconds}ms. Origiinal size: {requestBody.Length}, masked result size: {result.Length}");
+            WriteLine($"mask request body {count} times parallelly with EnableUnmatchedKeysCache {(enableUnmatchedKeyCache ? "on":"off")}, took {stopwatch.ElapsedMilliseconds}ms. Origiinal size: {requestBody.Length}, masked result size: {result.Length}");
         }
     }
 }
