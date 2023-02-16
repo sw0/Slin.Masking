@@ -1,5 +1,5 @@
 {
-	//Tempalte Description:
+	//Template Description:
 	//  This is full template, with options, named formatters and rules defined.
 	//  Options would provide advanced settings and features.
 	//  Suggestion: you can use masking.custom.json to overwrite settings in masking.json file.
@@ -11,7 +11,7 @@
 		"JsonAllowedCharacters": "<>&+", //by default: <>&+ will be allowed. This would make these characters not been escaped.
 		"JsonAllowedUnicodeRanges": [], //i.e. [ "CjkCompatibility", "CjkCompatibilityForms", "CjkCompatibilityIdeographs", "CjkRadicalsSupplement", "CjkStrokes", "CjkUnifiedIdeographs", "CjkUnifiedIdeographsExtensionA", "CjkSymbolsandPunctuation", "HalfwidthandFullwidthForms" ],
 		"MaskJsonSerializedParsedAsNode": true, //default: true
-		"JsonMinLength": 15, //default 15. usualy no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
+		"JsonMinLength": 15, //default 15. usually no need to set. it bypasses deserializing if length < N. null or empty no need to consider also.
 		"GlobalModeForArray": 1, //0:default,1:single,2:all
 
 		//XML related
@@ -114,8 +114,11 @@
 			},
 			"cvv": { "Formatters": [ { "Name": "cvv" } ] },
 			"Balance": { "Formatters": [ { "Format": "null" } ] },
-			"FirstName": { "Formatters": [ { "Name": "Name" } ] },
-			"LastName": { "Formatters": [ { "Name": "Name" } ] },
+			"Names": {
+				"KeyName": "^(First|Last)Name$",
+				"IgnoreKeyCase": true,
+				"Formatters": [ { "Name": "Name" } ]
+			},
 			"Email": { "Formatters": [ { "Name": "email" } ] },
 			"Password": { "Formatters": [ { "Format": "*" } ] },
 			"PhoneNumber": { "Formatters": [ { "Name": "phone" } ] }

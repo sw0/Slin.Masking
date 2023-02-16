@@ -13,6 +13,7 @@
 		</Description>
 		<PackageLicenseUrl>https://github.com/sw0/Slin.Masking/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageReleaseNotes>
+			0.2.10: Enhancement. Not crash if object are not friendly to be masked (object cycle, IntPtr)
 			0.2.9: Fix a critical bug in previous version, as HashSet is not thread safe.
 			0.2.8: a bit enhancement
 			0.2.6: fix typo and improve performance with hashset introduced to store unmatched keys.

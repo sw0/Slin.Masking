@@ -153,8 +153,11 @@ namespace Slin.Masking.Tests
       },
       ""cvv"": { ""Formatters"": [ { ""Name"": ""cvv"" } ] },
       ""Balance"": { ""Formatters"": [ { ""Format"": ""null"" } ] },
-      ""FirstName"": { ""Formatters"": [ { ""Name"": ""Name"" } ] },
-      ""LastName"": { ""Formatters"": [ { ""Name"": ""Name"" } ] },
+	  ""Names"": {
+	  	""KeyName"": ""^(First|Last)Name$"",
+	  	""IgnoreKeyCase"": true,
+	  	""Formatters"": [ { ""Name"": ""Name"" } ]
+	  },
       ""Email"": { ""Formatters"": [ { ""Name"": ""email"" } ] },
       ""Password"": { ""Formatters"": [ { ""Format"": ""*"" } ] },
       ""PhoneNumber"": { ""Formatters"": [ { ""Name"": ""phone"" } ] }

@@ -34,8 +34,11 @@
 				"Formatters": [ { "Format": "L4R4" } ]
 			},
 			"Balance": { "Formatters": [ { "Format": "null" } ] },
-			"FirstName": { "Formatters": [ { "Format": "L2*" } ] },
-			"LastName": { "Formatters": [ { "Format": "L2*" } ] },
+			"Names": {
+				"KeyName": "^(First|Last)Name$",
+				"IgnoreKeyCase": true,
+				"Formatters": [ { "Name": "Name" } ]
+			},
 			"Email": { "Formatters": [ { "Format": "L2@" } ] },
 			"PhoneNumber": { "Formatters": [ { "Format": "L3R4" } ] }
 		}

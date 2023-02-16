@@ -38,9 +38,15 @@ namespace Slin.Masking
         public void MaskObject(object source, StringBuilder builder)
         {
             if (source == null) return;
-
-            var element = JsonSerializer.SerializeToElement(source, _jsonOptions);
-            MaskJsonElement(null, element, builder);
+            try
+            {
+                var element = JsonSerializer.SerializeToElement(source, _jsonOptions);
+                MaskJsonElement(null, element, builder);
+            }
+            catch (Exception ex)
+            {
+                //todo internal log
+            }
         }
 
         public bool TryParse(string value, out JsonElement? node, bool basicValidation = true)

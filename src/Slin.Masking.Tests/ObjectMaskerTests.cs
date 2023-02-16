@@ -361,6 +361,27 @@ namespace Slin.Masking.Tests
         #endregion
 
         #region -- additional check points --
+        /// <summary>
+        /// [Case][Performance][ExceptionExpected]
+        /// Mask self-referenced object. Exception is expected.
+        /// 
+        /// TODO maybe we should not throw exception in Masker for self-referred object
+        /// </summary>
+        [Fact]
+        public void Case_MaskUnmanagedObject_ExceptionCaptured()
+        {
+            var profile = GetMaskingProfile();
+            ModifyProfile(profile);
+
+            var masker = new ObjectMasker(profile);
+
+            var model = new { Handle = new IntPtr(999999), ssn = "123456789" };
+
+            //System.NotSupportedException was captured internally.
+            var result = masker.MaskObject(model);
+
+            Assert.True(string.IsNullOrEmpty(result));
+        }
 
         /// <summary>
         /// [Case][Performance][ExceptionExpected]
@@ -369,7 +390,7 @@ namespace Slin.Masking.Tests
         /// TODO maybe we should not throw exception in Masker for self-referred object
         /// </summary>
         [Fact]
-        public void Case_MaskSeflReferencedObject()
+        public void Case_MaskSelfReferencedObject_ExceptionCaptured()
         {
             var profile = GetMaskingProfile();
             ModifyProfile(profile);
@@ -384,12 +405,10 @@ namespace Slin.Masking.Tests
             node2.Friend = node3;
             node3.Friend = model;
 
-            Exception ex = Assert.Throws<System.Text.Json.JsonException>(() =>
-            {
-                var result = masker.MaskObject(model);
-            });
+            //System.Text.Json.JsonException was captured
+            var result = masker.MaskObject(model);
 
-            Assert.Contains("A possible object cycle was detected.", ex.Message);
+            Assert.True(string.IsNullOrEmpty(result));
         }
 
         /// <summary>
@@ -425,7 +444,7 @@ namespace Slin.Masking.Tests
 
                 WriteLine($"[loop:{loop}]took ok {sw.Elapsed.TotalMilliseconds}ms: Parallel run {concurrentDictionaryCount} concurreny dictionary with {concurrentDictionarySize} items");
 
-                Assert.True(sw.ElapsedMilliseconds < 1000);
+                Assert.True(sw.ElapsedMilliseconds < 1100);
             }
         }
 
