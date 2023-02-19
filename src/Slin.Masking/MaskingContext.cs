@@ -15,8 +15,6 @@ namespace Slin.Masking
 
         protected Dictionary<string, MaskRuleDefinition> Items => Options.Rules;
 
-        //private readonly Dictionary<string, MaskRuleDefinition> _lookup = new Dictionary<string, MaskRuleDefinition>();
-
         private readonly ConcurrentDictionary<string, KeyedMasker> _pooled;
 
         private readonly List<KeyedMasker> _pooledPatternedKeyMaskers = new List<KeyedMasker>();

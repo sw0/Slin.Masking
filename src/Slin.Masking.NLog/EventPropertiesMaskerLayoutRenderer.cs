@@ -65,7 +65,7 @@ namespace Slin.Masking.NLog
 		{
 			if (logEvent.Properties == null || logEvent.Properties.Count == 0 || !logEvent.HasProperties)
 				return;
-
+			
 			if (Disabled)//including disabled
 			{
 				if (string.IsNullOrEmpty(Item))

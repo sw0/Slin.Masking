@@ -116,9 +116,11 @@ namespace Slin.Masking.Tests
         /// 
         /// we can find enable unmtached keys have performance improved here!!!
         /// 
-        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache off, took 2301ms. Origiinal size: 16524, masked result size: 1947
+        /// Origiinal size: 16524, masked result size: 1947
         /// 
-        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache on, took 1641ms. Origiinal size: 16524, masked result size: 1947
+        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache off, took 2301ms. 
+        /// 
+        /// mask request body 10000 times parallelly with EnableUnmatchedKeysCache on, took 1641ms.
         /// 
         /// </summary>
         [Theory]
@@ -153,7 +155,8 @@ namespace Slin.Masking.Tests
 
             Assert.Contains("dob=**", result);
 
-            WriteLine($"mask request body {count} times parallelly with EnableUnmatchedKeysCache {(enableUnmatchedKeyCache ? "on":"off")}, took {stopwatch.ElapsedMilliseconds}ms. Origiinal size: {requestBody.Length}, masked result size: {result.Length}");
+            WriteLine($"Original size: {requestBody.Length}, masked result size: {result.Length}");
+            WriteLine($"Mask request body {count} times parallelly with EnableUnmatchedKeysCache {(enableUnmatchedKeyCache ? "on":"off")}, took {stopwatch.ElapsedMilliseconds}ms.");
         }
     }
 }

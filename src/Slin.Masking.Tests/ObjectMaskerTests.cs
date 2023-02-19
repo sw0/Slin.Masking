@@ -303,7 +303,7 @@ namespace Slin.Masking.Tests
                 //NOTE here there is a known issue that JsonNode has a bug:
                 var expected2 = expected.Replace("&amp;amp;", "&amp;").Replace("&amp;", "&");
                 var actual3 = actual2.Replace("\\u0026", "&").Replace("&amp;amp;", "&amp;").Replace("&amp;", "&")
-                    .Replace("\\u4E2D\\u56FD", "ÖÐ¹ú").Replace("\\u4E16\\u754C", "ÊÀ½ç");
+                    .Replace("\\u4E2D\\u56FD", "ï¿½Ð¹ï¿½").Replace("\\u4E16\\u754C", "ï¿½ï¿½ï¿½ï¿½");
                 Assert.Equal(expected2, actual3);
             }
         }
